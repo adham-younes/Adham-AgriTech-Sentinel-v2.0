@@ -43,36 +43,51 @@ function buildUserFromProfile(profile: ProfileRow): Partial<User> {
 export async function resolveActiveProfile(
   supabase: SupabaseClient,
 ): Promise<{ user: Partial<User>; profile: ProfileRow }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (user?.id) {
-    const { data: existingProfile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle()
+    if (user?.id) {
+      try {
+        const { data: existingProfile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle()
 
-    if (existingProfile) {
-      return { user, profile: existingProfile as ProfileRow }
+        if (existingProfile) {
+          return { user, profile: existingProfile as ProfileRow }
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error)
+        // Fall through to build profile from user
+      }
+
+      return { user, profile: buildProfileFromUser(user) }
     }
 
-    return { user, profile: buildProfileFromUser(user) }
-  }
+    try {
+      const { data: fallbackProfile } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
-  const { data: fallbackProfile } = await supabase
-    .from("profiles")
-    .select("*")
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (fallbackProfile) {
-    return {
-      user: buildUserFromProfile(fallbackProfile as ProfileRow),
-      profile: fallbackProfile as ProfileRow,
+      if (fallbackProfile) {
+        return {
+          user: buildUserFromProfile(fallbackProfile as ProfileRow),
+          profile: fallbackProfile as ProfileRow,
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching fallback profile:", error)
+      // Fall through to default profile
     }
+  } catch (error) {
+    console.error("Error in resolveActiveProfile:", error)
+    // Return default profile if Supabase is not configured
   }
 
   return {

@@ -20,7 +20,7 @@ import { demoWorkgroups } from "@/lib/domain/workgroups"
 import { WorkgroupChannelCard } from "@/components/dashboard/workgroup-channel-card"
 import { TaskPlannerCard } from "@/components/dashboard/task-planner-card"
 import { WeatherWidget } from "@/components/dashboard/weather-widget"
-import dynamic from "next/dynamic"
+import dynamicImport from "next/dynamic"
 import type { FarmAnalyticsFeature } from "@/components/maps/farm-analytics-map"
 import { eosdaPublicConfig } from "@/lib/config/eosda"
 
@@ -28,7 +28,7 @@ import { FarmAnalyticsMap } from "@/components/maps/farm-analytics-map"
 import AdhamSatelliteMap from "@/components/dashboard/AdhamSatelliteMap"
 import DashboardClientWrapper from "@/components/dashboard/DashboardClientWrapper"
 
-const SatelliteImageryCard = dynamic(
+const SatelliteImageryCard = dynamicImport(
   () => import("@/components/dashboard/satellite-imagery-card").then((m) => m.SatelliteImageryCard),
   {
     ssr: false,
@@ -278,6 +278,9 @@ function mapFieldRowToFeature(row: FieldRow): FarmAnalyticsFeature | null {
     polygon: footprint,
   }
 }
+
+// Force dynamic rendering to prevent static generation errors
+export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
   const lang = detectLanguage()

@@ -4,6 +4,9 @@ import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { resolveActiveProfile } from "@/lib/supabase/demo-session"
 
+// Force dynamic rendering to prevent static generation errors
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { user, profile } = await resolveActiveProfile(supabase)
