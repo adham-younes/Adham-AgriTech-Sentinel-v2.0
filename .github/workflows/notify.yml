@@ -112,7 +112,7 @@ jobs:
         echo "$(date)" >> notification-summary.md
         
     - name: Upload notification summary
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: notification-summary-$(date +%Y%m%d-%H%M)
         path: notification-summary.md

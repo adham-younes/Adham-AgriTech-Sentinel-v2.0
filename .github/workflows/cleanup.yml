@@ -205,7 +205,7 @@ jobs:
         echo "$(date)" >> cleanup-report.md
         
     - name: Upload cleanup report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: cleanup-report-$(date +%Y%m%d)
         path: cleanup-report.md
