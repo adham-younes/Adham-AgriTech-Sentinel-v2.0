@@ -4,7 +4,7 @@ import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import type { GeoJSON } from "geojson"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase/client"
 import {
   Card,
   CardContent,

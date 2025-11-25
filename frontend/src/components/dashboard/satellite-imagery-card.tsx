@@ -19,7 +19,7 @@ const MAPBOX_STYLE = process.env.NEXT_PUBLIC_MAPBOX_STYLE?.trim() || 'satellite-
 const MAPBOX_TILE_URL = MAPBOX_TOKEN
   ? `https://api.mapbox.com/styles/v1/mapbox/${MAPBOX_STYLE}/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`
   : undefined
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase/client'
 
 const EOSDA_DEFAULT_COORDINATES: [number, number] = [
   eosdaPublicConfig.center.lng,
@@ -106,10 +106,7 @@ export function SatelliteImageryCard() {
   const [overlayStatus, setOverlayStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const supabase = useMemo(() => {
     try {
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      if (!url || !anonKey) return null
-      return createBrowserClient(url, anonKey)
+      return createClient()
     } catch (error) {
       console.warn('[SatelliteCard] Supabase client unavailable:', error)
       return null

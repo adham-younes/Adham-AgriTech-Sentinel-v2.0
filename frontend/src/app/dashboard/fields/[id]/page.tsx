@@ -5,7 +5,7 @@ import dynamic from "next/dynamic"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Leaf, Waves, ThermometerSun, Map } from "lucide-react"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase/client"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -119,10 +119,7 @@ export default function FieldDetailsPage({ params }: { params: Promise<{ id: str
   const [activeRaster, setActiveRaster] = useState<"ndvi" | "chlorophyll">("ndvi")
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  )
+  const supabase = createClient()
 
   const parseMaybeNumber = (value: unknown) =>
     typeof value === "string"

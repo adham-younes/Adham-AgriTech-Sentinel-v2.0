@@ -37,6 +37,31 @@ export function createServiceSupabaseClient() {
     } as any
   }
 
+  // Ensure BOTH variables are present and non-empty to prevent mixed credentials
+  const hasUrl = supabaseUrl && supabaseUrl.trim().length > 0
+  const hasKey = serviceKey && serviceKey.trim().length > 0
+
+  if (!hasUrl || !hasKey) {
+    const missing = []
+    if (!hasUrl) missing.push("NEXT_PUBLIC_SUPABASE_URL")
+    if (!hasKey) missing.push("SUPABASE_SERVICE_ROLE_KEY")
+    console.error(`[Supabase Service Client] Missing configuration: ${missing.join(", ")}`)
+    // Return mock client instead of throwing to prevent runtime errors
+    return {
+      auth: {
+        admin: {
+          getUserById: async () => ({ data: { user: null }, error: null }),
+        },
+      },
+      from: () => ({
+        select: () => ({ data: null, error: null }),
+        insert: () => ({ data: null, error: null }),
+        update: () => ({ data: null, error: null }),
+        delete: () => ({ data: null, error: null }),
+      }),
+    } as any
+  }
+
   console.log("[Supabase Service Client] Creating client...")
   
   try {
@@ -50,6 +75,19 @@ export function createServiceSupabaseClient() {
     return client
   } catch (error) {
     console.error("[Supabase Service Client] Client creation failed", error)
-    throw error
+    // Return mock client instead of throwing to prevent runtime errors
+    return {
+      auth: {
+        admin: {
+          getUserById: async () => ({ data: { user: null }, error: null }),
+        },
+      },
+      from: () => ({
+        select: () => ({ data: null, error: null }),
+        insert: () => ({ data: null, error: null }),
+        update: () => ({ data: null, error: null }),
+        delete: () => ({ data: null, error: null }),
+      }),
+    } as any
   }
 }

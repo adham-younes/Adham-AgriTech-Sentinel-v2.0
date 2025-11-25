@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase/client"
 import { Activity, Droplets, Leaf, LineChart, Download, Eye, Loader2 } from "lucide-react"
 import Link from "next/link"
 
@@ -269,10 +269,7 @@ export default function SatellitePage() {
 
   const supabase = useMemo(() => {
     try {
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      if (!url || !anonKey) return null
-      return createBrowserClient(url, anonKey)
+      return createClient()
     } catch (error) {
       console.error("[Satellite] Failed to create Supabase client:", error)
       return null

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { Sprout, Menu, X, LogOut, LogIn } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "@/lib/i18n/use-language"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase/client"
 
 export function TopNav() {
   const pathname = usePathname()
@@ -15,14 +15,7 @@ export function TopNav() {
   const [userName, setUserName] = useState<string | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
 
-  const supabase = useMemo(
-    () =>
-      createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ),
-    [],
-  )
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     let mounted = true

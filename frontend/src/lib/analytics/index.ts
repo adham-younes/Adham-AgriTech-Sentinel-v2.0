@@ -40,18 +40,26 @@ function getServiceSupabaseClient(): SupabaseClient | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!supabaseUrl || !serviceKey) {
+  // Ensure BOTH variables are present and non-empty to prevent mixed credentials
+  const hasUrl = supabaseUrl && supabaseUrl.trim().length > 0
+  const hasKey = serviceKey && serviceKey.trim().length > 0
+
+  if (!hasUrl || !hasKey) {
     return null
   }
 
-  globalSupabase.__billingSupabaseClient = createSupabaseClient(supabaseUrl, serviceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  })
-
-  return globalSupabase.__billingSupabaseClient
+  try {
+    globalSupabase.__billingSupabaseClient = createSupabaseClient(supabaseUrl, serviceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+    return globalSupabase.__billingSupabaseClient
+  } catch (error) {
+    console.error("[Analytics] Failed to create Supabase client:", error)
+    return null
+  }
 }
 
 async function getBrowserSupabaseClient(): Promise<SupabaseClient | null> {

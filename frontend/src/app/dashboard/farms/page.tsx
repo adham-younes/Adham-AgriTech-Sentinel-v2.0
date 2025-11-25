@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Plus, MapPin, Loader2 } from "lucide-react"
@@ -14,10 +14,7 @@ export default function FarmsPage() {
   const [loading, setLoading] = useState(true)
   const [lang, setLang] = useState<"ar" | "en">(language === "en" ? "en" : "ar")
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  )
+  const supabase = createClient()
 
   useEffect(() => {
     if (language === "ar" || language === "en") {
