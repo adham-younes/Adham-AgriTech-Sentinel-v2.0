@@ -61,7 +61,7 @@ jobs:
         echo "$(date)" >> update-report.md
         
     - name: Upload update report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: update-report-$(date +%Y%m%d)
         path: update-report.md
