@@ -1,0 +1,25 @@
+name: codex
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/codex.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate
+        run: |
+          echo "Workflow is working!"
+          if [ -f "docs/architecture/adham-agritech-vision.md" ]; then
+            echo "Vision document found"
+            wc -l docs/architecture/adham-agritech-vision.md
+          else
+            echo "Vision document not found"
+            exit 1
+          fi

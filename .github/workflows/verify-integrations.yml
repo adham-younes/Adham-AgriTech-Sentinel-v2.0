@@ -1,0 +1,234 @@
+name: Verify API Integrations
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  test-integrations:
+    name: Test All API Integrations
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://placeholder.supabase.co' }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'placeholder-key' }}
+      INFURA_PROJECT_ID: ${{ secrets.INFURA_PROJECT_ID || 'placeholder-project-id' }}
+      ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY || 'placeholder-key' }}
+      OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY || 'placeholder-key' }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'placeholder-key' }}
+      MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN || 'placeholder-token' }}
+      COPERNICUS_CLIENT_ID: ${{ secrets.COPERNICUS_CLIENT_ID || 'placeholder-client-id' }}
+      COPERNICUS_SECRET: ${{ secrets.COPERNICUS_SECRET || 'placeholder-secret' }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test OpenWeather API
+        id: openweather
+        run: |
+          echo "Testing OpenWeather API..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" "https://api.openweathermap.org/data/2.5/weather?q=Cairo&appid=${OPENWEATHER_API_KEY}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ OpenWeather API: Working"
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "Response: $BODY" | jq -r '.name, .main.temp'
+          else
+            echo "❌ OpenWeather API: Failed (HTTP $HTTP_CODE)"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "Response: $BODY"
+          fi
+
+      - name: Test OpenAI API
+        id: openai
+        run: |
+          echo "Testing OpenAI API..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" https://api.openai.com/v1/models \
+            -H "Authorization: Bearer ${OPENAI_API_KEY}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ OpenAI API: Working"
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "Available models count: $(echo "$RESPONSE" | head -n-1 | jq '.data | length')"
+          else
+            echo "❌ OpenAI API: Failed (HTTP $HTTP_CODE)"
+            echo "status=failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test Copernicus OAuth
+        id: copernicus
+        run: |
+          echo "Testing Copernicus API..."
+          # Test authentication endpoint
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -d "client_id=${COPERNICUS_CLIENT_ID}" \
+            -d "client_secret=${COPERNICUS_SECRET}" \
+            -d "grant_type=client_credentials" \
+            "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Copernicus API: Working"
+            echo "status=success" >> $GITHUB_OUTPUT
+            TOKEN=$(echo "$RESPONSE" | head -n-1 | jq -r '.access_token')
+            echo "Token obtained successfully (length: ${#TOKEN})"
+          else
+            echo "❌ Copernicus API: Failed (HTTP $HTTP_CODE)"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "Response: $(echo "$RESPONSE" | head -n-1)"
+          fi
+
+      - name: Test Mapbox API
+        id: mapbox
+        run: |
+          echo "Testing Mapbox API..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            "https://api.mapbox.com/geocoding/v5/mapbox.places/Cairo.json?access_token=${MAPBOX_TOKEN}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Mapbox API: Working"
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "Features found: $(echo "$RESPONSE" | head -n-1 | jq '.features | length')"
+          else
+            echo "❌ Mapbox API: Failed (HTTP $HTTP_CODE)"
+            echo "status=failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test Supabase Connection
+        id: supabase
+        run: |
+          echo "Testing Supabase API..."
+          if [ -z "$SUPABASE_URL" ]; then
+            echo "❌ Supabase: URL not configured"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "404" ]; then
+            echo "✅ Supabase API: Working (connection successful)"
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Supabase API: Failed (HTTP $HTTP_CODE)"
+            echo "status=failed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Integration Report
+        if: always()
+        run: |
+          echo "# 🔍 API Integration Test Report" > report.md
+          echo "" >> report.md
+          echo "**Test Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> report.md
+          echo "" >> report.md
+          echo "## Results Summary" >> report.md
+          echo "" >> report.md
+          
+          # OpenWeather
+          if [ "${{ steps.openweather.outputs.status }}" = "success" ]; then
+            echo "- ✅ **OpenWeather API**: Working" >> report.md
+          else
+            echo "- ❌ **OpenWeather API**: Failed - Check API key validity" >> report.md
+          fi
+          
+          # OpenAI
+          if [ "${{ steps.openai.outputs.status }}" = "success" ]; then
+            echo "- ✅ **OpenAI API**: Working" >> report.md
+          else
+            echo "- ❌ **OpenAI API**: Failed - Check API key and billing" >> report.md
+          fi
+          
+          # Copernicus
+          if [ "${{ steps.copernicus.outputs.status }}" = "success" ]; then
+            echo "- ✅ **Copernicus API**: Working" >> report.md
+          else
+            echo "- ❌ **Copernicus API**: Failed - Check client credentials" >> report.md
+          fi
+          
+          # Mapbox
+          if [ "${{ steps.mapbox.outputs.status }}" = "success" ]; then
+            echo "- ✅ **Mapbox API**: Working" >> report.md
+          else
+            echo "- ❌ **Mapbox API**: Failed - Check access token" >> report.md
+          fi
+          
+          # Supabase
+          if [ "${{ steps.supabase.outputs.status }}" = "success" ]; then
+            echo "- ✅ **Supabase**: Working" >> report.md
+          else
+            echo "- ❌ **Supabase**: Failed - Check URL and anon key" >> report.md
+          fi
+          
+          echo "" >> report.md
+          echo "## Recommendations" >> report.md
+          echo "" >> report.md
+          
+          FAILED_COUNT=0
+          [ "${{ steps.openweather.outputs.status }}" != "success" ] && ((FAILED_COUNT++))
+          [ "${{ steps.openai.outputs.status }}" != "success" ] && ((FAILED_COUNT++))
+          [ "${{ steps.copernicus.outputs.status }}" != "success" ] && ((FAILED_COUNT++))
+          [ "${{ steps.mapbox.outputs.status }}" != "success" ] && ((FAILED_COUNT++))
+          [ "${{ steps.supabase.outputs.status }}" != "success" ] && ((FAILED_COUNT++))
+          
+          if [ $FAILED_COUNT -eq 0 ]; then
+            echo "🎉 All integrations are working correctly!" >> report.md
+          else
+            echo "⚠️ $FAILED_COUNT integration(s) failed. Please check:" >> report.md
+            echo "" >> report.md
+            [ "${{ steps.openweather.outputs.status }}" != "success" ] && echo "- Verify OPENWEATHER_API_KEY is valid and active" >> report.md
+            [ "${{ steps.openai.outputs.status }}" != "success" ] && echo "- Verify OPENAI_API_KEY is valid and has billing enabled" >> report.md
+            [ "${{ steps.copernicus.outputs.status }}" != "success" ] && echo "- Verify COPERNICUS_CLIENT_ID and COPERNICUS_SECRET are correct" >> report.md
+            [ "${{ steps.mapbox.outputs.status }}" != "success" ] && echo "- Verify MAPBOX_TOKEN is valid" >> report.md
+            [ "${{ steps.supabase.outputs.status }}" != "success" ] && echo "- Verify Supabase URL and anon key are configured" >> report.md
+          fi
+          
+          echo "" >> report.md
+          echo "---" >> report.md
+          echo "*Generated by CODEX Integration Verification*" >> report.md
+          
+          cat report.md
+
+      - name: Upload Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-report
+          path: report.md
+          retention-days: 30
+
+      - name: Comment on Commit (if triggered manually)
+        if: github.event_name == 'workflow_dispatch' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('report.md', 'utf8');
+            
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: report
+            });

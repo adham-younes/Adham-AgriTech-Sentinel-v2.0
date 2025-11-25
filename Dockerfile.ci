@@ -1,0 +1,36 @@
+FROM node:18-alpine
+
+ENV NODE_ENV=production
+ENV CI=true
+
+# Install dependencies for CI/CD
+RUN apk add --no-cache \
+    git \
+    curl \
+    bash
+
+WORKDIR /usr/src/app
+
+# Copy package files
+COPY ["package.json", "package-lock.json*", "./"]
+
+# Install all dependencies (including devDependencies for linting)
+RUN npm ci --silent
+
+# Copy source code
+COPY . .
+
+# Create reports directory for async publishing
+RUN mkdir -p reports/async
+
+# Make scripts executable
+RUN chmod +x scripts/*.js
+
+# Expose port
+EXPOSE 3000
+
+# Set working permissions
+RUN chown -R node:node /usr/src/app
+USER node
+
+CMD ["npm", "start"]

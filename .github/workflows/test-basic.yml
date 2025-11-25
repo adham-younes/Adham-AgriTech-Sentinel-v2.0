@@ -1,0 +1,14 @@
+name: test-basic
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo test
+        run: echo "Hello from CODEx!"
+      
+      - name: Show date
+        run: date

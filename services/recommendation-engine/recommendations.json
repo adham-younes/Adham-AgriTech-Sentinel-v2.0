@@ -1,0 +1,74 @@
+{
+  "REC_HL_000": {
+    "recommendation_id": "REC_HL_000",
+    "title": "Routine Maintenance & Monitoring",
+    "title_ar": "الصيانة والمراقبة الروتينية",
+    "severity": "Low",
+    "action_type": "Preventive Care",
+    "steps": [
+      "Continue current irrigation schedule.",
+      "Apply light foliar nutrients to maintain vigor.",
+      "Monitor for early signs of pests."
+    ],
+    "steps_ar": [
+      "استمر في جدول الري الحالي.",
+      "تطبيق المغذيات الورقية الخفيفة للحفاظ على النشاط.",
+      "مراقبة العلامات المبكرة للآفات."
+    ],
+    "safety_warning": "None",
+    "safety_warning_ar": "لا يوجد",
+    "colors": {
+      "bg": "#1a1a1a",
+      "text": "#10b981",
+      "accent": "#10b981"
+    }
+  },
+  "REC_KD_205": {
+    "recommendation_id": "REC_KD_205",
+    "title": "Potassium Deficiency Treatment",
+    "title_ar": "علاج نقص البوتاسيوم",
+    "severity": "Medium",
+    "action_type": "Fertilization Adjustment",
+    "steps": [
+      "Apply Potassium Sulfate fertilizer at 10 kg/ha.",
+      "Delay irrigation for 2 days to prevent leaching.",
+      "Re-evaluate leaf color in 7 days."
+    ],
+    "steps_ar": [
+      "تطبيق سماد سلفات البوتاسيوم بتركيز 10 كجم/هكتار.",
+      "تأخير الري ليومين لمنع الغسيل.",
+      "إعادة تقييم لون الورقة خلال 7 أيام."
+    ],
+    "safety_warning": "Wear gloves when handling fertilizers.",
+    "safety_warning_ar": "ارتدِ قفازات عند التعامل مع الأسمدة.",
+    "colors": {
+      "bg": "#1a1a1a",
+      "text": "#f59e0b",
+      "accent": "#f59e0b"
+    }
+  },
+  "REC_LB_001": {
+    "recommendation_id": "REC_LB_001",
+    "title": "Immediate Late Blight Control",
+    "title_ar": "إجراء فوري لمكافحة اللفحة المتأخرة",
+    "severity": "High",
+    "action_type": "Chemical Treatment",
+    "steps": [
+      "Apply copper-based fungicide immediately (see Attachment #3).",
+      "Stop overhead irrigation for 2 weeks to reduce humidity.",
+      "Remove and destroy infected plant parts."
+    ],
+    "steps_ar": [
+      "التطبيق الفوري لمبيد الفطريات الموضح في المرفق رقم 3.",
+      "إيقاف الري العلوي لمدة أسبوعين لتخفيف الرطوبة.",
+      "إزالة وتدمير الأجزاء المصابة من النبات."
+    ],
+    "safety_warning": "Full PPE required (mask, gloves, suit). Re-entry interval: 24 hours.",
+    "safety_warning_ar": "يجب ارتداء معدات الحماية الشخصية الكاملة (قناع، قفازات، بدلة). فترة حظر الدخول: 24 ساعة.",
+    "colors": {
+      "bg": "#1a1a1a",
+      "text": "#ef4444",
+      "accent": "#ef4444"
+    }
+  }
+}

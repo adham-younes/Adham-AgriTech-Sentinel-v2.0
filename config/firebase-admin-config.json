@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "adham-agritech-529b0",
+  "private_key_id": "ffc81a228d3ae224bdaa32a2dec9297f139f2411",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCe3hU2BGFrepNZ\nvMXVTGpZfG5pVoYZahL3d8idpETsLlJEvOYDJ1sO9hrlY5YIP5ubWHe66LEiXUdy\nSN8ZIx4//Bkk5yWBdii43qLi/WbGZ4sSG8knFeu5QBGDJpuIGHNGYqmnZ7UzEJR9\nB77VtYNYT+QsKaBlrQ/Qk/VcGKMRS3mo5MxOXMSTMTC543B+OrcNdYMx+LFb1mQu\nkR9cWGOv0sPWdfRW0VsKcIl5z+E9OyfSuZzDnI7/gE8k6PchGLiontCvUD9iozGQ\nAec5kcfu+c8jqV2kO6OlWaUUKVrZU34WrECScboj/0T6xNevQMTkpHdCYnJh6eVQ\ni+Mq99afAgMBAAECggEAQ/mfVsUKEAxbBv8MIQd4y8A/l+fTKgWmhudkWftDGFF7\nlvjCbCAHSMAJ4xO4yt+4i4APftR4kk0aOG6wstdBZrxN3+ndNOcjZnKwfHJTato7\n+awU5hntig69T4IR82oOzNODZuMrd2WFO3g4ccWgJQXOCg1nmYmyphrg1Z6fC1M0\njisz9rabFmCXxCpqybe+E1NB3D+AmNeQqYQUAYNiHKXKcLczLSuIu8wYIKMZjHAf\no6G4bXUgK7joSEJD1AcSn930i7XE2YgSWL3ojN/5aOtBi6+iLyWCEaftWbsXcEDm\nYZpnYL3F5V9mxpgsRjMHISrXXW7IMpImgosVhBTTrQKBgQDXfKrJQAI8FTIIhhC6\nvedK/f43Ays2h2GbYsoxvH1d/ZQY/vka4lDwcDhZ4KN27OW3nrGxu8fMn0ocfwPv\nUbWk+wxqDjkPpPzZEcqJd58K8rl486dCtKzPCXDmbF0XCh88fVzmwSJr3w8wFyEI\nfoLlCULWM0CuLE9i3krI9iAC0wKBgQC8vFXRk2032TJwkXhUfs3uMHAm9mcmjM/e\nG5CvpjAQupErE6c6j3MQztMAcXj43QKxpihtVPNZuSKcX4xWm3JVzDa3QzTOWK9J\n+XuQb70HHdBTITZnW/+2cI3UjiZL98WSMUmuhKduDBGLNbszKrRXJeispXMRBAhf\nAlGbju7FhQKBgQCP4I9v3Cshzs0fX9Rfu1hpe/l25ci+mdoUE/wJBV93mE5/+g59\nYsrEH0mgyRqb10TyOyVOFKEtANZM/Im2CwqLY4xAa8qxpWmlzfk7nAE3ICWymoz9\nPwF7I0SctZHaRkng65tR/3ZqK/9KDsdhkob3Qh28Q3BWWwOOcfnhAGUTPQKBgQCw\nrAwZlsvST7rrrQDa96iFo0oY7uc4KvAalesmwYaU4lAp5sfQBaBMx461B4OaUijH\naybE0ZTLFIbVoouYNwMcVYGSo5K25kWQFb4ZQr/L/ZiZeKmYr4H7ofjiU/59dn63\njvPOLdcdKKbzjWSjTQJr4cygcG/6KbA8X8tMtsvEkQKBgCE6cyLcHiqFPQiMBsSG\nqDJtWmshR73GwN/KTxKJ8I87KOu2K33bbsO4oy/p3DhIe9SMGPIciDtsnay6Syuw\nXGAbbMIX9lSjKQ6CTfv5uzBlax84e0XzfbFz7x+N5VDDzYjTQ8Uyu6hMm35QFI5J\nA2JuQZepg6Kwncysyw9eNNFb\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-tgizh@adham-agritech-529b0.iam.gserviceaccount.com",
+  "client_id": "117933940034865296674",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-tgizh%40adham-agritech-529b0.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

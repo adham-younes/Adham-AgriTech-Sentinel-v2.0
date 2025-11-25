@@ -1,0 +1,166 @@
+name: Status Check
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # Run every 5 minutes
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  status-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Start application
+      run: npm run start &
+      env:
+        PORT: 3003
+        
+    - name: Wait for application to start
+      run: sleep 30
+      
+    - name: Check application status
+      run: |
+        echo "Checking application status..."
+        
+        # Check if application is running
+        if curl -s http://localhost:3003 > /dev/null; then
+          echo "✅ Application is running"
+          APP_STATUS="healthy"
+        else
+          echo "❌ Application is not running"
+          APP_STATUS="unhealthy"
+        fi
+        
+        # Check response time
+        RESPONSE_TIME=$(curl -s -o /dev/null -w "%{time_total}" http://localhost:3003)
+        echo "Response time: ${RESPONSE_TIME}s"
+        
+        # Check memory usage
+        MEMORY_USAGE=$(ps -o pid,vsz,rss,comm -p $(pgrep node) | tail -1 | awk '{print $3}')
+        echo "Memory usage: ${MEMORY_USAGE}KB"
+        
+        # Check disk usage
+        DISK_USAGE=$(df -h . | tail -1 | awk '{print $5}')
+        echo "Disk usage: ${DISK_USAGE}"
+        
+    - name: Check API endpoints
+      run: |
+        echo "Checking API endpoints..."
+        
+        # Check health endpoint
+        if curl -s http://localhost:3003/api/health > /dev/null; then
+          echo "✅ Health API is working"
+          HEALTH_API="working"
+        else
+          echo "❌ Health API is not working"
+          HEALTH_API="not_working"
+        fi
+        
+        # Check weather endpoint
+        if curl -s "http://localhost:3003/api/weather?location=Cairo,EG" > /dev/null; then
+          echo "✅ Weather API is working"
+          WEATHER_API="working"
+        else
+          echo "❌ Weather API is not working"
+          WEATHER_API="not_working"
+        fi
+        
+    - name: Check database connection
+      run: |
+        echo "Checking database connection..."
+        
+        # This would check Supabase connection
+        # For now, we'll simulate it
+        if [ -n "$NEXT_PUBLIC_SUPABASE_URL" ]; then
+          echo "✅ Database connection configured"
+          DB_STATUS="connected"
+        else
+          echo "❌ Database connection not configured"
+          DB_STATUS="not_connected"
+        fi
+        
+    - name: Check external services
+      run: |
+        echo "Checking external services..."
+        
+        # Check OpenWeather API
+        if [ -n "$OPENWEATHER_API_KEY" ]; then
+          echo "✅ OpenWeather API key configured"
+          OPENWEATHER_STATUS="configured"
+        else
+          echo "❌ OpenWeather API key not configured"
+          OPENWEATHER_STATUS="not_configured"
+        fi
+        
+        # Check OpenAI API
+        if [ -n "$OPENAI_API_KEY" ]; then
+          echo "✅ OpenAI API key configured"
+          OPENAI_STATUS="configured"
+        else
+          echo "❌ OpenAI API key not configured"
+          OPENAI_STATUS="not_configured"
+        fi
+        
+    - name: Create status report
+      run: |
+        echo "# Status Report - $(date)" > status-report.md
+        echo "" >> status-report.md
+        echo "## Application Status" >> status-report.md
+        echo "- Status: $APP_STATUS" >> status-report.md
+        echo "- Response Time: ${RESPONSE_TIME}s" >> status-report.md
+        echo "- Memory Usage: ${MEMORY_USAGE}KB" >> status-report.md
+        echo "- Disk Usage: ${DISK_USAGE}" >> status-report.md
+        echo "" >> status-report.md
+        echo "## API Status" >> status-report.md
+        echo "- Health API: $HEALTH_API" >> status-report.md
+        echo "- Weather API: $WEATHER_API" >> status-report.md
+        echo "" >> status-report.md
+        echo "## Database Status" >> status-report.md
+        echo "- Connection: $DB_STATUS" >> status-report.md
+        echo "" >> status-report.md
+        echo "## External Services" >> status-report.md
+        echo "- OpenWeather: $OPENWEATHER_STATUS" >> status-report.md
+        echo "- OpenAI: $OPENAI_STATUS" >> status-report.md
+        echo "" >> status-report.md
+        echo "## Timestamp" >> status-report.md
+        echo "$(date)" >> status-report.md
+        
+    - name: Upload status report
+      uses: actions/upload-artifact@v4
+      with:
+        name: status-report-$(date +%Y%m%d-%H%M)
+        path: status-report.md
+        
+    - name: Update status badge
+      if: github.ref == 'refs/heads/main'
+      run: |
+        # This would update a status badge
+        echo "Updating status badge..."
+        
+        if [ "$APP_STATUS" = "healthy" ]; then
+          echo "✅ Application is healthy"
+        else
+          echo "❌ Application is unhealthy"
+        fi
+        
+    - name: Send alert on failure
+      if: failure()
+      run: |
+        echo "❌ Status check failed!"
+        echo "Please check the application status manually."
+        # Here you would send an alert via email, Slack, etc.

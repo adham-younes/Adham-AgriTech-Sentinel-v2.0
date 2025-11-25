@@ -1,0 +1,624 @@
+{
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "حدث خطأ",
+    "success": "تم بنجاح",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "confirm": "تأكيد",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب",
+    "export": "تصدير",
+    "import": "استيراد",
+    "refresh": "تحديث",
+    "close": "إغلاق",
+    "open": "فتح",
+    "view": "عرض",
+    "details": "التفاصيل",
+    "settings": "الإعدادات",
+    "help": "المساعدة",
+    "about": "حول",
+    "contact": "اتصل بنا",
+    "logout": "تسجيل الخروج",
+    "login": "تسجيل الدخول",
+    "register": "تسجيل",
+    "welcome": "مرحباً",
+    "goodbye": "وداعاً",
+    "yes": "نعم",
+    "no": "لا",
+    "ok": "موافق",
+    "retry": "إعادة المحاولة",
+    "continue": "متابعة",
+    "finish": "إنهاء",
+    "start": "بدء",
+    "stop": "إيقاف",
+    "pause": "إيقاف مؤقت",
+    "resume": "استئناف",
+    "all": "الكل"
+  },
+  "education": {
+    "title": "ثورة الزراعة الرقمية",
+    "subtitle": "مقالات وكراسات وفيديوهات تحوّل الذكاء الاصطناعي وبيانات الأقمار الصناعية والحساسات إلى قرارات يومية.",
+    "cards": {
+      "satellite": {
+        "title": "أساسيات صور الأقمار الصناعية",
+        "body": "افهم أساسيات NDVI وكيف تساعد بيانات Sentinel في تشخيص إجهاد المحاصيل ودعم اتخاذ القرار في الوقت المناسب."
+      },
+      "greenhouse": {
+        "title": "الدفيئات والإضاءة",
+        "body": "تحكم في المناخ وأطياف الإضاءة لتحسين التمثيل الضوئي والإنتاجية، خصوصاً في مواسم الإشعاع المنخفض."
+      },
+      "revolutionary": {
+        "title": "مزرعة ثورية: حساسات ودرونز",
+        "body": "استخدم حساسات التربة والدرونز وخرائط NDVI لتطبيق الري والتسميد الدقيق على مستوى المناطق داخل الحقل."
+      }
+    },
+    "more_link": "استكشف ثورة الزراعة الرقمية"
+  },
+  "navigation": {
+    "dashboard": "لوحة التحكم",
+    "farms": "المزارع",
+    "fields": "الحقول",
+    "crops": "المحاصيل",
+    "weather": "الطقس",
+    "irrigation": "الري",
+    "soil_analysis": "تحليل التربة",
+    "crop_monitoring": "مراقبة المحاصيل",
+    "reports": "التقارير",
+    "marketplace": "السوق",
+    "ai_assistant": "المساعد الذكي",
+    "satellite": "الأقمار الصناعية",
+    "agronomy_insights": "تحليلات المحاصيل",
+    "features": "الميزات",
+    "forum": "المنتدى",
+    "services": "الخدمات",
+    "partners": "الشركاء",
+    "notifications": "الإشعارات",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات"
+  },
+  "navigation_groups": {
+    "overview": "النظرة العامة",
+    "operations": "إدارة الحقول",
+    "insights": "التحليلات",
+    "engagement": "التفاعل والخدمات",
+    "platform": "البنية والمنصة"
+  },
+  "branding": {
+    "name": "Adham AgriTech",
+    "tagline": "منصة الزراعة الذكية"
+  },
+  "landing": {
+    "hero_title": "منصة الزراعة الذكية",
+    "hero_subtitle": "منصة متكاملة لإدارة المزارع توحد الذكاء الاصطناعي وصور الأقمار الصناعية وبيانات الحساسات لزيادة الإنتاجية وحماية كل فدان في الوقت الفعلي.",
+    "primary_cta": "استكشف المنصة",
+    "secondary_cta": "افتح خريطة المزرعة ثلاثية الأبعاد",
+    "auth": {
+      "login": "تسجيل الدخول",
+      "signup": "إنشاء حساب جديد"
+    },
+    "features_title": "مميزات المنصة",
+    "features_subtitle": "حلول متقدمة لإدارة المزرعة بكفاءة",
+    "features": {
+      "crop_monitoring": {
+        "title": "مراقبة المحاصيل",
+        "description": "تتبع صحة المحاصيل باستخدام صور الأقمار الصناعية ومؤشرات NDVI وEVI"
+      },
+      "smart_irrigation": {
+        "title": "الري الذكي",
+        "description": "تحكم في أنظمة الري وجدولة الري بناءً على بيانات التربة والطقس"
+      },
+      "weather": {
+        "title": "توقعات الطقس",
+        "description": "توقعات دقيقة للطقس لمدة 7 أيام لتخطيط أفضل للأنشطة الزراعية"
+      },
+      "soil": {
+        "title": "تحليل التربة",
+        "description": "تحليل شامل للتربة مع توصيات ذكية للأسمدة والري"
+      },
+      "assistant": {
+        "title": "المساعد الذكي",
+        "description": "مساعد زراعي ذكي يجيب على أسئلتك ويقدم نصائح مخصصة"
+      },
+      "security": {
+        "title": "الأمان",
+        "description": "أفضل ممارسات خصوصية البيانات وأمن المنصة"
+      },
+      "insights": {
+        "title": "تحليلات المحاصيل",
+        "description": "رؤى استباقية مبنية على الحساسات وصور الأقمار الصناعية وتنبيهات الذكاء الاصطناعي"
+      }
+    },
+    "stats": {
+      "active_farms": "مزارع نشطة",
+      "managed_hectares": "هكتار مُدار",
+      "productivity_increase": "زيادة الإنتاجية"
+    },
+    "cta": {
+      "title": "جاهز لتحسين إنتاجية مزرعتك؟",
+      "subtitle": "انضم إلى آلاف المزارعين الذين يستخدمون Adham AgriTech لإدارة مزارعهم",
+      "button": "ابدأ الآن"
+    },
+    "footer": {
+      "partners": "شركاؤنا",
+      "rights": "جميع الحقوق محفوظة."
+    }
+  },
+  "dashboard_header": {
+    "welcome": "مرحباً، {name}",
+    "fallback_name": "مستخدم",
+    "role": {
+      "farmer": "مزارع",
+      "engineer": "مهندس زراعي",
+      "manager": "مدير",
+      "default": "عضو"
+    },
+    "menu": {
+      "account": "حسابي",
+      "profile": "الملف الشخصي",
+      "settings": "الإعدادات",
+      "sign_out": "تسجيل الخروج"
+    },
+    "notifications": "الإشعارات"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم الرئيسية",
+    "welcome_message": "مرحباً بك في منصة Adham AgriTech",
+    "overview": "نظرة عامة",
+    "quick_actions": "إجراءات سريعة",
+    "recent_activity": "النشاط الأخير",
+    "statistics": "الإحصائيات",
+    "alerts": "التنبيهات",
+    "weather_summary": "ملخص الطقس",
+    "farm_status": "حالة المزرعة",
+    "crop_health": "صحة المحاصيل",
+    "irrigation_status": "حالة الري",
+    "market_prices": "أسعار السوق",
+    "ai_recommendations": "توصيات الذكاء الاصطناعي"
+  },
+  "farms": {
+    "title": "إدارة المزارع",
+    "add_farm": "إضافة مزرعة",
+    "farm_name": "اسم المزرعة",
+    "farm_description": "وصف المزرعة",
+    "location": "الموقع",
+    "size": "المساحة",
+    "soil_type": "نوع التربة",
+    "climate_zone": "المنطقة المناخية",
+    "established_date": "تاريخ التأسيس",
+    "owner": "المالك",
+    "status": "الحالة",
+    "actions": "الإجراءات",
+    "view_details": "عرض التفاصيل",
+    "edit_farm": "تعديل المزرعة",
+    "delete_farm": "حذف المزرعة",
+    "farm_created": "تم إنشاء المزرعة بنجاح",
+    "farm_updated": "تم تحديث المزرعة بنجاح",
+    "farm_deleted": "تم حذف المزرعة بنجاح"
+  },
+  "fields": {
+    "title": "إدارة الحقول",
+    "add_field": "إضافة حقل",
+    "field_name": "اسم الحقل",
+    "field_description": "وصف الحقل",
+    "area": "المساحة",
+    "coordinates": "الإحداثيات",
+    "soil_analysis": "تحليل التربة",
+    "irrigation_system": "نظام الري",
+    "current_crop": "المحصول الحالي",
+    "planting_date": "تاريخ الزراعة",
+    "expected_harvest": "التوقعات الحصاد",
+    "field_created": "تم إنشاء الحقل بنجاح",
+    "field_updated": "تم تحديث الحقل بنجاح",
+    "field_deleted": "تم حذف الحقل بنجاح"
+  },
+  "weather": {
+    "title": "بيانات الطقس",
+    "current_weather": "الطقس الحالي",
+    "forecast": "التوقعات",
+    "temperature": "درجة الحرارة",
+    "humidity": "الرطوبة",
+    "precipitation": "الأمطار",
+    "wind_speed": "سرعة الرياح",
+    "wind_direction": "اتجاه الرياح",
+    "pressure": "الضغط الجوي",
+    "uv_index": "مؤشر الأشعة فوق البنفسجية",
+    "visibility": "الرؤية",
+    "weather_condition": "حالة الطقس",
+    "clear": "صافي",
+    "cloudy": "غائم",
+    "rainy": "ممطر",
+    "stormy": "عاصف",
+    "foggy": "ضبابي",
+    "snowy": "ثلجي",
+    "weather_impact": "تأثير الطقس",
+    "recommendations": "التوصيات"
+  },
+  "irrigation": {
+    "title": "إدارة الري",
+    "irrigation_systems": "أنظمة الري",
+    "water_requirements": "متطلبات المياه",
+    "irrigation_schedule": "جدول الري",
+    "water_usage": "استهلاك المياه",
+    "efficiency": "الكفاءة",
+    "sensors": "المستشعرات",
+    "automation": "الأتمتة",
+    "drip": "الري بالتنقيط",
+    "sprinkler": "الري بالرش",
+    "flood": "الري بالغمر",
+    "center_pivot": "الري المحوري",
+    "manual": "الري اليدوي",
+    "irrigation_recommendation": "توصية الري",
+    "water_deficit": "عجز المياه",
+    "optimal_moisture": "الرطوبة المثلى",
+    "current_moisture": "الرطوبة الحالية"
+  },
+  "soil_analysis": {
+    "title": "تحليل التربة",
+    "ph_level": "مستوى الحموضة",
+    "nitrogen": "النيتروجين",
+    "phosphorus": "الفوسفور",
+    "potassium": "البوتاسيوم",
+    "organic_matter": "المادة العضوية",
+    "moisture_content": "محتوى الرطوبة",
+    "analysis_date": "تاريخ التحليل",
+    "recommendations": "التوصيات",
+    "soil_health": "صحة التربة",
+    "nutrient_balance": "توازن المغذيات",
+    "improvement_suggestions": "اقتراحات التحسين"
+  },
+  "crop_monitoring": {
+    "title": "مراقبة المحاصيل",
+    "crop_health": "صحة المحاصيل",
+    "growth_stage": "مرحلة النمو",
+    "pest_detection": "كشف الآفات",
+    "disease_detection": "كشف الأمراض",
+    "yield_prediction": "توقع المحصول",
+    "harvest_readiness": "جاهزية الحصاد",
+    "germination": "الإنبات",
+    "vegetative": "النمو الخضري",
+    "flowering": "الإزهار",
+    "fruiting": "الإثمار",
+    "maturity": "النضج",
+    "crop_recommendations": "توصيات المحاصيل"
+  },
+  "reports": {
+    "title": "التقارير",
+    "generate_report": "إنشاء تقرير",
+    "report_types": "أنواع التقارير",
+    "farm_summary": "ملخص المزرعة",
+    "field_analysis": "تحليل الحقل",
+    "weather_report": "تقرير الطقس",
+    "irrigation_optimization": "تحسين الري",
+    "market_analysis": "تحليل السوق",
+    "ai_recommendations": "توصيات الذكاء الاصطناعي",
+    "export_pdf": "تصدير PDF",
+    "export_excel": "تصدير Excel",
+    "report_generated": "تم إنشاء التقرير بنجاح"
+  },
+  "marketplace": {
+    "title": "السوق",
+    "buy": "شراء",
+    "sell": "بيع",
+    "products": "المنتجات",
+    "seeds": "البذور",
+    "fertilizers": "الأسمدة",
+    "equipment": "المعدات",
+    "price": "السعر",
+    "quantity": "الكمية",
+    "quality": "الجودة",
+    "supplier": "المورد",
+    "rating": "التقييم",
+    "reviews": "المراجعات",
+    "add_to_cart": "إضافة للسلة",
+    "buy_now": "شراء الآن"
+  },
+  "ai_assistant": {
+    "title": "المساعد الذكي",
+    "subtitle": "اطرح أي سؤال حول عملياتك وتحليلات منصة أدهم",
+    "placeholder": "اكتب سؤالك هنا...",
+    "examples_title": "أمثلة على الأسئلة:",
+    "example1": "ما هو أفضل وقت لزراعة القمح في مصر؟",
+    "example2": "كيف أعالج نقص النيتروجين في التربة؟",
+    "example3": "ما هي أفضل طرق الري للمحاصيل الصيفية؟",
+    "ask_question": "اسأل سؤالاً",
+    "chat_history": "تاريخ المحادثة",
+    "recent_chats": "المحادثات الأخيرة",
+    "no_history": "لا توجد محادثات سابقة",
+    "history_toggle": {
+      "show": "عرض المحادثات الأخيرة",
+      "hide": "إخفاء المحادثات الأخيرة"
+    },
+    "recommendations": "التوصيات",
+    "diagnosis": "التشخيص",
+    "advice": "النصائح",
+    "send": "إرسال",
+    "clear_chat": "مسح المحادثة",
+    "voice_input": "الإدخال الصوتي",
+    "image_upload": "رفع صورة",
+    "ai_thinking": "المساعد يفكر...",
+    "ai_response": "رد المساعد",
+    "language_toggle": {
+      "label_en": "الإنجليزية",
+      "label_ar": "العربية",
+      "switch_to_en": "التبديل إلى الإنجليزية",
+      "switch_to_ar": "التبديل إلى العربية"
+    }
+  },
+  "smart_companion": {
+    "title": "Adham AgriTech Eng",
+    "launcher_label": "افتح Adham AgriTech Eng",
+    "welcome": "مرحبًا! أنا Adham AgriTech Eng، المساعد الزراعي التشغيلي لمنصة أدهم. اسألني عن الحقول، الري، مؤشرات NDVI، أو كيفية تفسير القراءات.",
+    "placeholder": "اكتب سؤالك حول الحقول أو الري أو مؤشرات NDVI أو أي جزء في المنصة...",
+    "agent_name": "Adham AgriTech Eng",
+    "examples": {
+      "operations": "ما المهام الجارية على المزارع الآن؟",
+      "alerts": "اشرح آخر تنبيه للري.",
+      "explain": "فسر مخطط NDVI بطريقة بسيطة."
+    },
+    "status": {
+      "ready": "المساعد جاهز",
+      "error": "المساعد غير متوفر"
+    },
+    "typing": "المساعد يكتب..."
+  },
+  "satellite": {
+    "title": "الأقمار الصناعية",
+    "satellite_view": "عرض الأقمار الصناعية",
+    "ndvi_analysis": "تحليل NDVI",
+    "vegetation_health": "صحة الغطاء النباتي",
+    "crop_monitoring": "مراقبة المحاصيل",
+    "field_boundaries": "حدود الحقول",
+    "zoom_in": "تكبير",
+    "zoom_out": "تصغير",
+    "fullscreen": "ملء الشاشة",
+    "layers": "الطبقات",
+    "satellite": "الأقمار الصناعية",
+    "terrain": "التضاريس",
+    "hybrid": "مختلط",
+    "poor": "ضعيف",
+    "fair": "متوسط",
+    "good": "جيد",
+    "excellent": "ممتاز"
+  },
+  "satellite3d": {
+    "title": "ذكاء المزارع ثلاثي الأبعاد",
+    "subtitle": "تضاريس تفاعلية ثلاثية الأبعاد مع تحليلات على مستوى الحقل",
+    "live_view": "الخريطة ثلاثية الأبعاد المباشرة",
+    "analysis_panel": "تحليلات الحقل",
+    "ndvi": "مؤشر NDVI",
+    "moisture": "الرطوبة",
+    "yield": "إمكانات الإنتاج",
+    "last_updated": "آخر تحديث",
+    "select_prompt": "اختر حقلاً لعرض التشخيصات",
+    "quick_actions": "إجراءات سريعة",
+    "actions": {
+      "ndvi": "تحليل NDVI",
+      "growth": "تتبع النمو",
+      "issues": "كشف المشكلات",
+      "export": "تصدير البيانات"
+    },
+    "ndvi_missing": "لا توجد قراءات NDVI محفوظة لهذا الحقل بعد. اطلب لقطة مراقبة جديدة أو حدّث صور EOSDA لتفعيل التحليلات.",
+    "summary": {
+      "fields": "الحقول المراقبة",
+      "health": "متوسط الصحة",
+      "area": "إجمالي المساحة"
+    }
+  },
+  "services_status": {
+    "title": "حالة الخدمات",
+    "subtitle": "راقب صحة وأداء جميع التكاملات",
+    "refresh": "تحديث",
+    "sync_mode": "وضع المزامنة",
+    "sync": "متزامن",
+    "async": "غير متزامن",
+    "auto_refresh": "تحديث تلقائي",
+    "last_update": "آخر تحديث",
+    "overall_status": "الحالة العامة",
+    "latency": "الزمن المستغرق",
+    "status_labels": {
+      "healthy": "سليمة",
+      "degraded": "متدهورة",
+      "error": "خطأ"
+    },
+    "services": {
+      "weather": "خدمة الطقس",
+      "sensors": "شبكة الحساسات",
+      "esd": "خدمة الأقمار الصناعية",
+      "supabase": "قاعدة البيانات"
+    },
+    "sensors_hint": "أضف المتغيرين SENSOR_HUB_API_URL و SENSOR_HUB_API_KEY داخل إعدادات المشروع في Vercel ثم أعد النشر أو شغّل فحص الصحة من جديد.",
+    "timeline": "خط سير التنفيذ",
+    "timeline_empty": "لا يوجد تنفيذ حديث بعد"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "new_notification": "إشعار جديد",
+    "mark_as_read": "تعيين كمقروء",
+    "mark_all_read": "تعيين الكل كمقروء",
+    "delete_notification": "حذف الإشعار",
+    "clear_all": "مسح الكل",
+    "irrigation_alert": "تنبيه الري",
+    "weather_warning": "تحذير الطقس",
+    "pest_alert": "تنبيه الآفات",
+    "harvest_reminder": "تذكير الحصاد",
+    "maintenance_due": "صيانة مستحقة",
+    "price_alert": "تنبيه السعر"
+  },
+  "errors": {
+    "network_error": "خطأ في الشبكة",
+    "server_error": "خطأ في الخادم",
+    "validation_error": "خطأ في التحقق",
+    "authentication_error": "خطأ في المصادقة",
+    "authorization_error": "خطأ في التفويض",
+    "not_found": "غير موجود",
+    "forbidden": "غير مسموح",
+    "timeout": "انتهت المهلة",
+    "unknown_error": "خطأ غير معروف",
+    "try_again": "حاول مرة أخرى",
+    "contact_support": "اتصل بالدعم الفني"
+  },
+  "success": {
+    "data_saved": "تم حفظ البيانات بنجاح",
+    "data_updated": "تم تحديث البيانات بنجاح",
+    "data_deleted": "تم حذف البيانات بنجاح",
+    "operation_completed": "تمت العملية بنجاح",
+    "email_sent": "تم إرسال البريد الإلكتروني",
+    "password_changed": "تم تغيير كلمة المرور",
+    "profile_updated": "تم تحديث الملف الشخصي",
+    "settings_saved": "تم حفظ الإعدادات"
+  },
+  "validation": {
+    "required": "هذا الحقل مطلوب",
+    "email_invalid": "البريد الإلكتروني غير صحيح",
+    "phone_invalid": "رقم الهاتف غير صحيح",
+    "password_weak": "كلمة المرور ضعيفة",
+    "password_mismatch": "كلمات المرور غير متطابقة",
+    "min_length": "يجب أن يكون على الأقل {min} أحرف",
+    "max_length": "يجب أن يكون على الأكثر {max} أحرف",
+    "min_value": "يجب أن تكون القيمة على الأقل {min}",
+    "max_value": "يجب أن تكون القيمة على الأكثر {max}",
+    "numeric": "يجب أن تكون القيمة رقمية",
+    "positive": "يجب أن تكون القيمة موجبة",
+    "date_invalid": "التاريخ غير صحيح",
+    "url_invalid": "الرابط غير صحيح"
+  },
+  "landing_home": {
+    "hero": {
+      "image_alt": "طائرة درون تراقب حقلاً زراعياً",
+      "stats": {
+        "active": {
+          "label": "الحقول النشطة",
+          "value": "2,430",
+          "delta": "+18% هذا الشهر"
+        },
+        "latest_capture": {
+          "label": "أحدث صورة فضائية",
+          "value": "منذ 3 ساعات",
+          "delta": "EOSDA"
+        },
+        "weather_alerts": {
+          "label": "تنبيهات الطقس",
+          "value": "4",
+          "delta": "وادي النطرون • المنيا"
+        }
+      }
+    },
+    "live": {
+      "title": "المؤشرات الحية للمزرعة",
+      "subtitle": "اربط صور الأقمار الصناعية والحساسات ومساعد الذكاء الاصطناعي في لوحة واحدة.",
+      "button": "افتح لوحة المراقبة"
+    },
+    "metrics": {
+      "ndvi": {
+        "title": "مؤشر NDVI اللحظي",
+        "trend": "+0.05 خلال الأسبوع",
+        "description": "نركّب طبقات Sentinel وEOSDA فوق 35 حقلاً لرصد أي بقع يقل فيها المؤشر عن 0.4 قبل أن يظهر الإجهاد للناظر."
+      },
+      "water": {
+        "title": "كفاءة استخدام المياه",
+        "trend": "توفير هذا الموسم",
+        "description": "تضبط المحاور والري بالتنقيط مدد التشغيل تبعاً لحساسات التربة ومعامل التبخر اليومي كي لا تتجاوز المضخات الحاجة الفعلية."
+      },
+      "pest": {
+        "title": "مراقبة الآفات",
+        "value": "9 زيارات",
+        "trend": "تمت المعالجة",
+        "description": "نربط ملاحظات الكشافة بالصور الحرارية وأجهزة الرطوبة لننشئ تنبيهات دقيقة ومهام احتواء لكل قطعة."
+      }
+    },
+    "stories": {
+      "irrigation": {
+        "title": "سيناريو ري دقيق",
+        "impact": "+27% إنتاجية",
+        "summary": "ضبطت المنصة تشغيل المضخات وفق حرارة التربة وسرعة الرياح للحفاظ على تجانس النمو في الحقول المفتوحة.",
+        "quote": "الخريطة الحرارية جعلت الطاقم يرى مناطق الإجهاد قبل أن تتضرر النباتات.",
+        "author": "- فريق العمليات"
+      },
+      "sensors": {
+        "title": "تكامل المستشعرات والذكاء الاصطناعي",
+        "impact": "-32% استهلاك مياه",
+        "summary": "تتحد بيانات محطات الطقس والمجسات والكاميرات المحمولة لإصدار أوامر عمل جاهزة لكل فريق ميداني.",
+        "quote": "نحصل الآن على خطة تفقد يومية على الهاتف بدل متابعة جداول منفصلة.",
+        "author": "- مشرف الاستدامة"
+      }
+    },
+    "impact": {
+      "eyebrow": "موثوقة ميدانياً",
+      "title": "أثر ملموس في كل هكتار",
+      "description": "مدعومة بصور الأقمار الصناعية وذكاء الطقس وإرشادات الذكاء الاصطناعي."
+    },
+    "ndvi": {
+      "tip": "نصيحة سريعة",
+      "heading": "كيف نقرأ خرائط NDVI",
+      "description": "يقارن المؤشر بين الضوء الأحمر وتحت الأحمر القريب لقياس حيوية المزروعات، ثم ندمجه مع بيانات رطوبة التربة لنحدد المناطق التي تحتاج ريًا إضافياً أو تفقداً مباشراً.",
+      "cta": "تعرّف أكثر",
+      "image_alt": "طبقات طيفية توضح صحة الغطاء النباتي"
+    },
+    "footer": {
+      "rights": "جميع الحقوق محفوظة.",
+      "education_link": "المركز التعليمي"
+    }
+  },
+  "farm_form": {
+    "title": "إضافة مزرعة جديدة",
+    "back": "رجوع",
+    "fields": {
+      "name": {
+        "label": "اسم المزرعة",
+        "placeholder": "اكتب اسم المزرعة"
+      },
+      "location": {
+        "label": "الموقع",
+        "placeholder": "المدينة / المحافظة"
+      },
+      "crop": {
+        "label": "المحصول الرئيسي",
+        "placeholder": "قمح، ذرة، نخيل..."
+      },
+      "area": {
+        "label": "المساحة (هكتار)",
+        "placeholder": "مثلاً 12.5"
+      }
+    },
+    "geo": {
+      "heading": "الإحداثيات الحالية",
+      "latitude": "خط العرض",
+      "longitude": "خط الطول",
+      "use_location": "استخدم موقعي كنقطة",
+      "locating": "جاري تحديد الموقع...",
+      "message": "نعتمد موقعك الحالي عند السماح بالوصول، ويمكنك تعديله بالنقر على الخريطة أو إدخال الإحداثيات يدويًا.",
+      "unsupported": "المتصفح لا يدعم تحديد الموقع.",
+      "denied": "تعذر الوصول إلى موقعك. عدّل النقطة يدوياً."
+    },
+    "map": {
+      "label": "ثبّت موقع المزرعة على الخريطة",
+      "hint": "انقر على الخريطة أو اسحب النقطة لضبط الموقع بدقة، ويمكنك تعديلها في أي وقت قبل الحفظ."
+    },
+    "actions": {
+      "cancel": "إلغاء",
+      "save": "حفظ المزرعة",
+      "saving": "جاري الحفظ..."
+    },
+    "alerts": {
+      "create_failed": "حدث خطأ أثناء إنشاء المزرعة"
+    }
+  },
+  "analytics": {
+    "soil_crop_title": "تحليلات التربة والمحاصيل",
+    "health_score": "نقاط الصحة",
+    "ndvi": "مؤشر NDVI",
+    "moisture": "الرطوبة",
+    "temperature": "درجة الحرارة",
+    "last_updated": "آخر تحديث",
+    "loading": "جاري تحميل البيانات...",
+    "error": "فشل تحميل البيانات",
+    "no_data": "لا توجد بيانات متاحة"
+  }
+}

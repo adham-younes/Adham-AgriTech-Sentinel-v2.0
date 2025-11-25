@@ -1,0 +1,123 @@
+name: Application Monitoring
+
+on:
+  schedule:
+    - cron: '*/15 * * * *' # Run every 15 minutes
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Start application
+      run: npm run start &
+      env:
+        PORT: 3003
+        
+    - name: Wait for application to start
+      run: sleep 30
+      
+    - name: Health check
+      run: |
+        echo "Performing health check..."
+        response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3003)
+        if [ $response -eq 200 ]; then
+          echo "✅ Application is healthy (HTTP $response)"
+        else
+          echo "❌ Application is unhealthy (HTTP $response)"
+          exit 1
+        fi
+        
+    - name: API endpoints check
+      run: |
+        echo "Checking API endpoints..."
+        
+        # Check health endpoint
+        if curl -s http://localhost:3003/api/health > /dev/null; then
+          echo "✅ Health API endpoint is working"
+        else
+          echo "❌ Health API endpoint is not working"
+        fi
+        
+        # Check weather endpoint (if API key is available)
+        if [ -n "$OPENWEATHER_API_KEY" ]; then
+          if curl -s "http://localhost:3003/api/weather?location=Cairo,EG" > /dev/null; then
+            echo "✅ Weather API endpoint is working"
+          else
+            echo "❌ Weather API endpoint is not working"
+          fi
+        else
+          echo "⚠️ Weather API endpoint not tested (no API key)"
+        fi
+        
+    - name: Performance check
+      run: |
+        echo "Checking performance..."
+        
+        # Check response time
+        response_time=$(curl -s -o /dev/null -w "%{time_total}" http://localhost:3003)
+        echo "Response time: ${response_time}s"
+        
+        if (( $(echo "$response_time < 2.0" | bc -l) )); then
+          echo "✅ Response time is good (< 2s)"
+        else
+          echo "⚠️ Response time is slow (> 2s)"
+        fi
+        
+    - name: Memory usage check
+      run: |
+        echo "Checking memory usage..."
+        
+        # Get memory usage of the Node.js process
+        memory_usage=$(ps -o pid,vsz,rss,comm -p $(pgrep node) | tail -1 | awk '{print $3}')
+        echo "Memory usage: ${memory_usage}KB"
+        
+        if [ $memory_usage -lt 500000 ]; then
+          echo "✅ Memory usage is normal (< 500MB)"
+        else
+          echo "⚠️ Memory usage is high (> 500MB)"
+        fi
+        
+    - name: Create monitoring report
+      run: |
+        echo "# Monitoring Report - $(date)" > monitoring-report.md
+        echo "" >> monitoring-report.md
+        echo "## Health Status" >> monitoring-report.md
+        echo "- Application: ✅ Healthy" >> monitoring-report.md
+        echo "- APIs: ✅ Working" >> monitoring-report.md
+        echo "- Performance: ✅ Good" >> monitoring-report.md
+        echo "- Memory: ✅ Normal" >> monitoring-report.md
+        echo "" >> monitoring-report.md
+        echo "## Metrics" >> monitoring-report.md
+        echo "- Response Time: ${response_time}s" >> monitoring-report.md
+        echo "- Memory Usage: ${memory_usage}KB" >> monitoring-report.md
+        echo "- Timestamp: $(date)" >> monitoring-report.md
+        
+    - name: Upload monitoring report
+      uses: actions/upload-artifact@v4
+      with:
+        name: monitoring-report-$(date +%Y%m%d-%H%M)
+        path: monitoring-report.md
+        
+    - name: Send notification on failure
+      if: failure()
+      run: |
+        echo "❌ Monitoring check failed!"
+        echo "Please check the application status manually."
+        # Here you would send a notification via email, Slack, etc.

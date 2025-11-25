@@ -1,0 +1,91 @@
+name: codex-write-simple
+
+on:
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of update'
+        required: true
+        default: 'vision'
+        type: choice
+        options:
+          - vision
+          - architecture
+          - documentation
+
+permissions:
+  contents: write
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.CODEX_PAT }}
+          
+      - name: Configure Git
+        run: |
+          git config user.name "codex-bot"
+          git config user.email "codex-bot@users.noreply.github.com"
+          
+      - name: Update vision document
+        if: github.event.inputs.update_type == 'vision'
+        run: |
+          mkdir -p docs/architecture
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          cat > docs/architecture/adham-agritech-vision.md << 'EOF'
+          # Adham AgriTech Platform - Vision Document
+          
+          **Last Updated:** TIMESTAMP_PLACEHOLDER
+          **Updated By:** CODEx Automation
+          
+          ## Platform Vision
+          
+          The Adham AgriTech platform revolutionizes precision agriculture through:
+          
+          - Satellite-based crop monitoring
+          - AI-powered analytics
+          - Blockchain integration
+          - Sustainability focus
+          
+          ---
+          *Auto-updated by CODEx*
+          EOF
+          sed -i "s/TIMESTAMP_PLACEHOLDER/$TIMESTAMP/g" docs/architecture/adham-agritech-vision.md
+          
+      - name: Update architecture docs
+        if: github.event.inputs.update_type == 'architecture'
+        run: |
+          mkdir -p docs/architecture
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          echo "# Architecture Update - $TIMESTAMP" > docs/architecture/latest-update.md
+          echo "Updated by CODEx automation" >> docs/architecture/latest-update.md
+          
+      - name: Update documentation
+        if: github.event.inputs.update_type == 'documentation'
+        run: |
+          mkdir -p docs/updates
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          echo "# Documentation Update - $TIMESTAMP" > docs/updates/latest.md
+          echo "Updated by CODEx automation" >> docs/updates/latest.md
+          
+      - name: Commit and push
+        run: |
+          git add docs/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "chore(codex): update documentation [skip ci]"
+          git push
+          
+      - name: Summary
+        if: always()
+        run: |
+          echo "## CODEx Write Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Update Type: ${{ github.event.inputs.update_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Time: $(date -u)" >> $GITHUB_STEP_SUMMARY

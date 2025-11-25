@@ -1,0 +1,92 @@
+name: Accessibility Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 4 * * 0' # Run every Sunday at 4 AM
+
+jobs:
+  accessibility-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Start application
+      run: npm run start &
+      env:
+        PORT: 3003
+        
+    - name: Wait for application to start
+      run: sleep 30
+      
+    - name: Run axe-core tests
+      run: |
+        npm install -g @axe-core/cli
+        axe http://localhost:3003 --exit
+      continue-on-error: true
+      
+    - name: Run pa11y tests
+      run: |
+        npm install -g pa11y
+        pa11y http://localhost:3003 --reporter json > pa11y-results.json
+      continue-on-error: true
+      
+    - name: Upload accessibility results
+      uses: actions/upload-artifact@v4
+      with:
+        name: accessibility-results
+        path: pa11y-results.json
+      continue-on-error: true
+      
+    - name: Comment PR with accessibility results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v8
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            const pa11yResults = JSON.parse(fs.readFileSync('pa11y-results.json', 'utf8'));
+            
+            const comment = `## ♿ Accessibility Test Results
+            
+            ### Issues Found: ${pa11yResults.issues.length}
+            
+            ${pa11yResults.issues.map(issue => 
+              `- **${issue.type}:** ${issue.message} (${issue.selector})`
+            ).join('\n')}
+            
+            ### Recommendations
+            - Fix all errors before merging
+            - Review warnings for potential improvements
+            - Test with screen readers
+            - Ensure keyboard navigation works
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          } catch (error) {
+            console.log('No accessibility results to comment');
+          }
+      continue-on-error: true

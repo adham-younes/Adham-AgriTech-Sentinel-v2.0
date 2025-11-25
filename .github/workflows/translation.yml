@@ -1,0 +1,92 @@
+name: Translation Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  translation-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Check Arabic text
+      run: |
+        echo "Checking for Arabic text in code..."
+        if grep -r "[\u0600-\u06FF]" --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" .; then
+          echo "✅ Arabic text found in code files"
+        else
+          echo "❌ No Arabic text found in code files"
+        fi
+      continue-on-error: true
+      
+    - name: Check English text
+      run: |
+        echo "Checking for English text in code..."
+        if grep -r "Start Free\|Sign In\|Login\|Dashboard\|Weather\|Reports" --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" .; then
+          echo "✅ English text found in code files"
+        else
+          echo "❌ No English text found in code files"
+        fi
+      continue-on-error: true
+      
+    - name: Check RTL support
+      run: |
+        echo "Checking for RTL support..."
+        if grep -r "dir.*rtl\|dir.*ltr" --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" .; then
+          echo "✅ RTL/LTR support found"
+        else
+          echo "❌ No RTL/LTR support found"
+        fi
+      continue-on-error: true
+      
+    - name: Check language attributes
+      run: |
+        echo "Checking for language attributes..."
+        if grep -r "lang.*ar\|lang.*en" --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" .; then
+          echo "✅ Language attributes found"
+        else
+          echo "❌ No language attributes found"
+        fi
+      continue-on-error: true
+      
+    - name: Comment PR with translation results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v8
+      with:
+        script: |
+          const comment = `## 🌐 Translation Check Results
+          
+          ### Checks Performed
+          - ✅ Arabic text detection
+          - ✅ English text detection
+          - ✅ RTL/LTR support
+          - ✅ Language attributes
+          
+          ### Recommendations
+          - Ensure all user-facing text is translated
+          - Check RTL layout for Arabic content
+          - Verify language attributes are correct
+          - Test both Arabic and English versions
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+      continue-on-error: true

@@ -1,0 +1,162 @@
+name: codex-write
+on:
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of update to perform'
+        required: true
+        default: 'vision'
+        type: choice
+        options:
+          - vision
+          - architecture
+          - documentation
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  codex-write:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure Git with PAT
+        env:
+          CODEX_PAT: ${{ secrets.CODEX_PAT }}
+        run: |
+          git config user.name "codex-bot"
+          git config user.email "codex-bot@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${CODEX_PAT}@github.com/${{ github.repository }}.git
+
+      - name: Verify directories exist
+        run: |
+          mkdir -p docs/architecture
+          mkdir -p docs/updates
+
+      - name: Update vision document
+        if: github.event.inputs.update_type == 'vision' || github.event.inputs.update_type == ''
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          cat > docs/architecture/adham-agritech-vision.md << 'EOF'
+          # Adham AgriTech Platform - Vision Document
+          
+          **Last Updated:** $TIMESTAMP
+          **Updated By:** CODEx Automation
+          
+          ## Platform Vision
+          
+          The Adham AgriTech platform aims to revolutionize precision agriculture through:
+          
+          1. **Satellite-Based Monitoring**
+             - Real-time crop health analysis using NDVI, EVI, NDWI, SAVI indices
+             - Multi-source data integration (Sentinel-2, Copernicus)
+             - Historical trend analysis and predictive insights
+          
+          2. **AI-Powered Analytics**
+             - Machine learning for yield prediction
+             - Computer vision for disease detection
+             - Generative AI for personalized recommendations
+          
+          3. **Blockchain Integration**
+             - Land NFT management and ownership tracking
+             - Transparent agricultural transactions
+             - Governance and staking mechanisms
+          
+          4. **Sustainability Focus**
+             - Carbon footprint tracking
+             - Water usage optimization
+             - Regenerative agriculture practices
+          
+          5. **User-Centric Design**
+             - Mobile-first responsive interface
+             - Real-time alerts and notifications
+             - Multilingual support (Arabic/English)
+          
+          ## Technical Architecture
+          
+          - **Frontend:** Next.js 14 with TypeScript, TailwindCSS, shadcn/ui
+          - **Backend:** Supabase (PostgreSQL + Auth + Storage)
+          - **AI Services:** Groq API for advanced analytics
+          - **Blockchain:** Ethereum (Sepolia testnet) with Web3 integration
+          - **Satellite Data:** Copernicus API integration
+          - **Weather:** OpenWeather API
+          
+          ## Current Status
+          
+          ✅ Core satellite monitoring functionality
+          ✅ Blockchain features (NFTs, staking, governance)
+          ✅ AI-powered crop health analysis
+          ✅ Weather integration
+          ✅ Responsive dashboard
+          
+          ## Roadmap
+          
+          - [ ] Drone imagery integration
+          - [ ] IoT sensor data processing
+          - [ ] Mobile applications (iOS/Android)
+          - [ ] Advanced predictive models
+          - [ ] Equipment integration APIs
+          
+          ---
+          *This document is automatically updated by CODEx to reflect the latest platform vision.*
+          EOF
+          
+          # Replace timestamp placeholder
+          sed -i "s/\$TIMESTAMP/$TIMESTAMP/g" docs/architecture/adham-agritech-vision.md
+
+      - name: Update architecture documentation
+        if: github.event.inputs.update_type == 'architecture'
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          echo "# Architecture Update - $TIMESTAMP" > docs/architecture/latest-update.md
+          echo "" >> docs/architecture/latest-update.md
+          echo "Updated by CODEx automation" >> docs/architecture/latest-update.md
+
+      - name: Validate changes
+        run: |
+          echo "Validating generated files..."
+          if [ -f "docs/architecture/adham-agritech-vision.md" ]; then
+            echo "✓ Vision document exists"
+            wc -l docs/architecture/adham-agritech-vision.md
+          fi
+          
+          echo ""
+          echo "Git status:"
+          git status
+
+      - name: Commit and push changes
+        env:
+          CODEX_PAT: ${{ secrets.CODEX_PAT }}
+        run: |
+          git add docs/
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          git commit -m "chore(codex): update documentation [skip ci]
+          
+          - Updated by CODEx automation
+          - Type: ${{ github.event.inputs.update_type || 'vision' }}
+          - Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          
+          echo "Pushing changes to main branch..."
+          git push origin HEAD:main
+          
+          echo "✓ Changes successfully pushed"
+
+      - name: Create summary
+        if: always()
+        run: |
+          echo "## CODEx Write Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Update Type:** ${{ github.event.inputs.update_type || 'vision' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY

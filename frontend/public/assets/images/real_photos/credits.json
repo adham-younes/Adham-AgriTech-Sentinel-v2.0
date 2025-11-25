@@ -1,0 +1,62 @@
+[
+  {
+    "file": "drone-monitoring.jpg",
+    "source": "StockCake",
+    "url": "https://stockcake.com/",
+    "description": "Drone capturing crop health data over irrigated fields."
+  },
+  {
+    "file": "farmer-tablet.jpg",
+    "source": "StockCake",
+    "url": "https://stockcake.com/",
+    "description": "Farmer reviewing smart irrigation insights on a tablet."
+  },
+  {
+    "file": "smart-farming-console.jpg",
+    "source": "StockCake",
+    "url": "https://stockcake.com/",
+    "description": "Smart farming command center displaying NDVI, weather, and IoT feeds."
+  },
+  {
+    "file": "soil-sensor.jpg",
+    "source": "StockCake",
+    "url": "https://stockcake.com/",
+    "description": "Soil probes and weather mast deployed inside a greenhouse tunnel."
+  },
+  {
+    "file": "precision-harvest.jpg",
+    "source": "StockCake",
+    "url": "https://stockcake.com/",
+    "description": "Precision harvesting machinery operating at sunset."
+  },
+  {
+    "file": "greenhouse-lights.png",
+    "source": "Pixabay",
+    "url": "https://pixabay.com/photos/modern-farming-8836913/",
+    "description": "Smart greenhouse with automated grow lights."
+  },
+  {
+    "file": "weather-station.jpg",
+    "source": "iStock",
+    "url": "https://www.istockphoto.com/",
+    "description": "Weather station sensors measuring rainfall and leaf wetness."
+  },
+  {
+    "file": "drone-scouting.jpg",
+    "source": "iStock",
+    "url": "https://www.istockphoto.com/",
+    "description": "Autonomous scouting drone analyzing crop rows."
+  },
+  {
+    "file": "monitoring-dashboard.jpg",
+    "source": "iStock",
+    "url": "https://www.istockphoto.com/",
+    "description": "Agronomist reviewing dashboards with vegetation indices."
+  },
+  {
+    "file": "smart-farming-technology.jpg",
+    "source": "StockCake",
+    "url": "https://stockcake.com/",
+    "description": "Close-up of smart farm controls blending maps and telemetry."
+  }
+]

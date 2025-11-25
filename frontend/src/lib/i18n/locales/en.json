@@ -1,0 +1,627 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "export": "Export",
+    "import": "Import",
+    "refresh": "Refresh",
+    "close": "Close",
+    "open": "Open",
+    "view": "View",
+    "details": "Details",
+    "settings": "Settings",
+    "help": "Help",
+    "about": "About",
+    "contact": "Contact Us",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register",
+    "welcome": "Welcome",
+    "goodbye": "Goodbye",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "retry": "Retry",
+    "continue": "Continue",
+    "finish": "Finish",
+    "start": "Start",
+    "stop": "Stop",
+    "pause": "Pause",
+    "resume": "Resume",
+    "all": "All"
+  },
+  "education": {
+    "title": "Digital Agriculture Revolution",
+    "subtitle": "Articles, playbooks, and videos that translate AI, satellite data, and sensors into daily actions.",
+    "cards": {
+      "satellite": {
+        "title": "Satellite Imagery 101",
+        "body": "Understand NDVI basics and how Sentinel data helps diagnose crop stress and support timely decisions."
+      },
+      "greenhouse": {
+        "title": "Greenhouses & Grow-Lights",
+        "body": "Control climate and light spectra to improve photosynthesis and yield, especially in low-radiation seasons."
+      },
+      "revolutionary": {
+        "title": "Revolutionary Farm: Sensors & Drones",
+        "body": "Use soil sensors, drones, and NDVI maps to drive precise irrigation and fertilization at zone-level."
+      }
+    },
+    "more_link": "Explore the Digital Agriculture Revolution"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "farms": "Farms",
+    "fields": "Fields",
+    "crops": "Crops",
+    "weather": "Weather",
+    "irrigation": "Irrigation",
+    "soil_analysis": "Soil Analysis",
+    "crop_monitoring": "Crop Monitoring",
+    "reports": "Reports",
+    "marketplace": "Marketplace",
+    "ai_assistant": "AI Assistant",
+    "satellite": "Satellite",
+    "agronomy_insights": "Agronomy Insights",
+    "features": "Features",
+    "forum": "Forum",
+    "services": "Services",
+    "partners": "Partners",
+    "notifications": "Notifications",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "navigation_groups": {
+    "overview": "Overview",
+    "operations": "Field Operations",
+    "insights": "Insights",
+    "engagement": "Engagement",
+    "platform": "Platform"
+  },
+  "branding": {
+    "name": "Adham AgriTech",
+    "tagline": "Smart Agriculture Platform"
+  },
+  "landing": {
+    "hero_title": "Smart Agriculture Platform",
+    "hero_subtitle": "Comprehensive farm management platform fusing AI, satellite intelligence, and sensor telemetry to maximize yield and protect every hectare in real time.",
+    "primary_cta": "Explore Platform",
+    "secondary_cta": "Open 3D Farm Map",
+    "auth": {
+      "login": "Sign in",
+      "signup": "Create account"
+    },
+    "features_title": "Platform Features",
+    "features_subtitle": "Advanced solutions for efficient farm management",
+    "features": {
+      "crop_monitoring": {
+        "title": "Crop Monitoring",
+        "description": "Track crop health using satellite imagery and NDVI/EVI indicators"
+      },
+      "smart_irrigation": {
+        "title": "Smart Irrigation",
+        "description": "Control irrigation systems and schedule watering based on soil and weather data"
+      },
+      "weather": {
+        "title": "Weather Forecast",
+        "description": "Accurate 7-day weather forecasts for better planning of agricultural activities"
+      },
+      "soil": {
+        "title": "Soil Analysis",
+        "description": "Comprehensive soil analysis with smart fertilizer and irrigation recommendations"
+      },
+      "assistant": {
+        "title": "AI Assistant",
+        "description": "Smart agricultural assistant that answers questions and provides personalized advice"
+      },
+      "security": {
+        "title": "Security",
+        "description": "Best practices for data privacy and platform security"
+      },
+      "insights": {
+        "title": "Agronomy Insights",
+        "description": "Proactive agronomic intelligence combining sensors, satellite imagery, and AI alerts"
+      }
+    },
+    "stats": {
+      "active_farms": "Active Farms",
+      "managed_hectares": "Managed Hectares",
+      "productivity_increase": "Productivity Increase"
+    },
+    "cta": {
+      "title": "Ready to improve your farm productivity?",
+      "subtitle": "Join thousands of farmers using Adham AgriTech to manage their farms",
+      "button": "Get Started"
+    },
+    "footer": {
+      "partners": "Our Partners",
+      "rights": "All rights reserved."
+    }
+  },
+  "dashboard_header": {
+    "welcome": "Welcome, {name}",
+    "fallback_name": "User",
+    "role": {
+      "farmer": "Farmer",
+      "engineer": "Agronomist",
+      "manager": "Manager",
+      "default": "Member"
+    },
+    "menu": {
+      "account": "My Account",
+      "profile": "Profile",
+      "settings": "Settings",
+      "sign_out": "Sign out"
+    },
+    "notifications": "Notifications"
+  },
+  "dashboard": {
+    "title": "Main Dashboard",
+    "welcome_message": "Welcome to Adham AgriTech Platform",
+    "overview": "Overview",
+    "quick_actions": "Quick Actions",
+    "recent_activity": "Recent Activity",
+    "statistics": "Statistics",
+    "alerts": "Alerts",
+    "weather_summary": "Weather Summary",
+    "farm_status": "Farm Status",
+    "crop_health": "Crop Health",
+    "irrigation_status": "Irrigation Status",
+    "market_prices": "Market Prices",
+    "ai_recommendations": "AI Recommendations"
+  },
+  "farms": {
+    "title": "Farm Management",
+    "add_farm": "Add Farm",
+    "farm_name": "Farm Name",
+    "farm_description": "Farm Description",
+    "location": "Location",
+    "size": "Size",
+    "soil_type": "Soil Type",
+    "climate_zone": "Climate Zone",
+    "established_date": "Established Date",
+    "owner": "Owner",
+    "status": "Status",
+    "actions": "Actions",
+    "view_details": "View Details",
+    "edit_farm": "Edit Farm",
+    "delete_farm": "Delete Farm",
+    "farm_created": "Farm created successfully",
+    "farm_updated": "Farm updated successfully",
+    "farm_deleted": "Farm deleted successfully"
+  },
+  "fields": {
+    "title": "Field Management",
+    "add_field": "Add Field",
+    "field_name": "Field Name",
+    "field_description": "Field Description",
+    "area": "Area",
+    "coordinates": "Coordinates",
+    "soil_analysis": "Soil Analysis",
+    "irrigation_system": "Irrigation System",
+    "current_crop": "Current Crop",
+    "planting_date": "Planting Date",
+    "expected_harvest": "Expected Harvest",
+    "field_created": "Field created successfully",
+    "field_updated": "Field updated successfully",
+    "field_deleted": "Field deleted successfully"
+  },
+  "weather": {
+    "title": "Weather Data",
+    "current_weather": "Current Weather",
+    "forecast": "Forecast",
+    "temperature": "Temperature",
+    "humidity": "Humidity",
+    "precipitation": "Precipitation",
+    "wind_speed": "Wind Speed",
+    "wind_direction": "Wind Direction",
+    "pressure": "Atmospheric Pressure",
+    "uv_index": "UV Index",
+    "visibility": "Visibility",
+    "weather_condition": "Weather Condition",
+    "clear": "Clear",
+    "cloudy": "Cloudy",
+    "rainy": "Rainy",
+    "stormy": "Stormy",
+    "foggy": "Foggy",
+    "snowy": "Snowy",
+    "weather_impact": "Weather Impact",
+    "recommendations": "Recommendations"
+  },
+  "irrigation": {
+    "title": "Irrigation Management",
+    "irrigation_systems": "Irrigation Systems",
+    "water_requirements": "Water Requirements",
+    "irrigation_schedule": "Irrigation Schedule",
+    "water_usage": "Water Usage",
+    "efficiency": "Efficiency",
+    "sensors": "Sensors",
+    "automation": "Automation",
+    "drip": "Drip Irrigation",
+    "sprinkler": "Sprinkler Irrigation",
+    "flood": "Flood Irrigation",
+    "center_pivot": "Center Pivot",
+    "manual": "Manual Irrigation",
+    "irrigation_recommendation": "Irrigation Recommendation",
+    "water_deficit": "Water Deficit",
+    "optimal_moisture": "Optimal Moisture",
+    "current_moisture": "Current Moisture"
+  },
+  "soil_analysis": {
+    "title": "Soil Analysis",
+    "ph_level": "pH Level",
+    "nitrogen": "Nitrogen",
+    "phosphorus": "Phosphorus",
+    "potassium": "Potassium",
+    "organic_matter": "Organic Matter",
+    "moisture_content": "Moisture Content",
+    "analysis_date": "Analysis Date",
+    "recommendations": "Recommendations",
+    "soil_health": "Soil Health",
+    "nutrient_balance": "Nutrient Balance",
+    "improvement_suggestions": "Improvement Suggestions"
+  },
+  "crop_monitoring": {
+    "title": "Crop Monitoring",
+    "crop_health": "Crop Health",
+    "growth_stage": "Growth Stage",
+    "pest_detection": "Pest Detection",
+    "disease_detection": "Disease Detection",
+    "yield_prediction": "Yield Prediction",
+    "harvest_readiness": "Harvest Readiness",
+    "germination": "Germination",
+    "vegetative": "Vegetative",
+    "flowering": "Flowering",
+    "fruiting": "Fruiting",
+    "maturity": "Maturity",
+    "crop_recommendations": "Crop Recommendations"
+  },
+  "reports": {
+    "title": "Reports",
+    "generate_report": "Generate Report",
+    "report_types": "Report Types",
+    "farm_summary": "Farm Summary",
+    "field_analysis": "Field Analysis",
+    "weather_report": "Weather Report",
+    "irrigation_optimization": "Irrigation Optimization",
+    "market_analysis": "Market Analysis",
+    "ai_recommendations": "AI Recommendations",
+    "export_pdf": "Export PDF",
+    "export_excel": "Export Excel",
+    "report_generated": "Report generated successfully"
+  },
+  "marketplace": {
+    "title": "Marketplace",
+    "buy": "Buy",
+    "sell": "Sell",
+    "products": "Products",
+    "seeds": "Seeds",
+    "fertilizers": "Fertilizers",
+    "equipment": "Equipment",
+    "price": "Price",
+    "quantity": "Quantity",
+    "quality": "Quality",
+    "supplier": "Supplier",
+    "rating": "Rating",
+    "reviews": "Reviews",
+    "add_to_cart": "Add to Cart",
+    "buy_now": "Buy Now"
+  },
+  "ai_assistant": {
+    "title": "AI Assistant",
+    "subtitle": "Ask anything about your Adham AgriTech operations and insights",
+    "placeholder": "Type your question here...",
+    "examples_title": "Example questions:",
+    "example1": "What is the best time to plant wheat in Egypt?",
+    "example2": "How do I treat nitrogen deficiency in soil?",
+    "example3": "What are the best irrigation methods for summer crops?",
+    "ask_question": "Ask a Question",
+    "chat_history": "Chat History",
+    "recent_chats": "Recent chats",
+    "no_history": "No chat history yet",
+    "history_toggle": {
+      "show": "Show recent chats",
+      "hide": "Hide recent chats"
+    },
+    "recommendations": "Recommendations",
+    "diagnosis": "Diagnosis",
+    "advice": "Advice",
+    "send": "Send",
+    "clear_chat": "Clear Chat",
+    "voice_input": "Voice Input",
+    "image_upload": "Upload Image",
+    "ai_thinking": "AI is thinking...",
+    "ai_response": "AI Response",
+    "language_toggle": {
+      "label_en": "English",
+      "label_ar": "Arabic",
+      "switch_to_en": "Switch to English",
+      "switch_to_ar": "Switch to Arabic"
+    }
+  },
+  "smart_companion": {
+    "title": "Adham AgriTech Eng",
+    "launcher_label": "Open Adham AgriTech Eng",
+    "welcome": "Hello! I'm Adham AgriTech Eng, your operational agronomy companion. Ask me anything about your farms, fields, automations, or satellite analytics.",
+    "placeholder": "Ask about fields, NDVI, irrigation, or explain a metric...",
+    "agent_name": "Adham AgriTech Eng",
+    "examples": {
+      "operations": "What tasks are due across my farms?",
+      "alerts": "Explain the latest irrigation alert.",
+      "explain": "Summarise the NDVI chart in simple terms."
+    },
+    "status": {
+      "ready": "Assistant online",
+      "error": "Assistant unavailable"
+    },
+    "typing": "Assistant is typing..."
+  },
+  "satellite": {
+    "title": "Satellite",
+    "satellite_view": "Satellite View",
+    "ndvi_analysis": "NDVI Analysis",
+    "vegetation_health": "Vegetation Health",
+    "crop_monitoring": "Crop Monitoring",
+    "field_boundaries": "Field Boundaries",
+    "zoom_in": "Zoom In",
+    "zoom_out": "Zoom Out",
+    "fullscreen": "Fullscreen",
+    "layers": "Layers",
+    "satellite": "Satellite",
+    "terrain": "Terrain",
+    "hybrid": "Hybrid",
+    "poor": "Poor",
+    "fair": "Fair",
+    "good": "Good",
+    "excellent": "Excellent"
+  },
+  "satellite3d": {
+    "title": "3D Farm Intelligence",
+    "subtitle": "Interactive 3D terrain with field-level analytics",
+    "live_view": "Live 3D Map",
+    "analysis_panel": "Field analytics",
+    "ndvi": "NDVI",
+    "moisture": "Moisture",
+    "yield": "Yield potential",
+    "last_updated": "Last update",
+    "select_prompt": "Select a field to view diagnostics",
+    "quick_actions": "Quick actions",
+    "actions": {
+      "ndvi": "NDVI Analysis",
+      "growth": "Growth Tracking",
+      "issues": "Issue Detection",
+      "export": "Export Data"
+    },
+    "ndvi_missing": "No NDVI readings yet for this field. Capture a crop monitoring pass or request new EOSDA imagery to unlock vegetation insights.",
+    "summary": {
+      "fields": "Fields monitored",
+      "health": "Average health",
+      "area": "Total area"
+    }
+  },
+  "services_status": {
+    "title": "Services health",
+    "subtitle": "Monitor the health and performance of all integrations",
+    "refresh": "Refresh",
+    "sync_mode": "Sync mode",
+    "sync": "Synchronous",
+    "async": "Asynchronous",
+    "auto_refresh": "Auto refresh",
+    "last_update": "Last update",
+    "overall_status": "Overall status",
+    "latency": "Latency",
+    "status_labels": {
+      "healthy": "Healthy",
+      "degraded": "Degraded",
+      "error": "Error"
+    },
+    "services": {
+      "weather": "Weather service",
+      "sensors": "Sensor network",
+      "supabase": "Database",
+      "ai_groq": "AI Service (Groq)",
+      "mapping_mapbox": "Map Service (Mapbox)",
+      "satellite_copernicus": "Satellite (Copernicus)",
+      "satellite_eosda": "Satellite (EOSDA)"
+    },
+    "sensors_hint": "Set SENSOR_HUB_API_URL and SENSOR_HUB_API_KEY (Project → Settings → Environment Variables) then redeploy or trigger a new health check.",
+    "timeline": "Execution timeline",
+    "timeline_empty": "No recent checks yet"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "new_notification": "New Notification",
+    "mark_as_read": "Mark as Read",
+    "mark_all_read": "Mark All as Read",
+    "delete_notification": "Delete Notification",
+    "clear_all": "Clear All",
+    "irrigation_alert": "Irrigation Alert",
+    "weather_warning": "Weather Warning",
+    "pest_alert": "Pest Alert",
+    "harvest_reminder": "Harvest Reminder",
+    "maintenance_due": "Maintenance Due",
+    "price_alert": "Price Alert"
+  },
+  "errors": {
+    "network_error": "Network Error",
+    "server_error": "Server Error",
+    "validation_error": "Validation Error",
+    "authentication_error": "Authentication Error",
+    "authorization_error": "Authorization Error",
+    "not_found": "Not Found",
+    "forbidden": "Forbidden",
+    "timeout": "Timeout",
+    "unknown_error": "Unknown Error",
+    "try_again": "Try Again",
+    "contact_support": "Contact Support"
+  },
+  "success": {
+    "data_saved": "Data saved successfully",
+    "data_updated": "Data updated successfully",
+    "data_deleted": "Data deleted successfully",
+    "operation_completed": "Operation completed successfully",
+    "email_sent": "Email sent successfully",
+    "password_changed": "Password changed successfully",
+    "profile_updated": "Profile updated successfully",
+    "settings_saved": "Settings saved successfully"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email_invalid": "Invalid email address",
+    "phone_invalid": "Invalid phone number",
+    "password_weak": "Password is too weak",
+    "password_mismatch": "Passwords do not match",
+    "min_length": "Must be at least {min} characters",
+    "max_length": "Must be at most {max} characters",
+    "min_value": "Value must be at least {min}",
+    "max_value": "Value must be at most {max}",
+    "numeric": "Value must be numeric",
+    "positive": "Value must be positive",
+    "date_invalid": "Invalid date",
+    "url_invalid": "Invalid URL"
+  },
+  "landing_home": {
+    "hero": {
+      "image_alt": "Drone inspecting farmland",
+      "stats": {
+        "active": {
+          "label": "Active fields",
+          "value": "2,430",
+          "delta": "+18% this month"
+        },
+        "latest_capture": {
+          "label": "Latest satellite capture",
+          "value": "3h ago",
+          "delta": "EOSDA"
+        },
+        "weather_alerts": {
+          "label": "Weather alerts",
+          "value": "4",
+          "delta": "Wadi El-Natrun • Minya"
+        }
+      }
+    },
+    "live": {
+      "title": "Live Farm Intelligence",
+      "subtitle": "Tie satellites, sensors, and the AI assistant into one glance.",
+      "button": "Open dashboard"
+    },
+    "metrics": {
+      "ndvi": {
+        "title": "Live NDVI",
+        "trend": "+0.05 weekly",
+        "description": "We stack Sentinel + EOSDA tiles over 35 fields to flag any pocket that drops below 0.4 before stress is visible."
+      },
+      "water": {
+        "title": "Water efficiency",
+        "trend": "Savings this season",
+        "description": "Center pivots and drip blocks follow soil probes plus daily ET so pumps never overshoot actual crop demand."
+      },
+      "pest": {
+        "title": "Pest scouting",
+        "value": "9 visits",
+        "trend": "Resolved",
+        "description": "Scout notes, thermal layers, and humidity probes fuse together so alerts and containment tasks stay hyper local."
+      }
+    },
+    "stories": {
+      "irrigation": {
+        "title": "Smart irrigation scenario",
+        "impact": "+27% productivity",
+        "summary": "Adham AgriTech scheduled pumps against soil temperature and wind speed to keep open fields growing evenly.",
+        "quote": "The heat map surfaced stress zones before the leaves ever curled.",
+        "author": "- Operations crew"
+      },
+      "sensors": {
+        "title": "Sensors + AI integration",
+        "impact": "-32% water use",
+        "summary": "Local weather stations, soil probes, and handheld cameras merge into ready-to-run work orders.",
+        "quote": "We now get one daily scouting plan on the phone instead of juggling sheets.",
+        "author": "- Sustainability lead"
+      }
+    },
+    "impact": {
+      "eyebrow": "Field-proven",
+      "title": "Impact across every hectare",
+      "description": "Powered by satellite imagery, weather intelligence, and AI guidance."
+    },
+    "ndvi": {
+      "tip": "Quick Tip",
+      "heading": "How we read NDVI maps",
+      "description": "The index compares red and near-infrared energy to gauge crop vigor, then blends soil moisture so irrigation and scouting focus on the true stress pockets.",
+      "cta": "Learn more",
+      "image_alt": "Spectral layers explaining vegetation health"
+    },
+    "footer": {
+      "rights": "All rights reserved.",
+      "education_link": "Educational Center"
+    }
+  },
+  "farm_form": {
+    "title": "Add New Farm",
+    "back": "Back",
+    "fields": {
+      "name": {
+        "label": "Farm Name",
+        "placeholder": "Enter farm name"
+      },
+      "location": {
+        "label": "Location",
+        "placeholder": "City / Governorate"
+      },
+      "crop": {
+        "label": "Primary Crop",
+        "placeholder": "Corn, Wheat, Palm..."
+      },
+      "area": {
+        "label": "Area (hectares)",
+        "placeholder": "e.g. 12.5"
+      }
+    },
+    "geo": {
+      "heading": "Current coordinates",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "use_location": "Use my location",
+      "locating": "Locating...",
+      "message": "We rely on your current position when allowed; tap the map or edit coordinates any time.",
+      "unsupported": "Geolocation is not supported.",
+      "denied": "Unable to access location. Adjust manually."
+    },
+    "map": {
+      "label": "Pin the farm location on the map",
+      "hint": "Tap or drag anywhere on the map to refine the pin; you can adjust it anytime before saving."
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "save": "Save Farm",
+      "saving": "Saving..."
+    },
+    "alerts": {
+      "create_failed": "Error creating farm"
+    }
+  },
+  "analytics": {
+    "soil_crop_title": "Soil & Crop Analytics",
+    "health_score": "Health Score",
+    "ndvi": "NDVI",
+    "moisture": "Moisture",
+    "temperature": "Temperature",
+    "last_updated": "Last Updated",
+    "loading": "Loading data...",
+    "error": "Failed to load data",
+    "no_data": "No data available"
+  }
+}

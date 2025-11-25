@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" role="img" aria-label="EOS Data Analytics logo">
+  <defs>
+    <linearGradient id="eosda-leaf" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00c39a"/>
+      <stop offset="100%" stop-color="#0b7c4c"/>
+    </linearGradient>
+  </defs>
+  <path d="M64 28c24 18 34 42 20 58-8 9-20 10-28 5-10-6-14-20-10-35 4-15 12-25 18-28z" fill="url(#eosda-leaf)"/>
+  <path d="M36 82c34-8 58-24 74-44" fill="none" stroke="#d9fff2" stroke-width="4" stroke-linecap="round"/>
+  <text x="140" y="58" font-family="'Space Grotesk','Segoe UI',sans-serif" font-size="34" font-weight="600" fill="#0b2e23">EOSDA</text>
+  <text x="140" y="92" font-family="'Space Grotesk','Segoe UI',sans-serif" font-size="18" letter-spacing="4" fill="#457363">DATA ANALYTICS</text>
+</svg>

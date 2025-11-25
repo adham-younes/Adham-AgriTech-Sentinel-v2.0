@@ -1,0 +1,118 @@
+name: Notify
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    types: [opened, closed, merged]
+  release:
+    types: [published]
+  workflow_run:
+    workflows: ["CI/CD Pipeline", "Security Scan", "Performance Test"]
+    types: [completed]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Notify on push to main
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        echo "🚀 New changes pushed to main branch"
+        echo "Branch: ${{ github.ref }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Author: ${{ github.actor }}"
+        echo "Message: ${{ github.event.head_commit.message }}"
+        
+    - name: Notify on pull request
+      if: github.event_name == 'pull_request'
+      run: |
+        if [ "${{ github.event.action }}" = "opened" ]; then
+          echo "📝 New pull request opened: #${{ github.event.pull_request.number }}"
+          echo "Title: ${{ github.event.pull_request.title }}"
+          echo "Author: ${{ github.event.pull_request.user.login }}"
+        elif [ "${{ github.event.action }}" = "closed" ]; then
+          echo "❌ Pull request closed: #${{ github.event.pull_request.number }}"
+        elif [ "${{ github.event.action }}" = "merged" ]; then
+          echo "✅ Pull request merged: #${{ github.event.pull_request.number }}"
+        fi
+        
+    - name: Notify on release
+      if: github.event_name == 'release'
+      run: |
+        echo "🎉 New release published: ${{ github.event.release.tag_name }}"
+        echo "Title: ${{ github.event.release.name }}"
+        echo "Body: ${{ github.event.release.body }}"
+        
+    - name: Notify on workflow completion
+      if: github.event_name == 'workflow_run'
+      run: |
+        if [ "${{ github.event.workflow_run.conclusion }}" = "success" ]; then
+          echo "✅ Workflow completed successfully: ${{ github.event.workflow_run.name }}"
+        elif [ "${{ github.event.workflow_run.conclusion }}" = "failure" ]; then
+          echo "❌ Workflow failed: ${{ github.event.workflow_run.name }}"
+        elif [ "${{ github.event.workflow_run.conclusion }}" = "cancelled" ]; then
+          echo "⏹️ Workflow cancelled: ${{ github.event.workflow_run.name }}"
+        else
+          echo "⚠️ Workflow completed with status: ${{ github.event.workflow_run.conclusion }}"
+        fi
+        
+    - name: Send email notification
+      if: failure()
+      run: |
+        echo "Sending email notification for failed workflow..."
+        # Here you would send an email notification
+        # For example, using a service like SendGrid, Mailgun, etc.
+        
+    - name: Send Slack notification
+      if: always()
+      run: |
+        echo "Sending Slack notification..."
+        # Here you would send a Slack notification
+        # For example, using Slack webhook or Slack app
+        
+    - name: Send Discord notification
+      if: always()
+      run: |
+        echo "Sending Discord notification..."
+        # Here you would send a Discord notification
+        # For example, using Discord webhook
+        
+    - name: Send Teams notification
+      if: always()
+      run: |
+        echo "Sending Teams notification..."
+        # Here you would send a Teams notification
+        # For example, using Teams webhook
+        
+    - name: Create notification summary
+      run: |
+        echo "# Notification Summary - $(date)" > notification-summary.md
+        echo "" >> notification-summary.md
+        echo "## Event Details" >> notification-summary.md
+        echo "- Event: ${{ github.event_name }}" >> notification-summary.md
+        echo "- Action: ${{ github.event.action }}" >> notification-summary.md
+        echo "- Actor: ${{ github.actor }}" >> notification-summary.md
+        echo "- Repository: ${{ github.repository }}" >> notification-summary.md
+        echo "- Branch: ${{ github.ref }}" >> notification-summary.md
+        echo "- Commit: ${{ github.sha }}" >> notification-summary.md
+        echo "" >> notification-summary.md
+        echo "## Notifications Sent" >> notification-summary.md
+        echo "- Email: ${{ env.EMAIL_SENT }}" >> notification-summary.md
+        echo "- Slack: ${{ env.SLACK_SENT }}" >> notification-summary.md
+        echo "- Discord: ${{ env.DISCORD_SENT }}" >> notification-summary.md
+        echo "- Teams: ${{ env.TEAMS_SENT }}" >> notification-summary.md
+        echo "" >> notification-summary.md
+        echo "## Timestamp" >> notification-summary.md
+        echo "$(date)" >> notification-summary.md
+        
+    - name: Upload notification summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: notification-summary-$(date +%Y%m%d-%H%M)
+        path: notification-summary.md

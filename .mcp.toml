@@ -1,0 +1,19 @@
+[projects."/home/adhamyounes"]
+trust_level = "trusted"
+
+[servers.supabase]
+command = "pnpm"
+args = ["--filter", "@supabase/mcp-server-supabase", "dev"]
+env = { 
+  SUPABASE_URL = "https://nptpmiljdljxjbgoxyqn.supabase.co",
+  SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wdHBtaWxqZGxqeGpiZ294eXFuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzIxNDE1MiwiZXhwIjoyMDc4NzkwMTUyfQ.kKrC3CS87voa2qlJEokpd4JbKrbGqwaGkMLQy66S1mc"
+}
+
+[servers.vercel]
+command = "node"
+args = ["/home/adhamyounes/mcp/vercel-mcp.js"]
+env = {
+  VERCEL_API_TOKEN = "wFmL8hhz0KLsuIUyDzC1PPms",
+  VERCEL_PROJECT_ID = "prj_PgnyG7cJb4coRJCUV19FTrOBVE7X",
+  VERCEL_ORG_ID = "7WF7UxcGVf9AlVTsn980AxoY"
+}

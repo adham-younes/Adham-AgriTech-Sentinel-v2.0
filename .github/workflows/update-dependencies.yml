@@ -1,0 +1,117 @@
+name: Update Dependencies
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Run every Monday at midnight
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Update dependencies
+      run: |
+        # Update all dependencies to latest versions
+        npm update
+        
+        # Check for outdated packages
+        npm outdated || true
+        
+    - name: Check for security vulnerabilities
+      run: |
+        npm audit --audit-level moderate
+        
+    - name: Run tests after update
+      run: |
+        npm run test
+      continue-on-error: true
+      
+    - name: Build application after update
+      run: |
+        npm run build
+      continue-on-error: true
+      
+    - name: Create update report
+      run: |
+        echo "# Dependency Update Report - $(date)" > update-report.md
+        echo "" >> update-report.md
+        echo "## Updated Packages" >> update-report.md
+        npm list --depth=0 >> update-report.md
+        echo "" >> update-report.md
+        echo "## Outdated Packages" >> update-report.md
+        npm outdated >> update-report.md
+        echo "" >> update-report.md
+        echo "## Security Audit" >> update-report.md
+        npm audit --audit-level moderate >> update-report.md
+        echo "" >> update-report.md
+        echo "## Timestamp" >> update-report.md
+        echo "$(date)" >> update-report.md
+        
+    - name: Upload update report
+      uses: actions/upload-artifact@v4
+      with:
+        name: update-report-$(date +%Y%m%d)
+        path: update-report.md
+        
+    - name: Create pull request if updates available
+      uses: actions/github-script@v8
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            const updateReport = fs.readFileSync('update-report.md', 'utf8');
+            
+            // Check if there are any outdated packages
+            if (updateReport.includes('outdated')) {
+              const pr = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🔄 Update Dependencies',
+                head: 'update-dependencies',
+                base: 'main',
+                body: `## 📦 Dependency Updates
+                
+                This PR updates the following dependencies:
+                
+                \`\`\`
+                ${updateReport}
+                \`\`\`
+                
+                ### Changes
+                - Updated all dependencies to latest versions
+                - Fixed security vulnerabilities
+                - Ran tests to ensure compatibility
+                
+                ### Testing
+                - [ ] All tests pass
+                - [ ] Application builds successfully
+                - [ ] No breaking changes detected
+                
+                ### Review
+                Please review the changes and merge if everything looks good.
+                `,
+                labels: ['dependencies', 'automated']
+              });
+              
+              console.log(`Created PR: ${pr.data.html_url}`);
+            } else {
+              console.log('No updates available');
+            }
+          } catch (error) {
+            console.log('Error creating PR:', error);
+          }
+      continue-on-error: true

@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  ci-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+    container_name: adham-agritech-ci
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./reports:/usr/src/app/reports
+    environment:
+      - NODE_ENV=production
+      - CI=true
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    ports:
+      - "3000:3000"
+    command: npm run lint
+    profiles:
+      - lint
+
+  ci-build:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+    container_name: adham-agritech-build
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./reports:/usr/src/app/reports
+    environment:
+      - NODE_ENV=production
+      - CI=true
+    command: npm run build
+    profiles:
+      - build
+
+  ci-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+    container_name: adham-agritech-test
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./reports:/usr/src/app/reports
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    command: npm test
+    profiles:
+      - test
+
+  async-deploy:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+    container_name: adham-agritech-async
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - ./reports:/usr/src/app/reports
+    environment:
+      - NODE_ENV=production
+      - CLIENT_PAYLOAD={"branch":"ci/test-deploy","environment":"production","url":"https://adham-agritech.vercel.app"}
+      - GITHUB_OUTPUT=/tmp/github-output
+    command: node scripts/async-post-deploy.js
+    profiles:
+      - async

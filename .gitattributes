@@ -1,0 +1,201 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Custom for Visual Studio
+*.cs     diff=csharp
+
+# Standard to msysgit
+*.doc	 diff=astextplain
+*.DOC	 diff=astextplain
+*.docx diff=astextplain
+*.DOCX diff=astextplain
+*.dot  diff=astextplain
+*.DOT  diff=astextplain
+*.pdf  diff=astextplain
+*.PDF	 diff=astextplain
+*.rtf	 diff=astextplain
+*.RTF	 diff=astextplain
+
+# Image files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text
+
+# Font files
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+
+# Archive files
+*.zip binary
+*.tar.gz binary
+*.rar binary
+*.7z binary
+
+# Executable files
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# Database files
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+
+# Log files
+*.log text
+*.log.* text
+
+# Environment files
+.env* text
+*.env text
+
+# Configuration files
+*.json text
+*.yaml text
+*.yml text
+*.toml text
+*.ini text
+*.cfg text
+*.conf text
+
+# Documentation
+*.md text
+*.txt text
+*.rst text
+
+# Code files
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+*.css text
+*.scss text
+*.sass text
+*.less text
+*.html text
+*.htm text
+*.xml text
+*.php text
+*.py text
+*.rb text
+*.go text
+*.rs text
+*.java text
+*.c text
+*.cpp text
+*.h text
+*.hpp text
+*.cs text
+*.vb text
+*.swift text
+*.kt text
+*.scala text
+*.clj text
+*.hs text
+*.ml text
+*.fs text
+*.erl text
+*.ex text
+*.exs text
+*.elm text
+*.dart text
+*.r text
+*.m text
+*.pl text
+*.pm text
+*.sh text
+*.bash text
+*.zsh text
+*.fish text
+*.ps1 text
+*.bat text
+*.cmd text
+
+# Lock files
+package-lock.json text
+yarn.lock text
+pnpm-lock.yaml text
+Gemfile.lock text
+Pipfile.lock text
+composer.lock text
+
+# Git files
+.gitignore text
+.gitattributes text
+.gitmodules text
+
+# Editor files
+.editorconfig text
+.eslintrc* text
+.prettierrc* text
+.stylelintrc* text
+.babelrc* text
+.travis.yml text
+.circleci/config.yml text
+.github/workflows/*.yml text
+
+# OS files
+.DS_Store binary
+Thumbs.db binary
+desktop.ini binary
+
+# IDE files
+.vscode/settings.json text
+.vscode/tasks.json text
+.vscode/launch.json text
+.vscode/extensions.json text
+.idea/workspace.xml text
+.idea/tasks.xml text
+.idea/*.iml text
+
+# Temporary files
+*.tmp text
+*.temp text
+*.swp text
+*.swo text
+*~ text
+
+# Build files
+dist/ export-ignore
+build/ export-ignore
+out/ export-ignore
+.next/ export-ignore
+node_modules/ export-ignore
+coverage/ export-ignore
+.nyc_output/ export-ignore
+
+# Test files
+test-results/ export-ignore
+playwright-report/ export-ignore
+test-results.xml export-ignore
+
+# Log files
+logs/ export-ignore
+*.log export-ignore
+
+# Environment files
+.env* export-ignore
+*.env export-ignore
+
+# OS files
+.DS_Store export-ignore
+Thumbs.db export-ignore
+desktop.ini export-ignore
+
+# IDE files
+.vscode/ export-ignore
+.idea/ export-ignore
+*.swp export-ignore
+*.swo export-ignore
+*~ export-ignore
+
+# Temporary files
+*.tmp export-ignore
+*.temp export-ignore

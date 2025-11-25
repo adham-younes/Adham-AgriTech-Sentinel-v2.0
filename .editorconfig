@@ -1,0 +1,86 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# All files
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Markdown files
+[*.md]
+trim_trailing_whitespace = false
+
+# YAML files
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON files
+[*.json]
+indent_size = 2
+
+# JavaScript/TypeScript files
+[*.{js,jsx,ts,tsx}]
+indent_size = 2
+quote_type = single
+
+# CSS/SCSS files
+[*.{css,scss,sass,less}]
+indent_size = 2
+
+# HTML files
+[*.{html,htm}]
+indent_size = 2
+
+# Python files
+[*.py]
+indent_size = 4
+
+# Shell scripts
+[*.{sh,bash,zsh,fish}]
+indent_size = 2
+
+# SQL files
+[*.sql]
+indent_size = 2
+
+# Configuration files
+[*.{ini,cfg,conf}]
+indent_size = 2
+
+# Package.json
+[package.json]
+indent_size = 2
+
+# Lock files
+[{package-lock.json,yarn.lock,pnpm-lock.yaml}]
+indent_size = 2
+
+# Git files
+[.gitignore]
+indent_size = 2
+
+# Editor files
+[.editorconfig]
+indent_size = 2
+
+# README files
+[README.md]
+trim_trailing_whitespace = false
+
+# CHANGELOG files
+[CHANGELOG.md]
+trim_trailing_whitespace = false
+
+# CONTRIBUTING files
+[CONTRIBUTING.md]
+trim_trailing_whitespace = false
+
+# License files
+[LICENSE]
+trim_trailing_whitespace = false
