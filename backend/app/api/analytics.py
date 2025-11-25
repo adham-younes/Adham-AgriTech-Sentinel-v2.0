@@ -6,6 +6,7 @@ from app.services.esoda_service import esoda
 app = Flask(__name__)
 
 @app.route('/api/analytics', methods=['POST'])
+@app.route('/api/cron/analytics', methods=['POST'])
 def get_analytics():
     data = request.json
     coords = data.get('polygon_coords')
