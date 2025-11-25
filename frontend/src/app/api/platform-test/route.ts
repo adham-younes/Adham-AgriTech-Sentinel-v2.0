@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server"
 
+export const dynamic = 'force-dynamic'
+
 // Comprehensive platform test to identify all issues
 export async function GET(request: Request) {
   console.log("[PLATFORM-TEST] Running comprehensive platform test...")
-  
+
   try {
     const results: any = {
       timestamp: new Date().toISOString(),
@@ -22,7 +24,7 @@ export async function GET(request: Request) {
         sentinelPipeline: isFeatureEnabled("sentinelPipeline"),
         satelliteCache: isFeatureEnabled("satelliteCache"),
       }
-      
+
       if (Object.values(flags).every(f => f)) {
         results.working.push("✅ All feature flags enabled")
       } else {
@@ -39,13 +41,13 @@ export async function GET(request: Request) {
     try {
       const { createServiceSupabaseClient } = await import("@/lib/supabase/service-client")
       const supabase = createServiceSupabaseClient()
-      
+
       // Test farms
       const { data: farms, error: farmsError } = await supabase
         .from("farms")
         .select("id, name")
         .limit(5)
-      
+
       // Test fields
       const { data: fields, error: fieldsError } = await supabase
         .from("fields")
@@ -75,7 +77,7 @@ export async function GET(request: Request) {
 
     // Test 3: API Endpoints
     const apiTests = []
-    
+
     // Test satellite analytics API
     try {
       const response = await fetch("http://localhost:3003/api/soil-analysis/analyze-from-satellite", {
@@ -83,13 +85,13 @@ export async function GET(request: Request) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fieldId: "test", language: "en" })
       })
-      
+
       apiTests.push({
         endpoint: "satellite-analytics",
         status: response.status,
         working: response.ok
       })
-      
+
       if (response.ok) {
         results.working.push("✅ Satellite analytics API working")
       } else {
@@ -111,13 +113,13 @@ export async function GET(request: Request) {
       const response = await fetch("http://localhost:3003/api/farms", {
         method: "GET"
       })
-      
+
       apiTests.push({
         endpoint: "farms",
         status: response.status,
         working: response.ok
       })
-      
+
       if (response.ok) {
         results.working.push("✅ Farms API working")
       } else {
@@ -138,19 +140,19 @@ export async function GET(request: Request) {
 
     // Test 4: Map Providers
     const mapTests = []
-    
+
     // Test Esri tiles
     try {
       const esriResponse = await fetch(
         "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/10/537/374"
       )
-      
+
       mapTests.push({
         provider: "Esri",
         status: esriResponse.status,
         working: esriResponse.ok
       })
-      
+
       if (esriResponse.ok) {
         results.working.push("✅ Esri maps working")
       } else {
@@ -184,7 +186,7 @@ export async function GET(request: Request) {
     // Overall status
     const workingCount = results.working.length
     const failedCount = results.failed.length
-    
+
     if (failedCount === 0) {
       results.status = "✅ All systems working"
       results.overall = "healthy"
