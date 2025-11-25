@@ -778,8 +778,12 @@ export default function SatellitePage() {
                         {formattedCaptureDate ?? "—"}
                       </span>
                     </div>
-                  </>
-                </CardContent>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-gray-400">{t("satellite3d.select_prompt")}</p>
+              )}
+            </CardContent>
           </Card>
 
           <div className="space-y-4">
