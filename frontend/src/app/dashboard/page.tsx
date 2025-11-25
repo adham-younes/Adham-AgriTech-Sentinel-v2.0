@@ -490,7 +490,10 @@ export default async function DashboardPage() {
             error={null}
             height={400}
           /> */}
-          <AdhamSatelliteMap coords={analyticsFields.length > 0 ? analyticsFields[0].polygon : null} />
+          <AdhamSatelliteMap
+            coords={analyticsFields.length > 0 ? analyticsFields[0].polygon : null}
+            esodaKey={process.env.NEXT_PUBLIC_EOSDA_API_KEY || ''}
+          />
         </CardContent>
       </Card>
 
@@ -515,7 +518,7 @@ export default async function DashboardPage() {
 
         {/* Zero-Input Flow Wrapper */}
         <div className="col-span-12 lg:col-span-8">
-          <DashboardClientWrapper initialCoords={firstFieldPolygon} />
+          <DashboardClientWrapper initialCoords={analyticsFields.length > 0 ? analyticsFields[0].polygon : null} />
         </div>
         {/* Alerts */}
         <Card className="glass-card border-primary/20 shadow-3d hover:shadow-3d-lg transition-all duration-300">
