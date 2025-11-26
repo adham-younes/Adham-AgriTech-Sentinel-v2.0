@@ -70,14 +70,7 @@ export default function NewFieldPage() {
     soil_type: "",
   })
 
-  const supabase = useMemo(
-    () =>
-      createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      ),
-    [],
-  )
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     if (language === "ar" || language === "en") {
