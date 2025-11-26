@@ -12,8 +12,10 @@ const BRAND = {
 };
 
 // ESODA / Sentinel Hub Configuration
-const INSTANCE_ID = import.meta.env.VITE_SENTINEL_ID;
-const SENTINEL_WMS_URL = `https://services.sentinel-hub.com/ogc/wms/${INSTANCE_ID}`;
+// Note: Sentinel Hub integration requires NEXT_PUBLIC_SENTINEL_ID env var
+// For now, we'll use alternative satellite imagery providers
+const INSTANCE_ID = process.env.NEXT_PUBLIC_SENTINEL_ID || '';
+const SENTINEL_WMS_URL = INSTANCE_ID ? `https://services.sentinel-hub.com/ogc/wms/${INSTANCE_ID}` : '';
 
 // Custom Map Controller to handle auto-zoom
 const MapController = ({ center, zoom }) => {
@@ -31,11 +33,9 @@ const AdhamSatelliteMap = ({ coords, esodaKey }) => {
     const center = coords && coords.length > 0 ? coords[0] : [30.0444, 31.2357];
     const [activeLayer, setActiveLayer] = useState('NDVI');
 
-    // Dynamic WMS URL generator
+    // Dynamic WMS URL generator - only if Sentinel Hub is configured
     const getWmsUrl = (layer) => {
-        // If esodaKey is passed, we could use it here, but typically WMS uses Instance ID
-        // For ESODA specific endpoints, adjust the base URL if needed.
-        // Standard Sentinel Hub WMS:
+        if (!SENTINEL_WMS_URL) return null;
         return `${SENTINEL_WMS_URL}?REQUEST=GetMap&LAYERS=${layer}&MAXCC=20&FORMAT=image/png`;
     };
 
