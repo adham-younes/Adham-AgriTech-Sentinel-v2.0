@@ -69,26 +69,38 @@ const AdhamSatelliteMap = ({ coords, esodaKey }) => {
                         <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
                     </LayersControl.BaseLayer>
 
-                    <LayersControl.Overlay checked name="Vegetation Health (NDVI)">
+                    <LayersControl.BaseLayer name="Satellite (Esri)">
                         <TileLayer
-                            url={getWmsUrl('NDVI')}
-                            opacity={1.0}
+                            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                            attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
                         />
-                    </LayersControl.Overlay>
+                    </LayersControl.BaseLayer>
 
-                    <LayersControl.Overlay name="Soil Moisture (Moisture Index)">
-                        <TileLayer
-                            url={getWmsUrl('MOISTURE_INDEX')}
-                            opacity={1.0}
-                        />
-                    </LayersControl.Overlay>
+                    {/* Only show Sentinel Hub layers if configured */}
+                    {SENTINEL_WMS_URL && (
+                        <>
+                            <LayersControl.Overlay name="Vegetation Health (NDVI)">
+                                <TileLayer
+                                    url={getWmsUrl('NDVI')}
+                                    opacity={1.0}
+                                />
+                            </LayersControl.Overlay>
 
-                    <LayersControl.Overlay name="True Color">
-                        <TileLayer
-                            url={getWmsUrl('TRUE_COLOR')}
-                            opacity={1.0}
-                        />
-                    </LayersControl.Overlay>
+                            <LayersControl.Overlay name="Soil Moisture (Moisture Index)">
+                                <TileLayer
+                                    url={getWmsUrl('MOISTURE_INDEX')}
+                                    opacity={1.0}
+                                />
+                            </LayersControl.Overlay>
+
+                            <LayersControl.Overlay name="True Color">
+                                <TileLayer
+                                    url={getWmsUrl('TRUE_COLOR')}
+                                    opacity={1.0}
+                                />
+                            </LayersControl.Overlay>
+                        </>
+                    )}
                 </LayersControl>
 
                 {coords && (
