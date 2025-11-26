@@ -1,6 +1,7 @@
-import { Suspense } from "react"
-import { cookies } from "next/headers"
-import { createClient } from "@/lib/supabase/server"
+"use client"
+
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
 import { CropHealthMonitor } from "@/components/analytics/crop-health-monitor"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,15 +9,6 @@ import { Leaf, ArrowLeft, Sparkles } from "lucide-react"
 import Link from "next/link"
 
 type Lang = "ar" | "en"
-
-function detectLanguage(): Lang {
-  try {
-    const jar = cookies()
-    const stored = jar.get("adham-agritech-language")?.value
-    if (stored === "en" || stored === "ar") return stored
-  } catch { }
-  return "ar"
-}
 
 const STRINGS: Record<Lang, Record<string, string>> = {
   ar: {
@@ -43,25 +35,42 @@ const STRINGS: Record<Lang, Record<string, string>> = {
   },
 }
 
-export const dynamic = 'force-dynamic'
+export default function CropMonitoringPage() {
+  const [lang, setLang] = useState<Lang>("ar")
+  const [fields, setFields] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
-export default async function CropMonitoringPage() {
-  const lang = detectLanguage()
-  const t = STRINGS[lang]
-  const supabase = await createClient()
+  useEffect(() => {
+    fetchFields()
+  }, [])
 
-  // Fetch user's fields with crop info
-  const { data: fields, error } = await supabase
-    .from("fields")
-    .select("id, name, crop_type, area, boundary_coordinates, farms!fields_farm_id_fkey(name)")
-    .order("created_at", { ascending: false })
-    .limit(20)
+  async function fetchFields() {
+    try {
+      const { data, error } = await supabase
+        .from("fields")
+        .select("id, name, crop_type, area, boundary_coordinates, farms!fields_farm_id_fkey(name)")
+        .order("created_at", { ascending: false })
+        .limit(20)
 
-  if (error) {
-    console.error("Error fetching fields:", error)
+      if (error) throw error
+      setFields(data || [])
+    } catch (error) {
+      console.error("Error fetching fields:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const fieldsList = fields || []
+  const t = STRINGS[lang]
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -96,7 +105,7 @@ export default async function CropMonitoringPage() {
       </Card>
 
       {/* Field Selection & Dashboard */}
-      {fieldsList.length === 0 ? (
+      {fields.length === 0 ? (
         <Card className="glass-card p-12 text-center">
           <div className="max-w-md mx-auto space-y-4">
             <h3 className="text-2xl font-bold">{t.noFields}</h3>
@@ -112,7 +121,7 @@ export default async function CropMonitoringPage() {
         <div className="space-y-6">
           {/* Field Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {fieldsList.map((field) => (
+            {fields.map((field) => (
               <Link key={field.id} href={`/dashboard/crop-monitoring?field=${field.id}`}>
                 <Button
                   variant="outline"
@@ -129,18 +138,14 @@ export default async function CropMonitoringPage() {
             ))}
           </div>
 
-          {/* Dashboard for first field (or selected field) */}
-          <Suspense fallback={<div className="flex items-center justify-center h-96">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400"></div>
-          </div>}>
-            <CropHealthMonitor
-              fieldId={fieldsList[0].id}
-              fieldName={fieldsList[0].name}
-              polygon={parsePolygon(fieldsList[0].boundary_coordinates)}
-              cropType={fieldsList[0].crop_type}
-              areaHectares={parseArea(fieldsList[0].area)}
-            />
-          </Suspense>
+          {/* Dashboard for first field */}
+          <CropHealthMonitor
+            fieldId={fields[0].id}
+            fieldName={fields[0].name}
+            polygon={parsePolygon(fields[0].boundary_coordinates)}
+            cropType={fields[0].crop_type}
+            areaHectares={parseArea(fields[0].area)}
+          />
         </div>
       )}
     </div>
@@ -161,7 +166,7 @@ function parsePolygon(coords: any): [number, number][] {
 }
 
 function parseArea(area: any): number {
-  if (typeof area === 'number') return area / 4200 // Convert from sqm to hectares (feddan to hectares)
+  if (typeof area === 'number') return area / 4200 // Convert from sqm to hectares
   if (typeof area === 'string') {
     const parsed = parseFloat(area)
     return isNaN(parsed) ? 1 : parsed / 4200

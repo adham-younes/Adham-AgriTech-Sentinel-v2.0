@@ -1,6 +1,7 @@
-import { Suspense } from "react"
-import { cookies } from "next/headers"
-import { createClient } from "@/lib/supabase/server"
+"use client"
+
+import { Suspense, useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
 import { SoilIntelligenceDashboard } from "@/components/analytics/soil-intelligence-dashboard"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,15 +9,6 @@ import { Sparkles, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
 type Lang = "ar" | "en"
-
-function detectLanguage(): Lang {
-  try {
-    const jar = cookies()
-    const stored = jar.get("adham-agritech-language")?.value
-    if (stored === "en" || stored === "ar") return stored
-  } catch { }
-  return "ar"
-}
 
 const STRINGS: Record<Lang, Record<string, string>> = {
   ar: {
@@ -45,25 +37,42 @@ const STRINGS: Record<Lang, Record<string, string>> = {
   },
 }
 
-export const dynamic = 'force-dynamic'
+export default function SoilAnalysisPage() {
+  const [lang, setLang] = useState<Lang>("ar")
+  const [fields, setFields] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
-export default async function SoilAnalysisPage() {
-  const lang = detectLanguage()
-  const t = STRINGS[lang]
-  const supabase = await createClient()
+  useEffect(() => {
+    fetchFields()
+  }, [])
 
-  // Fetch user's fields
-  const { data: fields, error } = await supabase
-    .from("fields")
-    .select("id, name, boundary_coordinates, farms!fields_farm_id_fkey(name)")
-    .order("created_at", { ascending: false })
-    .limit(20)
+  async function fetchFields() {
+    try {
+      const { data, error } = await supabase
+        .from("fields")
+        .select("id, name, boundary_coordinates, farms!fields_farm_id_fkey(name)")
+        .order("created_at", { ascending: false })
+        .limit(20)
 
-  if (error) {
-    console.error("Error fetching fields:", error)
+      if (error) throw error
+      setFields(data || [])
+    } catch (error) {
+      console.error("Error fetching fields:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const fieldsList = fields || []
+  const t = STRINGS[lang]
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -98,7 +107,7 @@ export default async function SoilAnalysisPage() {
       </Card>
 
       {/* Field Selection & Dashboard */}
-      {fieldsList.length === 0 ? (
+      {fields.length === 0 ? (
         <Card className="glass-card p-12 text-center">
           <div className="max-w-md mx-auto space-y-4">
             <h3 className="text-2xl font-bold">{t.noFields}</h3>
@@ -114,7 +123,7 @@ export default async function SoilAnalysisPage() {
         <div className="space-y-6">
           {/* Field Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {fieldsList.map((field) => (
+            {fields.map((field) => (
               <Link key={field.id} href={`/dashboard/soil-analysis?field=${field.id}`}>
                 <Button
                   variant="outline"
@@ -126,17 +135,13 @@ export default async function SoilAnalysisPage() {
             ))}
           </div>
 
-          {/* Dashboard for first field (or selected field) */}
-          <Suspense fallback={<div className="flex items-center justify-center h-96">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>}>
-            <SoilIntelligenceDashboard
-              fieldId={fieldsList[0].id}
-              fieldName={fieldsList[0].name}
-              polygon={parsePolygon(fieldsList[0].boundary_coordinates)}
-              cropType={null}
-            />
-          </Suspense>
+          {/* Dashboard for first field */}
+          <SoilIntelligenceDashboard
+            fieldId={fields[0].id}
+            fieldName={fields[0].name}
+            polygon={parsePolygon(fields[0].boundary_coordinates)}
+            cropType={null}
+          />
         </div>
       )}
     </div>
