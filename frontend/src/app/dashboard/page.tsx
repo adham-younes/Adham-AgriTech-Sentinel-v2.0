@@ -41,6 +41,8 @@ const SatelliteImageryCard = dynamicImport(
 )
 
 import { SoilCropAnalytics } from "@/components/dashboard/soil-crop-analytics"
+import { AiAgronomistWidget } from "@/components/dashboard/ai-agronomist-widget"
+import { CropTimeline } from "@/components/dashboard/crop-timeline"
 
 import {
   getPlatformHealth,
@@ -501,10 +503,19 @@ export default async function DashboardPage() {
       {SHOW_SATELLITE_CARD ? <SatelliteImageryCard /> : null}
 
       {analyticsFields.length > 0 && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-6">
+          <CropTimeline
+            cropType={analyticsFields[0].crop || 'Wheat'}
+            plantingDate={null} // TODO: Add planting_date to database schema
+          />
           <SoilCropAnalytics fieldId={analyticsFields[0].id} />
         </div>
       )}
+
+      <AiAgronomistWidget
+        fieldId={analyticsFields.length > 0 ? analyticsFields[0].id : undefined}
+        cropType={analyticsFields.length > 0 ? analyticsFields[0].crop : undefined}
+      />
 
 
       <div className="grid gap-6 lg:grid-cols-2">

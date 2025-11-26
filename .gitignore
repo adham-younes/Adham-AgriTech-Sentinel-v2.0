@@ -27,10 +27,12 @@ yarn-error.log*
 
 # local env files
 .env*.local
+!.env.local.example
 .env
 
 # vercel
 .vercel
+!adham-agritech-v2/.vercel
 
 # typescript
 *.tsbuildinfo

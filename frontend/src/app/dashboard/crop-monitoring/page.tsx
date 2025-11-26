@@ -1,268 +1,170 @@
-"use client"
-
-import type { GeoJSON } from "geojson"
-import dynamic from "next/dynamic"
-import { useState, useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
+import { Suspense } from "react"
+import { cookies } from "next/headers"
+import { createClient } from "@/lib/supabase/server"
+import { CropHealthMonitor } from "@/components/analytics/crop-health-monitor"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Loader2, TrendingUp } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Leaf, ArrowLeft, Sparkles } from "lucide-react"
 import Link from "next/link"
-import { useTranslation } from "@/lib/i18n/use-language"
 
-const SatelliteMap = dynamic(() => import("@/components/satellite-map").then((mod) => mod.SatelliteMap), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-primary/20 bg-muted/40 text-sm text-muted-foreground">
-      تحميل خريطة القمر الصناعي / Loading satellite map…
-    </div>
-  ),
-})
+type Lang = "ar" | "en"
 
-export default function CropMonitoringPage() {
-  const { language, setLanguage } = useTranslation()
-  const [monitoring, setMonitoring] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [lang, setLang] = useState<"ar" | "en">(language === "en" ? "en" : "ar")
-  const [activeMonitoring, setActiveMonitoring] = useState<any | null>(null)
+function detectLanguage(): Lang {
+  try {
+    const jar = cookies()
+    const stored = jar.get("adham-agritech-language")?.value
+    if (stored === "en" || stored === "ar") return stored
+  } catch { }
+  return "ar"
+}
 
-  const supabase = createClient()
+const STRINGS: Record<Lang, Record<string, string>> = {
+  ar: {
+    title: "مراقبة صحة المحاصيل",
+    subtitle: "تحليل شامل مدعوم بالذكاء الاصطناعي والأقمار الصناعية",
+    backToFields: "العودة للحقول",
+    selectField: "اختر حقلاً",
+    noFields: "لا توجد حقول",
+    noFieldsDesc: "أضف حقولاً أولاً لعرض تحليلات صحة المحاصيل",
+    addField: "إضافة حقل",
+    aiPowered: "مدعوم بالذكاء الاصطناعي",
+    aiDesc: "نظام مراقبة متقدم يستخدم NDVI من الأقمار الصناعية، كشف الإجهاد بالتعلم الآلي، وتوقعات الإنتاجية - بدون إدخال يدوي.",
+  },
+  en: {
+    title: "Crop Health Monitoring",
+    subtitle: "Comprehensive AI-powered satellite analysis",
+    backToFields: "Back to Fields",
+    selectField: "Select a Field",
+    noFields: "No Fields",
+    noFieldsDesc: "Add fields first to view crop health analytics",
+    addField: "Add Field",
+    aiPowered: "AI-Powered",
+    aiDesc: "Advanced monitoring system using satellite NDVI, ML stress detection, and yield predictions - no manual input required.",
+  },
+}
 
-  useEffect(() => {
-    if (language === "ar" || language === "en") {
-      setLang(language)
-    }
-  }, [language])
+export const dynamic = 'force-dynamic'
 
-  useEffect(() => {
-    fetchMonitoring()
-  }, [])
+export default async function CropMonitoringPage() {
+  const lang = detectLanguage()
+  const t = STRINGS[lang]
+  const supabase = await createClient()
 
-  async function fetchMonitoring() {
-    try {
-      const { data, error } = await supabase
-        .from("crop_monitoring")
-        .select("*, fields(id, name, boundary_coordinates, farms(name, latitude, longitude))")
-        .order("monitoring_date", { ascending: false })
+  // Fetch user's fields with crop info
+  const { data: fields, error } = await supabase
+    .from("fields")
+    .select("id, name, crop_type, area, boundary_coordinates, farms!fields_farm_id_fkey(name)")
+    .order("created_at", { ascending: false })
+    .limit(20)
 
-      if (error) throw error
-      setMonitoring(data || [])
-      setActiveMonitoring(data && data.length > 0 ? data[0] : null)
-    } catch (error) {
-      console.error("[v0] Error fetching crop monitoring:", error)
-    } finally {
-      setLoading(false)
-    }
+  if (error) {
+    console.error("Error fetching fields:", error)
   }
 
-  const getHealthColor = (health: string) => {
-    switch (health) {
-      case "excellent":
-        return "bg-green-500"
-      case "good":
-        return "bg-green-400"
-      case "fair":
-        return "bg-yellow-500"
-      case "poor":
-        return "bg-orange-500"
-      case "critical":
-        return "bg-red-500"
-      default:
-        return "bg-gray-500"
-    }
-  }
-
-  const t = {
-    ar: {
-      title: "مراقبة المحاصيل",
-      addMonitoring: "إضافة مراقبة جديدة",
-      noMonitoring: "لا توجد بيانات مراقبة",
-      noMonitoringDesc: "ابدأ بإضافة بيانات مراقبة المحاصيل",
-      field: "الحقل",
-      farm: "المزرعة",
-      date: "التاريخ",
-      health: "الحالة الصحية",
-      ndvi: "مؤشر NDVI",
-      evi: "مؤشر EVI",
-      viewDetails: "عرض التفاصيل",
-      excellent: "ممتاز",
-      good: "جيد",
-      fair: "متوسط",
-      poor: "ضعيف",
-      critical: "حرج",
-    },
-    en: {
-      title: "Crop Monitoring",
-      addMonitoring: "Add New Monitoring",
-      noMonitoring: "No Monitoring Data",
-      noMonitoringDesc: "Start by adding crop monitoring data",
-      field: "Field",
-      farm: "Farm",
-      date: "Date",
-      health: "Health Status",
-      ndvi: "NDVI Index",
-      evi: "EVI Index",
-      viewDetails: "View Details",
-      excellent: "Excellent",
-      good: "Good",
-      fair: "Fair",
-      poor: "Poor",
-      critical: "Critical",
-    },
-  }
+  const fieldsList = fields || []
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
-          {t[lang].title}
-        </h1>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const next = lang === "ar" ? "en" : "ar"
-              setLang(next)
-              setLanguage(next)
-            }}
-            className="glass-card border-white/10 hover:border-green-500/50 hover:shadow-glow transition-all"
-          >
-            {lang === "ar" ? "EN" : "ع"}
-          </Button>
-          <Link href="/dashboard/crop-monitoring/new">
-            <Button className="gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-glow hover:shadow-glow-lg transition-all">
-              <Plus className="h-4 w-4" />
-              {t[lang].addMonitoring}
+      {/* Header */}
+      <div className="glass-card p-6 rounded-2xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-primary bg-clip-text text-transparent flex items-center gap-3">
+              <Leaf className="h-8 w-8 text-emerald-400" />
+              {t.title}
+            </h1>
+            <p className="text-muted-foreground mt-2">{t.subtitle}</p>
+          </div>
+          <Link href="/dashboard/fields">
+            <Button variant="outline" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              {t.backToFields}
             </Button>
           </Link>
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+      {/* AI Info Card */}
+      <Card className="glass-card border-emerald-400/20 p-4">
+        <div className="flex items-start gap-3">
+          <Sparkles className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-semibold text-white mb-1">{t.aiPowered}</p>
+            <p className="text-muted-foreground">{t.aiDesc}</p>
+          </div>
         </div>
-      ) : monitoring.length === 0 ? (
-        <Card className="glass-card p-12 text-center border-white/10 shadow-depth">
-          <div className="mx-auto max-w-md space-y-4">
-            <h3 className="text-2xl font-bold text-white">{t[lang].noMonitoring}</h3>
-            <p className="text-gray-400">{t[lang].noMonitoringDesc}</p>
-            <Link href="/dashboard/crop-monitoring/new">
-              <Button className="gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-glow hover:shadow-glow-lg transition-all">
-                <Plus className="h-4 w-4" />
-                {t[lang].addMonitoring}
+      </Card>
+
+      {/* Field Selection & Dashboard */}
+      {fieldsList.length === 0 ? (
+        <Card className="glass-card p-12 text-center">
+          <div className="max-w-md mx-auto space-y-4">
+            <h3 className="text-2xl font-bold">{t.noFields}</h3>
+            <p className="text-muted-foreground">{t.noFieldsDesc}</p>
+            <Link href="/dashboard/fields/new">
+              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
+                {t.addField}
               </Button>
             </Link>
           </div>
         </Card>
       ) : (
         <div className="space-y-6">
-          {activeMonitoring && (
-            <SatelliteMap
-              fieldId={activeMonitoring.fields?.id ?? null}
-              latitude={
-                activeMonitoring.fields?.latitude ??
-                activeMonitoring.fields?.farms?.latitude ??
-                25.2854
-              }
-              longitude={
-                activeMonitoring.fields?.longitude ??
-                activeMonitoring.fields?.farms?.longitude ??
-                32.6421
-              }
-              boundary={(activeMonitoring.fields?.boundary_coordinates as GeoJSON.Polygon) ?? null}
-              fieldName={activeMonitoring.fields?.name || "Field"}
-              ndviValue={activeMonitoring.ndvi_value ?? null}
-              healthStatus={activeMonitoring.health_status || null}
-              lang={lang}
-            />
-          )}
-
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {monitoring.map((item) => (
-              <Card
-                key={item.id}
-                className={`glass-card p-6 border transition-all group cursor-pointer ${
-                  activeMonitoring?.id === item.id
-                    ? "border-green-500/70 shadow-glow"
-                    : "border-white/10 hover:border-green-500/50 hover:shadow-glow"
-                }`}
-                onMouseEnter={() => setActiveMonitoring(item)}
-                onFocus={() => setActiveMonitoring(item)}
-                onClick={() => setActiveMonitoring(item)}
-                tabIndex={0}
-              >
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-400 transition-colors">
-                      {item.fields?.name}
-                    </h3>
-                    <p className="text-sm text-gray-400">
-                      {t[lang].farm}: {item.fields?.farms?.name}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {t[lang].date}:{" "}
-                      {formatMonitoringDate(item.monitoring_date, lang)}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">{t[lang].health}:</span>
-                    <Badge className={`${getHealthColor(item.health_status)} border-0 shadow-glow`}>
-                      {t[lang][item.health_status as keyof typeof t.ar] || item.health_status}
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/10">
-                    <div className="space-y-1">
-                      <p className="text-xs text-gray-400">{t[lang].ndvi}</p>
-                      <div className="flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3 text-green-400" />
-                        <p className="text-lg font-bold text-green-400">{item.ndvi_value?.toFixed(2) || "N/A"}</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <p className="text-xs text-gray-400">{t[lang].evi}</p>
-                      <div className="flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3 text-green-400" />
-                        <p className="text-lg font-bold text-green-400">{item.evi_value?.toFixed(2) || "N/A"}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Link href={`/dashboard/crop-monitoring/${item.id}`}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full glass-card border-white/10 hover:border-green-500/50 hover:shadow-glow transition-all bg-transparent"
-                    >
-                      {t[lang].viewDetails}
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
+          {/* Field Tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {fieldsList.map((field) => (
+              <Link key={field.id} href={`/dashboard/crop-monitoring?field=${field.id}`}>
+                <Button
+                  variant="outline"
+                  className="whitespace-nowrap border-emerald-400/30 hover:bg-emerald-400/10"
+                >
+                  {field.name}
+                  {field.crop_type && (
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      ({field.crop_type})
+                    </span>
+                  )}
+                </Button>
+              </Link>
             ))}
           </div>
+
+          {/* Dashboard for first field (or selected field) */}
+          <Suspense fallback={<div className="flex items-center justify-center h-96">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400"></div>
+          </div>}>
+            <CropHealthMonitor
+              fieldId={fieldsList[0].id}
+              fieldName={fieldsList[0].name}
+              polygon={parsePolygon(fieldsList[0].boundary_coordinates)}
+              cropType={fieldsList[0].crop_type}
+              areaHectares={parseArea(fieldsList[0].area)}
+            />
+          </Suspense>
         </div>
       )}
     </div>
   )
 }
 
-function formatMonitoringDate(value: string, language: "ar" | "en") {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  const primaryLocale = language === "ar" ? "ar-EG" : "en-US"
-  try {
-    return date.toLocaleDateString(primaryLocale)
-  } catch {
-    try {
-      return date.toLocaleDateString("en-US")
-    } catch {
-      return value
+function parsePolygon(coords: any): [number, number][] {
+  if (!coords) return []
+  if (Array.isArray(coords) && coords.length > 0) {
+    if (Array.isArray(coords[0]) && coords[0].length === 2) {
+      return coords as [number, number][]
+    }
+    if (Array.isArray(coords[0]) && Array.isArray(coords[0][0])) {
+      return coords[0] as [number, number][]
     }
   }
+  return []
+}
+
+function parseArea(area: any): number {
+  if (typeof area === 'number') return area / 4200 // Convert from sqm to hectares (feddan to hectares)
+  if (typeof area === 'string') {
+    const parsed = parseFloat(area)
+    return isNaN(parsed) ? 1 : parsed / 4200
+  }
+  return 1
 }

@@ -1,0 +1,38 @@
+{
+  "name": "adham-agritech-v2",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@sentinel-hub/sentinelhub-js": "github:sentinel-hub/sentinelhub-js",
+    "axios": "^1.13.2",
+    "chart.js": "^4.5.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.554.0",
+    "next": "16.0.4",
+    "pg": "^8.16.3",
+    "react": "19.2.0",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "19.2.0",
+    "react-leaflet": "^5.0.0",
+    "swr": "^2.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/geojson": "^7946.0.16",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^20",
+    "@types/pg": "^8.15.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
