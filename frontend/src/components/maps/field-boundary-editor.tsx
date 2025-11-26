@@ -118,16 +118,6 @@ const buildStyle = (options?: { sentinelTile?: string | null }): StyleSpecificat
       },
     },
     layers: [
-      {
-        id: "esri-layer",
-        type: "raster",
-        source: "esri",
-        minzoom: 0,
-        maxzoom: 22,
-        paint: {
-          "raster-opacity": 1,
-        },
-      } as const,
       ...(EOSDA_TILE_URL
         ? [
           {
