@@ -326,203 +326,201 @@ export function FarmAnalyticsMap({
 
       eventsBoundRef.current = true
     }
-    eventsBoundRef.current = true
-  }
   }, [])
 
-// Update active raster layer
-useEffect(() => {
-  const map = mapRef.current
-  if (!map || !mapReadyRef.current) return
+  // Update active raster layer
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReadyRef.current) return
 
-  // Remove existing raster layers if any (except base)
-  const layers = ["eosda-layer"]
-  layers.forEach(id => {
-    if (map.getLayer(id)) map.removeLayer(id)
-    if (map.getSource(id)) map.removeSource(id)
-  })
-
-  if (activeLayer !== "true-color" || EOSDA_API_KEY) {
-    // Add new layer
-    const url = getLayerUrl(activeLayer)
-    map.addSource("eosda-layer", {
-      type: "raster",
-      tiles: [url],
-      tileSize: 256,
-      attribution: "EOS Data Analytics"
+    // Remove existing raster layers if any (except base)
+    const layers = ["eosda-layer"]
+    layers.forEach(id => {
+      if (map.getLayer(id)) map.removeLayer(id)
+      if (map.getSource(id)) map.removeSource(id)
     })
 
-    map.addLayer({
-      id: "eosda-layer",
-      type: "raster",
-      source: "eosda-layer",
-      paint: { "raster-opacity": 0.7 },
-      layout: { visibility: "visible" }
-    }, "field-outline") // Place below field outlines
-  }
+    if (activeLayer !== "true-color" || EOSDA_API_KEY) {
+      // Add new layer
+      const url = getLayerUrl(activeLayer)
+      map.addSource("eosda-layer", {
+        type: "raster",
+        tiles: [url],
+        tileSize: 256,
+        attribution: "EOS Data Analytics"
+      })
 
-}, [activeLayer])
-
-const updateSource = useCallback(
-  (map: maplibregl.Map) => {
-    const source = map.getSource("farm-fields") as maplibregl.GeoJSONSource | undefined
-    if (source) {
-      source.setData(featureCollection)
+      map.addLayer({
+        id: "eosda-layer",
+        type: "raster",
+        source: "eosda-layer",
+        paint: { "raster-opacity": 0.7 },
+        layout: { visibility: "visible" }
+      }, "field-outline") // Place below field outlines
     }
-  },
-  [featureCollection],
-)
 
-const fitMapToFields = useCallback(
-  (map: maplibregl.Map) => {
-    if (fields.length === 0) return
-    const bounds = new maplibregl.LngLatBounds()
-    fields.forEach((field) => {
-      field.polygon.forEach(([lng, lat]) => bounds.extend([lng, lat]))
+  }, [activeLayer])
+
+  const updateSource = useCallback(
+    (map: maplibregl.Map) => {
+      const source = map.getSource("farm-fields") as maplibregl.GeoJSONSource | undefined
+      if (source) {
+        source.setData(featureCollection)
+      }
+    },
+    [featureCollection],
+  )
+
+  const fitMapToFields = useCallback(
+    (map: maplibregl.Map) => {
+      if (fields.length === 0) return
+      const bounds = new maplibregl.LngLatBounds()
+      fields.forEach((field) => {
+        field.polygon.forEach(([lng, lat]) => bounds.extend([lng, lat]))
+      })
+      if (bounds.isEmpty()) return
+      map.fitBounds(bounds, { padding: 60, duration: 900, maxZoom: 15 })
+    },
+    [fields],
+  )
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return
+
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: SATELLITE_STYLE,
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM_LEVEL,
+      pitch: 55,
+      bearing: -20,
+      antialias: true,
     })
-    if (bounds.isEmpty()) return
-    map.fitBounds(bounds, { padding: 60, duration: 900, maxZoom: 15 })
-  },
-  [fields],
-)
 
-useEffect(() => {
-  if (!mapContainerRef.current) return
+    mapRef.current = map
 
-  const map = new maplibregl.Map({
-    container: mapContainerRef.current,
-    style: SATELLITE_STYLE,
-    center: DEFAULT_CENTER,
-    zoom: DEFAULT_ZOOM_LEVEL,
-    pitch: 55,
-    bearing: -20,
-    antialias: true,
-  })
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right")
+    map.addControl(new maplibregl.FullscreenControl())
 
-  mapRef.current = map
+    map.on("load", () => {
+      mapReadyRef.current = true
+      ensureLayers(map)
+      updateSource(map)
+      if (fields.length > 0) {
+        fitMapToFields(map)
+        initialFitRef.current = true
+      }
+    })
 
-  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right")
-  map.addControl(new maplibregl.FullscreenControl())
+    return () => {
+      map.remove()
+      mapRef.current = null
+      mapReadyRef.current = false
+      eventsBoundRef.current = false
+      initialFitRef.current = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  map.on("load", () => {
-    mapReadyRef.current = true
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReadyRef.current) return
+
     ensureLayers(map)
     updateSource(map)
-    if (fields.length > 0) {
+
+    if (fields.length > 0 && !initialFitRef.current) {
       fitMapToFields(map)
       initialFitRef.current = true
     }
-  })
 
-  return () => {
-    map.remove()
-    mapRef.current = null
-    mapReadyRef.current = false
-    eventsBoundRef.current = false
-    initialFitRef.current = false
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [])
-
-useEffect(() => {
-  const map = mapRef.current
-  if (!map || !mapReadyRef.current) return
-
-  ensureLayers(map)
-  updateSource(map)
-
-  if (fields.length > 0 && !initialFitRef.current) {
-    fitMapToFields(map)
-    initialFitRef.current = true
-  }
-
-  if (fields.length === 0) {
-    initialFitRef.current = false
-  }
-}, [ensureLayers, updateSource, fitMapToFields, fields])
-
-useEffect(() => {
-  const map = mapRef.current
-  if (!map || !mapReadyRef.current) return
-
-  if (map.getLayer("field-selected")) {
-    map.setFilter("field-selected", ["==", ["get", "id"], selectedFieldId ?? ""])
-  }
-
-  if (selectedFieldId) {
-    const target = fields.find((field) => field.id === selectedFieldId)
-    if (target) {
-      map.easeTo({
-        center: target.center,
-        zoom: 13,
-        duration: 900,
-        essential: true,
-      })
+    if (fields.length === 0) {
+      initialFitRef.current = false
     }
-  }
-}, [selectedFieldId, fields])
+  }, [ensureLayers, updateSource, fitMapToFields, fields])
 
-const showNoData = !isLoading && !error && fields.length === 0
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReadyRef.current) return
 
-return (
-  <div className="relative">
-    <div
-      ref={mapContainerRef}
-      className="w-full rounded-3xl border border-white/10"
-      style={{ height }}
-    />
+    if (map.getLayer("field-selected")) {
+      map.setFilter("field-selected", ["==", ["get", "id"], selectedFieldId ?? ""])
+    }
 
-    {isLoading && (
-      <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1.5 text-xs text-gray-100 border border-white/10">
-        جارٍ تحميل خريطة الحقول…
-      </div>
-    )}
+    if (selectedFieldId) {
+      const target = fields.find((field) => field.id === selectedFieldId)
+      if (target) {
+        map.easeTo({
+          center: target.center,
+          zoom: 13,
+          duration: 900,
+          essential: true,
+        })
+      }
+    }
+  }, [selectedFieldId, fields])
 
-    {!isLoading && error && (
-      <div className="absolute top-3 left-3 rounded-full bg-red-900/70 px-3 py-1.5 text-xs text-red-100 border border-red-400/30">
-        {error}
-      </div>
-    )}
+  const showNoData = !isLoading && !error && fields.length === 0
 
-    {showNoData && (
-      <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1.5 text-xs text-gray-200 border border-white/10">
-        لا توجد حقول مسجلة بعد.
-      </div>
-    )}
+  return (
+    <div className="relative">
+      <div
+        ref={mapContainerRef}
+        className="w-full rounded-3xl border border-white/10"
+        style={{ height }}
+      />
 
-    {/* Layer Switcher */}
-    <div className="absolute top-3 right-14 z-10">
-      <div className="relative">
-        <button
-          onClick={() => setShowLayers(!showLayers)}
-          className="flex items-center gap-2 bg-black/80 border border-white/20 rounded-lg px-3 py-2 text-white hover:bg-black/90 transition-colors"
-        >
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: LAYER_CONFIG[activeLayer].color }} />
-          <span className="text-xs font-medium">{LAYER_CONFIG[activeLayer].name[lang === "ar" ? "ar" : "en"]}</span>
-        </button>
+      {isLoading && (
+        <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1.5 text-xs text-gray-100 border border-white/10">
+          جارٍ تحميل خريطة الحقول…
+        </div>
+      )}
 
-        {showLayers && (
-          <div className="absolute top-full right-0 mt-2 w-48 bg-black/90 border border-white/20 rounded-xl overflow-hidden shadow-xl backdrop-blur-md">
-            {Object.entries(LAYER_CONFIG).map(([key, config]) => (
-              <button
-                key={key}
-                onClick={() => {
-                  setActiveLayer(key as MapLayer)
-                  setShowLayers(false)
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs transition-colors ${activeLayer === key
+      {!isLoading && error && (
+        <div className="absolute top-3 left-3 rounded-full bg-red-900/70 px-3 py-1.5 text-xs text-red-100 border border-red-400/30">
+          {error}
+        </div>
+      )}
+
+      {showNoData && (
+        <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1.5 text-xs text-gray-200 border border-white/10">
+          لا توجد حقول مسجلة بعد.
+        </div>
+      )}
+
+      {/* Layer Switcher */}
+      <div className="absolute top-3 right-14 z-10">
+        <div className="relative">
+          <button
+            onClick={() => setShowLayers(!showLayers)}
+            className="flex items-center gap-2 bg-black/80 border border-white/20 rounded-lg px-3 py-2 text-white hover:bg-black/90 transition-colors"
+          >
+            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: LAYER_CONFIG[activeLayer].color }} />
+            <span className="text-xs font-medium">{LAYER_CONFIG[activeLayer].name[lang === "ar" ? "ar" : "en"]}</span>
+          </button>
+
+          {showLayers && (
+            <div className="absolute top-full right-0 mt-2 w-48 bg-black/90 border border-white/20 rounded-xl overflow-hidden shadow-xl backdrop-blur-md">
+              {Object.entries(LAYER_CONFIG).map(([key, config]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setActiveLayer(key as MapLayer)
+                    setShowLayers(false)
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs transition-colors ${activeLayer === key
                     ? "bg-white/10 text-white font-medium"
                     : "text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
-              >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: config.color }} />
-                {config.name[lang === "ar" ? "ar" : "en"]}
-              </button>
-            ))}
-          </div>
-        )}
+                    }`}
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: config.color }} />
+                  {config.name[lang === "ar" ? "ar" : "en"]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-)
+  )
 }
