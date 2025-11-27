@@ -131,22 +131,22 @@ export default function FieldDetailsPage({ params }: { params: Promise<{ id: str
   const FALLBACK_RASTER_TILE =
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23d1fae5' stop-opacity='0.6'/%3E%3Cstop offset='50%25' stop-color='%23a7f3d0' stop-opacity='0.55'/%3E%3Cstop offset='100%25' stop-color='%23fbbf24' stop-opacity='0.6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='0' width='512' height='512' fill='url(%23g)'/%3E%3C/svg%3E"
 
-function sparklinePath(data: number[]) {
-  if (data.length === 0) return ""
-  const width = 120
-  const height = 40
-  const padding = 4
-  const step = (width - 2 * padding) / Math.max(data.length - 1, 1)
-  const min = Math.min(...data)
-  const max = Math.max(...data)
-  const range = max - min || 1
-  
-  return data.map((value, index) => {
-    const x = padding + index * step
-    const y = padding + (1 - (value - min) / range) * (height - 2 * padding)
-    return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
-  }).join(' ')
-}
+  function sparklinePath(data: number[]) {
+    if (data.length === 0) return ""
+    const width = 120
+    const height = 40
+    const padding = 4
+    const step = (width - 2 * padding) / Math.max(data.length - 1, 1)
+    const min = Math.min(...data)
+    const max = Math.max(...data)
+    const range = max - min || 1
+
+    return data.map((value, index) => {
+      const x = padding + index * step
+      const y = padding + (1 - (value - min) / range) * (height - 2 * padding)
+      return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
+    }).join(' ')
+  }
 
   async function resolveDomainLabels(fieldData: any) {
     try {
@@ -573,7 +573,7 @@ function sparklinePath(data: number[]) {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-3xl font-bold text-emerald-50">{moistureDisplay}</span>
-            <span className="text-xs text-emerald-100/80">{lang === "ar" ? "اعتماداً على EOSDA" : "satellite inferred"}</span>
+            <span className="text-xs text-emerald-100/80">{lang === "ar" ? "اعتماداً على الأقمار الصناعية" : "satellite inferred"}</span>
           </div>
           <div className="mt-3 h-16 rounded-lg bg-emerald-900/60 flex items-center justify-center">
             <div className="flex items-end gap-1 w-full px-2">
@@ -719,16 +719,16 @@ function sparklinePath(data: number[]) {
                 name: field.name,
                 areaFeddan: parseMaybeNumber(field.area) || 1,
                 center: fieldCenter,
-                polygon: (field.boundary_coordinates?.type === 'Polygon' 
-                  ? field.boundary_coordinates.coordinates[0] 
+                polygon: (field.boundary_coordinates?.type === 'Polygon'
+                  ? field.boundary_coordinates.coordinates[0]
                   : [
-                      [fieldCenter[1], fieldCenter[0]],
-                      [fieldCenter[1] + 0.001, fieldCenter[0]],
-                      [fieldCenter[1] + 0.001, fieldCenter[0] + 0.001],
-                      [fieldCenter[1], fieldCenter[0] + 0.001]
-                    ]) as [number, number][],
+                    [fieldCenter[1], fieldCenter[0]],
+                    [fieldCenter[1] + 0.001, fieldCenter[0]],
+                    [fieldCenter[1] + 0.001, fieldCenter[0] + 0.001],
+                    [fieldCenter[1], fieldCenter[0] + 0.001]
+                  ]) as [number, number][],
                 crop: field.crop_type || null,
-                health: parseMaybeNumber(field.last_ndvi ?? field.ndvi_score) ? 
+                health: parseMaybeNumber(field.last_ndvi ?? field.ndvi_score) ?
                   (parseMaybeNumber(field.last_ndvi ?? field.ndvi_score)! * 100) : 50
               }]}
               height={400}

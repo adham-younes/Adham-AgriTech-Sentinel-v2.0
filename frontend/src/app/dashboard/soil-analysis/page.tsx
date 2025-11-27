@@ -21,7 +21,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     noFieldsDesc: "أضف حقولاً أولاً لعرض تحليلات التربة",
     addField: "إضافة حقل",
     aiPowered: "مدعوم بالذكاء الاصطناعي",
-    aiDesc: "هذه التحليلات تعتمد على بيانات الأقمار الصناعية الفعلية من EOSDA، نماذج التعلم الآلي، والتنبؤات العميقة - لا حاجة لإدخال بيانات يدوية.",
+    aiDesc: "هذه التحليلات تعتمد على بيانات الأقمار الصناعية الفعلية، نماذج التعلم الآلي، والتنبؤات العميقة - لا حاجة لإدخال بيانات يدوية.",
   },
   en: {
     title: "Satellite Soil Intelligence",
@@ -33,7 +33,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     noFieldsDesc: "Add fields first to view soil analytics",
     addField: "Add Field",
     aiPowered: "AI-Powered",
-    aiDesc: "These analytics are based on real satellite data from EOSDA, machine learning models, and deep predictions - no manual data entry required.",
+    aiDesc: "These analytics are based on real satellite data, machine learning models, and deep predictions - no manual data entry required.",
   },
 }
 

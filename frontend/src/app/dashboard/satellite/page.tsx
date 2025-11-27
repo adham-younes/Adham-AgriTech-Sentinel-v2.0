@@ -651,7 +651,7 @@ export default function SatellitePage() {
               onChange={(e) => setProvider(e.target.value as any)}
             >
               <option value="sentinel">{language === "ar" ? "سنتينل هب" : "Sentinel Hub"}</option>
-              <option value="eosda">EOSDA</option>
+              <option value="eosda">Satellite View</option>
               <option value="auto">Auto</option>
             </select>
           </div>
@@ -840,7 +840,7 @@ export default function SatellitePage() {
                       <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-semibold text-emerald-100">
-                            {language === "ar" ? "قراءة EOSDA المباشرة" : "EOSDA satellite snapshot"}
+                            {language === "ar" ? "قراءة الأقمار الصناعية المباشرة" : "Satellite snapshot"}
                           </p>
                           <Button
                             variant="outline"

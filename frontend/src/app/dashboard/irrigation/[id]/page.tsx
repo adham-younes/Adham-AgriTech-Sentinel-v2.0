@@ -135,7 +135,7 @@ export default function IrrigationDetailsPage() {
       satelliteRecommendations: "Suggested interventions",
       satelliteConfidence: "Confidence",
       satelliteError: "Unable to load satellite insights",
-      satellitePending: "Fetching EOSDA data...",
+      satellitePending: "Fetching Satellite data...",
     },
   }
 

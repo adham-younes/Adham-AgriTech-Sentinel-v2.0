@@ -50,7 +50,7 @@ export default function RevolutionaryAnalyticsPage() {
           <CardContent className="space-y-2 text-gray-300">
             <p>انتقل إلى لوحة الحقول واختر أي حقل لرؤية:</p>
             <ul className="list-disc pl-5 space-y-1 text-sm text-gray-300">
-              <li>مؤشرات NDVI/كلوروفيل مع الخريطة الحرارية (EOSDA).</li>
+              <li>مؤشرات NDVI/كلوروفيل مع الخريطة الحرارية (Satellite Intelligence).</li>
               <li>منحنى زمني وطبقة خريطة تفاعلية مع اختيار تاريخ اللقطة.</li>
               <li>إجراءات مقترحة وتحذيرات معتمدة على آخر قراءة.</li>
             </ul>

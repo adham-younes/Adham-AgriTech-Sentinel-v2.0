@@ -153,7 +153,7 @@ export default function IrrigationPage() {
       satelliteNdvi: "NDVI",
       satelliteMoisture: "Soil moisture",
       satelliteChlorophyll: "Chlorophyll",
-      satellitePending: "Syncing EOSDA data...",
+      satellitePending: "Syncing Satellite data...",
       satelliteUnavailable: "No satellite readings yet",
     },
   }
