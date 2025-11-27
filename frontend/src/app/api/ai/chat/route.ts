@@ -1,3 +1,4 @@
+// Force Vercel Rebuild - AI Assistant Route v2
 export const runtime = "nodejs"
 import { generateText, type CoreMessage } from "ai"
 
