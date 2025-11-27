@@ -138,7 +138,7 @@ export default function NewFarmPage() {
       const description =
         primaryCrop.length > 0 ? (language === "ar" ? `المحصول الرئيسي: ${primaryCrop}` : `Primary crop: ${primaryCrop}`) : null
 
-      const payload = {
+      const requestPayload = {
         name: formData.name.trim(),
         location: formData.location.trim(),
         description,
@@ -147,13 +147,13 @@ export default function NewFarmPage() {
         longitude,
       }
 
-      console.log("[Farm Creation] Submitting payload:", payload)
+      console.log("[Farm Creation] Submitting payload:", requestPayload)
 
       const response = await fetch("/api/farms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(payload),
+        body: JSON.stringify(requestPayload),
       })
 
       const payload = (await response.json().catch(() => ({}))) as { error?: string; message?: string }
