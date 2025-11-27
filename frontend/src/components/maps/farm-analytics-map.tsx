@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import maplibregl, { type StyleSpecification } from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import type { FeatureCollection, Polygon } from "geojson"
@@ -28,6 +28,48 @@ const MAPBOX_ATTRIBUTION = "Imagery \u00A9 Mapbox"
 const EOSDA_TILE_URL =
   process.env.NEXT_PUBLIC_EOSDA_TILE_URL?.trim() ||
   "https://api.eosda.com";
+
+type MapLayer = "true-color" | "ndvi" | "ndmi" | "evi" | "soil-moisture" | "chlorophyll"
+
+const LAYER_CONFIG: Record<MapLayer, { name: { ar: string; en: string }; url: string; color: string }> = {
+  "true-color": {
+    name: { ar: "ألوان حقيقية", en: "True Color" },
+    url: "https://api-connect.eos.com/api/lms/tiles/v1/sentinel2l2a/{z}/{x}/{y}",
+    color: "#ffffff"
+  },
+  "ndvi": {
+    name: { ar: "صحة النبات (NDVI)", en: "Vegetation Health (NDVI)" },
+    url: "https://api-connect.eos.com/api/lms/tiles/v1/ndvi/{z}/{x}/{y}",
+    color: "#22c55e"
+  },
+  "ndmi": {
+    name: { ar: "إجهاد مائي (NDMI)", en: "Moisture Stress (NDMI)" },
+    url: "https://api-connect.eos.com/api/lms/tiles/v1/ndmi/{z}/{x}/{y}",
+    color: "#3b82f6"
+  },
+  "evi": {
+    name: { ar: "مؤشر نباتي محسن (EVI)", en: "Enhanced Veg. Index (EVI)" },
+    url: "https://api-connect.eos.com/api/lms/tiles/v1/evi/{z}/{x}/{y}",
+    color: "#84cc16"
+  },
+  "soil-moisture": {
+    name: { ar: "رطوبة التربة", en: "Soil Moisture" },
+    url: "https://api-connect.eos.com/api/lms/tiles/v1/soil_moisture/{z}/{x}/{y}",
+    color: "#a855f7"
+  },
+  "chlorophyll": {
+    name: { ar: "الكلوروفيل", en: "Chlorophyll" },
+    url: "https://api-connect.eos.com/api/lms/tiles/v1/chlorophyll/{z}/{x}/{y}",
+    color: "#10b981"
+  }
+}
+
+const EOSDA_API_KEY = process.env.NEXT_PUBLIC_EOSDA_API_KEY?.trim() || ""
+
+function getLayerUrl(layer: MapLayer) {
+  const baseUrl = LAYER_CONFIG[layer].url
+  return EOSDA_API_KEY ? `${baseUrl}?apikey=${EOSDA_API_KEY}` : baseUrl
+}
 
 function withDefaultSentinelParams(url?: string) {
   if (!url) return url
@@ -135,6 +177,7 @@ interface FarmAnalyticsMapProps {
   height?: number
   isLoading?: boolean
   error?: string | null
+  lang?: "ar" | "en"
 }
 
 const EMPTY_COLLECTION: FeatureCollection<Polygon, FieldFeatureProperties> = {
@@ -188,6 +231,7 @@ export function FarmAnalyticsMap({
   height = 520,
   isLoading = false,
   error = null,
+  lang = "ar"
 }: FarmAnalyticsMapProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
@@ -199,6 +243,8 @@ export function FarmAnalyticsMap({
   onFieldSelectRef.current = onFieldSelect
 
   const featureCollection = useMemo(() => toFeatureCollection(fields), [fields])
+  const [activeLayer, setActiveLayer] = useState<MapLayer>("true-color")
+  const [showLayers, setShowLayers] = useState(false)
 
   const ensureLayers = useCallback((map: maplibregl.Map) => {
     if (!map.getSource("farm-fields")) {
@@ -280,134 +326,203 @@ export function FarmAnalyticsMap({
 
       eventsBoundRef.current = true
     }
+    eventsBoundRef.current = true
+  }
   }, [])
 
-  const updateSource = useCallback(
-    (map: maplibregl.Map) => {
-      const source = map.getSource("farm-fields") as maplibregl.GeoJSONSource | undefined
-      if (source) {
-        source.setData(featureCollection)
-      }
-    },
-    [featureCollection],
-  )
+// Update active raster layer
+useEffect(() => {
+  const map = mapRef.current
+  if (!map || !mapReadyRef.current) return
 
-  const fitMapToFields = useCallback(
-    (map: maplibregl.Map) => {
-      if (fields.length === 0) return
-      const bounds = new maplibregl.LngLatBounds()
-      fields.forEach((field) => {
-        field.polygon.forEach(([lng, lat]) => bounds.extend([lng, lat]))
-      })
-      if (bounds.isEmpty()) return
-      map.fitBounds(bounds, { padding: 60, duration: 900, maxZoom: 15 })
-    },
-    [fields],
-  )
+  // Remove existing raster layers if any (except base)
+  const layers = ["eosda-layer"]
+  layers.forEach(id => {
+    if (map.getLayer(id)) map.removeLayer(id)
+    if (map.getSource(id)) map.removeSource(id)
+  })
 
-  useEffect(() => {
-    if (!mapContainerRef.current) return
-
-    const map = new maplibregl.Map({
-      container: mapContainerRef.current,
-      style: SATELLITE_STYLE,
-      center: DEFAULT_CENTER,
-      zoom: DEFAULT_ZOOM_LEVEL,
-      pitch: 55,
-      bearing: -20,
-      antialias: true,
+  if (activeLayer !== "true-color" || EOSDA_API_KEY) {
+    // Add new layer
+    const url = getLayerUrl(activeLayer)
+    map.addSource("eosda-layer", {
+      type: "raster",
+      tiles: [url],
+      tileSize: 256,
+      attribution: "EOS Data Analytics"
     })
 
-    mapRef.current = map
+    map.addLayer({
+      id: "eosda-layer",
+      type: "raster",
+      source: "eosda-layer",
+      paint: { "raster-opacity": 0.7 },
+      layout: { visibility: "visible" }
+    }, "field-outline") // Place below field outlines
+  }
 
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right")
-    map.addControl(new maplibregl.FullscreenControl())
+}, [activeLayer])
 
-    map.on("load", () => {
-      mapReadyRef.current = true
-      ensureLayers(map)
-      updateSource(map)
-      if (fields.length > 0) {
-        fitMapToFields(map)
-        initialFitRef.current = true
-      }
-    })
-
-    return () => {
-      map.remove()
-      mapRef.current = null
-      mapReadyRef.current = false
-      eventsBoundRef.current = false
-      initialFitRef.current = false
+const updateSource = useCallback(
+  (map: maplibregl.Map) => {
+    const source = map.getSource("farm-fields") as maplibregl.GeoJSONSource | undefined
+    if (source) {
+      source.setData(featureCollection)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  },
+  [featureCollection],
+)
 
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map || !mapReadyRef.current) return
+const fitMapToFields = useCallback(
+  (map: maplibregl.Map) => {
+    if (fields.length === 0) return
+    const bounds = new maplibregl.LngLatBounds()
+    fields.forEach((field) => {
+      field.polygon.forEach(([lng, lat]) => bounds.extend([lng, lat]))
+    })
+    if (bounds.isEmpty()) return
+    map.fitBounds(bounds, { padding: 60, duration: 900, maxZoom: 15 })
+  },
+  [fields],
+)
 
+useEffect(() => {
+  if (!mapContainerRef.current) return
+
+  const map = new maplibregl.Map({
+    container: mapContainerRef.current,
+    style: SATELLITE_STYLE,
+    center: DEFAULT_CENTER,
+    zoom: DEFAULT_ZOOM_LEVEL,
+    pitch: 55,
+    bearing: -20,
+    antialias: true,
+  })
+
+  mapRef.current = map
+
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right")
+  map.addControl(new maplibregl.FullscreenControl())
+
+  map.on("load", () => {
+    mapReadyRef.current = true
     ensureLayers(map)
     updateSource(map)
-
-    if (fields.length > 0 && !initialFitRef.current) {
+    if (fields.length > 0) {
       fitMapToFields(map)
       initialFitRef.current = true
     }
+  })
 
-    if (fields.length === 0) {
-      initialFitRef.current = false
+  return () => {
+    map.remove()
+    mapRef.current = null
+    mapReadyRef.current = false
+    eventsBoundRef.current = false
+    initialFitRef.current = false
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [])
+
+useEffect(() => {
+  const map = mapRef.current
+  if (!map || !mapReadyRef.current) return
+
+  ensureLayers(map)
+  updateSource(map)
+
+  if (fields.length > 0 && !initialFitRef.current) {
+    fitMapToFields(map)
+    initialFitRef.current = true
+  }
+
+  if (fields.length === 0) {
+    initialFitRef.current = false
+  }
+}, [ensureLayers, updateSource, fitMapToFields, fields])
+
+useEffect(() => {
+  const map = mapRef.current
+  if (!map || !mapReadyRef.current) return
+
+  if (map.getLayer("field-selected")) {
+    map.setFilter("field-selected", ["==", ["get", "id"], selectedFieldId ?? ""])
+  }
+
+  if (selectedFieldId) {
+    const target = fields.find((field) => field.id === selectedFieldId)
+    if (target) {
+      map.easeTo({
+        center: target.center,
+        zoom: 13,
+        duration: 900,
+        essential: true,
+      })
     }
-  }, [ensureLayers, updateSource, fitMapToFields, fields])
+  }
+}, [selectedFieldId, fields])
 
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map || !mapReadyRef.current) return
+const showNoData = !isLoading && !error && fields.length === 0
 
-    if (map.getLayer("field-selected")) {
-      map.setFilter("field-selected", ["==", ["get", "id"], selectedFieldId ?? ""])
-    }
+return (
+  <div className="relative">
+    <div
+      ref={mapContainerRef}
+      className="w-full rounded-3xl border border-white/10"
+      style={{ height }}
+    />
 
-    if (selectedFieldId) {
-      const target = fields.find((field) => field.id === selectedFieldId)
-      if (target) {
-        map.easeTo({
-          center: target.center,
-          zoom: 13,
-          duration: 900,
-          essential: true,
-        })
-      }
-    }
-  }, [selectedFieldId, fields])
+    {isLoading && (
+      <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1.5 text-xs text-gray-100 border border-white/10">
+        جارٍ تحميل خريطة الحقول…
+      </div>
+    )}
 
-  const showNoData = !isLoading && !error && fields.length === 0
+    {!isLoading && error && (
+      <div className="absolute top-3 left-3 rounded-full bg-red-900/70 px-3 py-1.5 text-xs text-red-100 border border-red-400/30">
+        {error}
+      </div>
+    )}
 
-  return (
-    <div className="relative">
-      <div
-        ref={mapContainerRef}
-        className="w-full rounded-3xl border border-white/10"
-        style={{ height }}
-      />
+    {showNoData && (
+      <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1.5 text-xs text-gray-200 border border-white/10">
+        لا توجد حقول مسجلة بعد.
+      </div>
+    )}
 
-      {isLoading && (
-        <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1.5 text-xs text-gray-100 border border-white/10">
-          جارٍ تحميل خريطة الحقول…
-        </div>
-      )}
+    {/* Layer Switcher */}
+    <div className="absolute top-3 right-14 z-10">
+      <div className="relative">
+        <button
+          onClick={() => setShowLayers(!showLayers)}
+          className="flex items-center gap-2 bg-black/80 border border-white/20 rounded-lg px-3 py-2 text-white hover:bg-black/90 transition-colors"
+        >
+          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: LAYER_CONFIG[activeLayer].color }} />
+          <span className="text-xs font-medium">{LAYER_CONFIG[activeLayer].name[lang === "ar" ? "ar" : "en"]}</span>
+        </button>
 
-      {!isLoading && error && (
-        <div className="absolute top-3 left-3 rounded-full bg-red-900/70 px-3 py-1.5 text-xs text-red-100 border border-red-400/30">
-          {error}
-        </div>
-      )}
-
-      {showNoData && (
-        <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1.5 text-xs text-gray-200 border border-white/10">
-          لا توجد حقول مسجلة بعد.
-        </div>
-      )}
+        {showLayers && (
+          <div className="absolute top-full right-0 mt-2 w-48 bg-black/90 border border-white/20 rounded-xl overflow-hidden shadow-xl backdrop-blur-md">
+            {Object.entries(LAYER_CONFIG).map(([key, config]) => (
+              <button
+                key={key}
+                onClick={() => {
+                  setActiveLayer(key as MapLayer)
+                  setShowLayers(false)
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs transition-colors ${activeLayer === key
+                    ? "bg-white/10 text-white font-medium"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+              >
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: config.color }} />
+                {config.name[lang === "ar" ? "ar" : "en"]}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
-  )
+  </div>
+)
 }
