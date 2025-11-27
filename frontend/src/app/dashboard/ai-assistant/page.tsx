@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Send, Sparkles, User, Bot, Upload, X, ChevronDown, ChevronUp, Clock, Leaf } from 'lucide-react'
+import { Loader2, Send, Sparkles, User, Bot, Upload, X, ChevronDown, ChevronUp, Clock, Leaf, Mic, MicOff } from 'lucide-react'
 import { useTranslation } from '@/lib/i18n/use-language'
 import { trackUsageEvent } from '@/lib/analytics'
 import { DEFAULT_PLAN_ID } from '@/lib/domain/types/billing'
@@ -64,6 +64,34 @@ function AIAssistantContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const historyPanelId = 'ai-assistant-mobile-history'
+  const [isListening, setIsListening] = useState(false)
+
+  const toggleListening = useCallback(() => {
+    if (isListening) {
+      setIsListening(false)
+      return
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      alert(isArabic ? "المتصفح لا يدعم التعرف الصوتي" : "Browser does not support speech recognition")
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = isArabic ? 'ar-EG' : 'en-US'
+    recognition.continuous = false
+    recognition.interimResults = false
+
+    recognition.onstart = () => setIsListening(true)
+    recognition.onend = () => setIsListening(false)
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript
+      setInput((prev) => prev + (prev ? ' ' : '') + transcript)
+    }
+
+    recognition.start()
+  }, [isListening, isArabic])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -708,6 +736,16 @@ function AIAssistantContent() {
                   className="flex-1"
                   dir={direction}
                 />
+                <Button
+                  type="button"
+                  variant={isListening ? "destructive" : "outline"}
+                  size="icon"
+                  onClick={toggleListening}
+                  className="shrink-0"
+                  title={isArabic ? "تحدث" : "Speak"}
+                >
+                  {isListening ? <MicOff className="h-4 w-4 animate-pulse" /> : <Mic className="h-4 w-4" />}
+                </Button>
                 <Button type="submit" disabled={isLoading || (!input.trim() && attachments.length === 0)} className="gap-2">
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   {t('ai_assistant.send')}
