@@ -226,7 +226,7 @@ export function GlobalCompanion() {
     let isMounted = true
     async function checkAvailability() {
       try {
-        const res = await fetch('/api/ai-assistant/providers', { cache: 'no-store' })
+        const res = await fetch('/api/ai/providers', { cache: 'no-store' })
         if (!isMounted) return
         if (!res.ok) {
           setAvailability('error')
@@ -345,7 +345,7 @@ export function GlobalCompanion() {
         .filter((message) => message.kind !== 'welcome')
         .map(({ role, content }) => ({ role, content }))
 
-      const response = await fetch('/api/ai-assistant', {
+      const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
