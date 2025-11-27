@@ -126,6 +126,11 @@ export default function NewFarmPage() {
       const normalizedCoords = coords ?? DEFAULT_COORDS
       const latitude = Number.parseFloat(normalizedCoords.latitude)
       const longitude = Number.parseFloat(normalizedCoords.longitude)
+
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        throw new Error("Invalid coordinates. Please select a location on the map.")
+      }
+
       const areaValue = Number.parseFloat(formData.area)
       const normalizedArea = Number.isFinite(areaValue) ? areaValue : 0
 
@@ -133,18 +138,22 @@ export default function NewFarmPage() {
       const description =
         primaryCrop.length > 0 ? (language === "ar" ? `المحصول الرئيسي: ${primaryCrop}` : `Primary crop: ${primaryCrop}`) : null
 
+      const payload = {
+        name: formData.name.trim(),
+        location: formData.location.trim(),
+        description,
+        total_area: normalizedArea,
+        latitude,
+        longitude,
+      }
+
+      console.log("[Farm Creation] Submitting payload:", payload)
+
       const response = await fetch("/api/farms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          name: formData.name.trim(),
-          location: formData.location.trim(),
-          description,
-          total_area: normalizedArea,
-          latitude,
-          longitude,
-        }),
+        body: JSON.stringify(payload),
       })
 
       const payload = (await response.json().catch(() => ({}))) as { error?: string; message?: string }
@@ -153,10 +162,10 @@ export default function NewFarmPage() {
       }
 
       console.log("[Farm Creation] Farm created successfully:", { farmId: payload.id })
-      
+
       // Wait a moment for database to sync
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       // Redirect to farms page
       router.push("/dashboard/farms")
     } catch (error) {
