@@ -29,7 +29,7 @@ async function fetchEOSDANDVIForDashboard(params: {
         evi: result.ndvi_value * 0.85, // Approximate EVI from NDVI
         healthStatus: result.ndvi_value > 0.6 ? 'Good' : result.ndvi_value > 0.4 ? 'Moderate' : 'Poor',
         recommendations: [
-          result.ndvi_value > 0.6 
+          result.ndvi_value > 0.6
             ? 'Vegetation health is good. Continue current practices.'
             : 'Consider reviewing irrigation and nutrient management.',
           'Monitor for changes in the coming weeks.',
@@ -49,9 +49,9 @@ async function fetchEOSDANDVIForDashboard(params: {
         evi: ndvi * 0.85,
         healthStatus: ndvi > 0.6 ? 'Good' : ndvi > 0.4 ? 'Moderate' : 'Poor',
         recommendations: [
-          'Using synthetic data - EOSDA service unavailable.',
+          'Using synthetic data - Satellite service unavailable.',
           'Check API configuration and network connectivity.',
-          'Consider enabling EOSDA integration for real data.'
+          'Consider enabling Satellite integration for real data.'
         ]
       },
       source: 'synthetic'
@@ -350,8 +350,8 @@ export function AdvancedSatelliteDashboard() {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`pb-2 text-sm font-medium border-b-2 transition ${activeTab === tab.key
-                ? "border-emerald-400 text-white"
-                : "border-transparent text-muted-foreground hover:text-white"
+              ? "border-emerald-400 text-white"
+              : "border-transparent text-muted-foreground hover:text-white"
               }`}
           >
             {tab.label}

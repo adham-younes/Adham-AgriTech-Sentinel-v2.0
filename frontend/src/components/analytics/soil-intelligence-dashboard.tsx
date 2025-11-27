@@ -348,7 +348,7 @@ export function SoilIntelligenceDashboard({
                         <div className="text-sm text-muted-foreground">
                             <p className="font-semibold text-white mb-1">مدعوم بالذكاء الاصطناعي</p>
                             <p>
-                                هذه التحليلات مبنية على بيانات الأقمار الصناعية الفعلية من EOSDA،
+                                هذه التحليلات مبنية على بيانات الأقمار الصناعية الفعلية،
                                 نماذج التعلم الآلي، وتوقعات الطقس. يتم تحديث البيانات يومياً لضمان دقة التوصيات.
                             </p>
                         </div>
