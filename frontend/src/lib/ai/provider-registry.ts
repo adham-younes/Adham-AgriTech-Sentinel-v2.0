@@ -116,8 +116,8 @@ export class AIProviderRegistry {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean)
-    const primaryEnv = (trim(process.env.AI_PRIMARY_PROVIDER) || trim(process.env.NEXT_PUBLIC_AI_PRIMARY_PROVIDER) || "")
-      .toLowerCase()
+    // Force Groq as primary provider as requested by user, ignoring env var for now
+    const primaryEnv = "groq"
 
     if (orderEnv.length > 0) {
       providers.sort((a, b) => {

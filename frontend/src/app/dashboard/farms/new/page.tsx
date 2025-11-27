@@ -117,15 +117,22 @@ export default function NewFarmPage() {
     }
   }, [geoStatus, t])
 
+  const [debugLogs, setDebugLogs] = useState<string[]>([])
+  const addLog = (msg: string) => setDebugLogs(prev => [...prev, `${new Date().toISOString().split('T')[1]} - ${msg}`])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    addLog("handleSubmit called")
     setLoading(true)
     setSubmitError(null)
 
     try {
+      addLog("Starting validation")
       const normalizedCoords = coords ?? DEFAULT_COORDS
       const latitude = Number.parseFloat(normalizedCoords.latitude)
       const longitude = Number.parseFloat(normalizedCoords.longitude)
+
+      addLog(`Coords: ${latitude}, ${longitude}`)
 
       if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
         throw new Error("Invalid coordinates. Please select a location on the map.")
@@ -133,6 +140,7 @@ export default function NewFarmPage() {
 
       const areaValue = Number.parseFloat(formData.area)
       const normalizedArea = Number.isFinite(areaValue) ? areaValue : 0
+      addLog(`Area: ${normalizedArea}`)
 
       const primaryCrop = formData.crop_type.trim()
       const description =
@@ -147,21 +155,27 @@ export default function NewFarmPage() {
         longitude,
       }
 
+      addLog(`Payload prepared: ${JSON.stringify(requestPayload)}`)
       console.log("[Farm Creation] Submitting payload:", requestPayload)
 
+      addLog("Sending fetch request...")
       const response = await fetch("/api/farms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(requestPayload),
       })
+      addLog(`Fetch response status: ${response.status}`)
 
       const responsePayload = (await response.json().catch(() => ({}))) as { error?: string; message?: string; id?: string }
+      addLog(`Response payload: ${JSON.stringify(responsePayload)}`)
+
       if (!response.ok) {
         throw new Error(responsePayload?.message ?? responsePayload?.error ?? "Failed to create farm")
       }
 
       console.log("[Farm Creation] Farm created successfully:", { farmId: responsePayload.id })
+      addLog("Success! Redirecting...")
 
       // Wait a moment for database to sync
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -171,9 +185,11 @@ export default function NewFarmPage() {
     } catch (error) {
       console.error("[farms] Error creating farm:", error)
       const details = extractErrorMessage(error)
+      addLog(`Error caught: ${details}`)
       setSubmitError(`${t("farm_form.alerts.create_failed")}: ${details}`)
     } finally {
       setLoading(false)
+      addLog("Finally block executed")
     }
   }
 
@@ -345,6 +361,16 @@ export default function NewFarmPage() {
           </div>
         </form>
       </Card>
+
+      {/* Debug Logs */}
+      {debugLogs.length > 0 && (
+        <div className="mt-8 p-4 bg-black text-green-400 font-mono text-xs rounded-lg border border-green-900 overflow-auto max-h-96">
+          <h3 className="font-bold mb-2 border-b border-green-900 pb-1">Debug Logs</h3>
+          {debugLogs.map((log, i) => (
+            <div key={i} className="mb-1">{log}</div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

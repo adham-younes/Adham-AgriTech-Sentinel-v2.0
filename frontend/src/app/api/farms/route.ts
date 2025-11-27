@@ -89,15 +89,15 @@ export async function GET(request: Request) {
 // Test endpoint for debugging
 export async function PUT(request: Request) {
   console.log("[API] PUT endpoint called")
-  
+
   try {
     // Just test service client creation without database operations
     console.log("[API] Creating service client...")
     const serviceSupabase = createServiceSupabaseClient()
     console.log("[API] Service client created successfully")
-    
-    return NextResponse.json({ 
-      success: true, 
+
+    return NextResponse.json({
+      success: true,
       message: "Service client test passed - no database operations"
     })
   } catch (error) {
@@ -106,8 +106,8 @@ export async function PUT(request: Request) {
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : "Unknown"
     })
-    return NextResponse.json({ 
-      error: "TEST_ERROR", 
+    return NextResponse.json({
+      error: "TEST_ERROR",
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
       type: error instanceof Error ? error.constructor.name : "Unknown"
@@ -158,7 +158,22 @@ export async function POST(request: Request) {
     const payloadToSend = Object.fromEntries(
       Object.entries(mutablePayload).filter(([, value]) => value !== undefined),
     )
+
+    console.log("[API/farms] Attempting initial insert with payload:", JSON.stringify(payloadToSend))
+
     const { data: initData, error: initError } = await supabase.from("farms").insert(payloadToSend).select("id").single()
+
+    console.log("[API/farms] Initial insert result:", {
+      success: !!initData?.id,
+      insertedId: initData?.id,
+      error: initError ? {
+        message: initError.message,
+        details: initError.details,
+        hint: initError.hint,
+        code: initError.code
+      } : null
+    })
+
     if (!initError && initData?.id) {
       insertedId = initData.id
     } else {
@@ -170,16 +185,45 @@ export async function POST(request: Request) {
       const latMissing = /column\s+latitude\s+does\s+not\s+exist/i.test(msg)
       const lngMissing = /column\s+longitude\s+does\s+not\s+exist/i.test(msg)
 
+      console.log("[API/farms] Error checks:", {
+        rlsViolation,
+        userIdMissing,
+        totalAreaMissing,
+        latMissing,
+        lngMissing,
+        willAttemptLegacy: rlsViolation || userIdMissing || totalAreaMissing || latMissing || lngMissing
+      })
+
       if (rlsViolation || userIdMissing || totalAreaMissing || latMissing || lngMissing) {
+        console.log("[API/farms] Attempting legacy schema fallback")
+        console.log("[API/farms] Raw payload for legacy extraction:", {
+          body_total_area: body.total_area,
+          raw_total_area: raw?.total_area,
+          raw_area: raw?.area,
+          body_latitude: body.latitude,
+          raw_latitude: raw?.latitude,
+          body_longitude: body.longitude,
+          raw_longitude: raw?.longitude
+        })
+
         const legacyArea = normalizeNumber(body.total_area ?? coerceNumber(raw?.total_area) ?? coerceNumber(raw?.area))
         const legacyLat = normalizeNumber(body.latitude ?? coerceNumber(raw?.latitude))
         const legacyLng = normalizeNumber(body.longitude ?? coerceNumber(raw?.longitude))
+
+        console.log("[API/farms] Legacy values after normalization:", {
+          legacyArea,
+          legacyLat,
+          legacyLng
+        })
+
         if (legacyArea == null || legacyLat == null || legacyLng == null) {
+          console.error("[API/farms] Legacy schema missing required fields!")
           insertError = {
             message: "LEGACY_SCHEMA_REQUIRED_FIELDS_MISSING",
             details: "area, latitude, longitude are required for legacy farms schema",
           }
         } else {
+          console.log("[API/farms] Attempting legacy insert with owner_id")
           const legacyPayload: Record<string, unknown> = {
             owner_id: user.id,
             name,
