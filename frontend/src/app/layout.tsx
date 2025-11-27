@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   title: "Adham AgriTech - Smart Agriculture Platform",
   description: "Smart Agriculture Platform for Farmers - AI agronomy, satellite intelligence, and sensor-driven automation",
   generator: "v0.app",
+  manifest: "/manifest.json",
 }
 
 export default function RootLayout({

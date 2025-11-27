@@ -27,6 +27,7 @@ import DashboardClientWrapper from "@/components/dashboard/DashboardClientWrappe
 import { SoilCropAnalytics } from "@/components/dashboard/soil-crop-analytics"
 import { AiAgronomistWidget } from "@/components/dashboard/ai-agronomist-widget"
 import { CropTimeline } from "@/components/dashboard/crop-timeline"
+import { DailyBriefing } from "@/components/dashboard/daily-briefing"
 
 import {
   getPlatformHealth,
@@ -373,6 +374,8 @@ export default async function DashboardPage() {
     return `${dryFieldsCount} fields need irrigation`
   }
 
+  const weatherMock = { temp: 28, condition: lang === "ar" ? "مشمس" : "Sunny", humidity: 45 }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -396,6 +399,13 @@ export default async function DashboardPage() {
           />
         </div>
       </div>
+
+      {/* Daily Briefing Summary */}
+      <DailyBriefing
+        weather={weatherMock}
+        alertCount={notifications.length}
+        userName={user?.user_metadata?.full_name?.split(' ')[0]}
+      />
 
       {/* Main Layout Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">

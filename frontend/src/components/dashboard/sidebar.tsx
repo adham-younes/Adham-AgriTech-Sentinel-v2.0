@@ -53,6 +53,7 @@ const navigationItems = {
   forum: { translationKey: "navigation.forum", href: "/dashboard/forum", icon: Users },
   services: { translationKey: "navigation.services", href: "/dashboard/services", icon: Activity },
   features: { translationKey: "navigation.features", href: "/dashboard/features", icon: Code },
+  notifications: { translationKey: "navigation.notifications", href: "/dashboard/notifications", icon: Bell },
   partners: { translationKey: "navigation.partners", href: "/partners", icon: Handshake },
 }
 
@@ -66,7 +67,7 @@ const navGroups = [
   {
     id: "insights",
     titleKey: "navigation_groups.insights",
-    items: ["weather", "irrigation", "agronomy", "reports"],
+    items: ["weather", "irrigation", "agronomy", "reports", "analytics"],
   },
   {
     id: "engagement",

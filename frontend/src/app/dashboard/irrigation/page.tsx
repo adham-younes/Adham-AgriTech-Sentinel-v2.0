@@ -11,6 +11,7 @@ import { useTranslation } from "@/lib/i18n/use-language"
 import { isFeatureEnabled } from "@/lib/config/feature-flags"
 import { fetchSatelliteInsights } from "@/lib/client/satellite-insights"
 import type { SatelliteInsightsMap } from "@/lib/types/satellite"
+import { IrrigationRecommendation } from "@/components/dashboard/irrigation-recommendation"
 
 export default function IrrigationPage() {
   const { language, setLanguage } = useTranslation()
@@ -180,6 +181,14 @@ export default function IrrigationPage() {
         </div>
       </div>
 
+      {/* Global Recommendation based on first system/field if available */}
+      {systems.length > 0 && fieldInsights[systems[0].field_id] && (
+        <IrrigationRecommendation
+          moisture={fieldInsights[systems[0].field_id]?.satellite?.soilMoisture?.value ?? undefined}
+          cropType={systems[0].fields?.crop_type}
+        />
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -219,77 +228,77 @@ export default function IrrigationPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-lg font-semibold mb-1">{system.fields?.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t[lang].farm}: {system.fields?.farms?.name}
-                    </p>
-                  </div>
-                  <Badge className={`${getStatusColor(system.status)} text-white`}>
-                    {t[lang][system.status as keyof typeof t.ar] || system.status}
-                  </Badge>
-                </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t[lang].type}:</span>
-                    <span className="font-medium">
-                      {t[lang][system.irrigation_type as keyof typeof t.ar] || system.irrigation_type}
-                    </span>
-                  </div>
-
-                  {system.flow_rate_lpm && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">{t[lang].flowRate}:</span>
-                      <div className="flex items-center gap-1">
-                        <Droplets className="h-3 w-3 text-primary" />
-                        <span className="font-medium">{system.flow_rate_lpm} L/min</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {system.schedule && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">{t[lang].schedule}:</span>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3 text-primary" />
-                        <span className="font-medium text-xs">{system.schedule}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {satelliteEnabled && system.field_id && (
-                  <div className="mt-4 rounded-md bg-primary/5 p-3 text-xs">
-                    <p className="font-semibold text-sm">{t[lang].satelliteSection}</p>
-                    {insight ? (
-                      <div className="mt-2 grid gap-3 sm:grid-cols-3">
-                        <div>
-                          <p className="text-muted-foreground">{t[lang].satelliteNdvi}</p>
-                          <p className="text-base font-semibold">{ndviLabel}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">{t[lang].satelliteMoisture}</p>
-                          <p className="text-base font-semibold">{moistureLabel}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">{t[lang].satelliteChlorophyll}</p>
-                          <p className="text-base font-semibold">{chlorophyllLabel}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-muted-foreground">
-                        {satelliteSyncing ? t[lang].satellitePending : t[lang].satelliteUnavailable}
+                      <p className="text-sm text-muted-foreground">
+                        {t[lang].farm}: {system.fields?.farms?.name}
                       </p>
+                    </div>
+                    <Badge className={`${getStatusColor(system.status)} text-white`}>
+                      {t[lang][system.status as keyof typeof t.ar] || system.status}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">{t[lang].type}:</span>
+                      <span className="font-medium">
+                        {t[lang][system.irrigation_type as keyof typeof t.ar] || system.irrigation_type}
+                      </span>
+                    </div>
+
+                    {system.flow_rate_lpm && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">{t[lang].flowRate}:</span>
+                        <div className="flex items-center gap-1">
+                          <Droplets className="h-3 w-3 text-primary" />
+                          <span className="font-medium">{system.flow_rate_lpm} L/min</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {system.schedule && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">{t[lang].schedule}:</span>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3 text-primary" />
+                          <span className="font-medium text-xs">{system.schedule}</span>
+                        </div>
+                      </div>
                     )}
                   </div>
-                )}
 
-                <Link href={`/dashboard/irrigation/${system.id}`}>
-                  <Button variant="outline" size="sm" className="w-full bg-transparent">
-                    {t[lang].viewDetails}
-                  </Button>
-                </Link>
-              </div>
-            </Card>
+                  {satelliteEnabled && system.field_id && (
+                    <div className="mt-4 rounded-md bg-primary/5 p-3 text-xs">
+                      <p className="font-semibold text-sm">{t[lang].satelliteSection}</p>
+                      {insight ? (
+                        <div className="mt-2 grid gap-3 sm:grid-cols-3">
+                          <div>
+                            <p className="text-muted-foreground">{t[lang].satelliteNdvi}</p>
+                            <p className="text-base font-semibold">{ndviLabel}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">{t[lang].satelliteMoisture}</p>
+                            <p className="text-base font-semibold">{moistureLabel}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">{t[lang].satelliteChlorophyll}</p>
+                            <p className="text-base font-semibold">{chlorophyllLabel}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-muted-foreground">
+                          {satelliteSyncing ? t[lang].satellitePending : t[lang].satelliteUnavailable}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <Link href={`/dashboard/irrigation/${system.id}`}>
+                    <Button variant="outline" size="sm" className="w-full bg-transparent">
+                      {t[lang].viewDetails}
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
             )
           })}
         </div>
