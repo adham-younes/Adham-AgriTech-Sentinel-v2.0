@@ -165,7 +165,7 @@ function AIAssistantContent() {
   useEffect(() => {
     async function checkProviders() {
       try {
-        const res = await fetch('/api/ai-assistant/providers', { cache: 'no-store' })
+        const res = await fetch('/api/ai/providers', { cache: 'no-store' })
         if (!res.ok) {
           setAiReady(null)
           return
@@ -316,7 +316,7 @@ function AIAssistantContent() {
       } = await supabase.auth.getUser()
       if (!user) return
 
-      await fetch('/api/ai-assistant/chat', {
+      await fetch('/api/ai/history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -358,7 +358,7 @@ function AIAssistantContent() {
     void saveMessage('user', userContent)
 
     try {
-      const response = await fetch('/api/ai-assistant', {
+      const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
