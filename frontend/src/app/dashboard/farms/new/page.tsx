@@ -156,12 +156,12 @@ export default function NewFarmPage() {
         body: JSON.stringify(requestPayload),
       })
 
-      const payload = (await response.json().catch(() => ({}))) as { error?: string; message?: string }
+      const responsePayload = (await response.json().catch(() => ({}))) as { error?: string; message?: string; id?: string }
       if (!response.ok) {
-        throw new Error(payload?.message ?? payload?.error ?? "Failed to create farm")
+        throw new Error(responsePayload?.message ?? responsePayload?.error ?? "Failed to create farm")
       }
 
-      console.log("[Farm Creation] Farm created successfully:", { farmId: payload.id })
+      console.log("[Farm Creation] Farm created successfully:", { farmId: responsePayload.id })
 
       // Wait a moment for database to sync
       await new Promise(resolve => setTimeout(resolve, 1000))
