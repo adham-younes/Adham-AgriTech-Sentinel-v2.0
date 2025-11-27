@@ -45,20 +45,7 @@ export class AIProviderRegistry {
 
     const trim = (v?: string) => (typeof v === "string" ? v.trim() : v)
 
-    if (trim(process.env.GROQ_API_KEY)) {
-      const groqKey = trim(process.env.GROQ_API_KEY) as string
-      const groqClient = createGroq({ apiKey: groqKey })
-      const groqModel = trim(process.env.GROQ_MODEL) || "llama-3.3-70b-versatile"
-      providers.push({
-        id: "groq",
-        name: "Groq",
-        modelId: groqModel,
-        getModel: () => groqClient(groqModel),
-        isAvailable: true,
-        capabilities: { vision: false },
-      })
-    }
-
+    // Priority 1: xAI Grok (User Requested Primary)
     if (trim(process.env.XAI_API_KEY)) {
       const xaiKey = trim(process.env.XAI_API_KEY) as string
       const xaiModel = trim(process.env.XAI_MODEL) || "grok-2-latest"
@@ -76,6 +63,7 @@ export class AIProviderRegistry {
       })
     }
 
+    // Priority 2: OpenAI (Fallback)
     if (trim(process.env.OPENAI_API_KEY)) {
       const openaiKey = trim(process.env.OPENAI_API_KEY) as string
       const openaiClient = createOpenAI({ apiKey: openaiKey })
@@ -90,6 +78,22 @@ export class AIProviderRegistry {
       })
     }
 
+    // Priority 3: Groq
+    if (trim(process.env.GROQ_API_KEY)) {
+      const groqKey = trim(process.env.GROQ_API_KEY) as string
+      const groqClient = createGroq({ apiKey: groqKey })
+      const groqModel = trim(process.env.GROQ_MODEL) || "llama-3.3-70b-versatile"
+      providers.push({
+        id: "groq",
+        name: "Groq",
+        modelId: groqModel,
+        getModel: () => groqClient(groqModel),
+        isAvailable: true,
+        capabilities: { vision: false },
+      })
+    }
+
+    // Priority 4: Google Gemini
     if (trim(process.env.GOOGLE_AI_API_KEY)) {
       const googleKey = trim(process.env.GOOGLE_AI_API_KEY) as string
       const googleClient = createGoogleGenerativeAI({ apiKey: googleKey })
@@ -135,8 +139,7 @@ export class AIProviderRegistry {
     }
 
     console.log(
-      `[AI Registry] Initialized ${this.providers.length} providers (priority: ${
-        orderEnv.length ? orderEnv.join(" → ") : primaryEnv || "default"
+      `[AI Registry] Initialized ${this.providers.length} providers (priority: ${orderEnv.length ? orderEnv.join(" → ") : primaryEnv || "default"
       }):`,
       this.providers.map((p) => `${p.id}:${p.modelId}`).join(", "),
     )

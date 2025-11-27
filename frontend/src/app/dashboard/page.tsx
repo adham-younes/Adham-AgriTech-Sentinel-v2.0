@@ -1,4 +1,5 @@
 import type React from "react"
+import Link from "next/link"
 import { cookies, headers } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,12 +8,9 @@ import {
   MapPin,
   Droplets,
   AlertTriangle,
-  Cloud,
   ShieldCheck,
   Bot,
-  BookOpen,
   Layers3,
-  ClipboardList,
   Leaf,
   TrendingUp,
 } from "lucide-react"
@@ -20,25 +18,11 @@ import { demoWorkgroups } from "@/lib/domain/workgroups"
 import { WorkgroupChannelCard } from "@/components/dashboard/workgroup-channel-card"
 import { TaskPlannerCard } from "@/components/dashboard/task-planner-card"
 import { WeatherWidget } from "@/components/dashboard/weather-widget"
-import dynamicImport from "next/dynamic"
 import type { FarmAnalyticsFeature } from "@/components/maps/farm-analytics-map"
 import { eosdaPublicConfig } from "@/lib/config/eosda"
 
-import { FarmAnalyticsMap } from "@/components/maps/farm-analytics-map"
 import AdhamSatelliteMap from "@/components/dashboard/AdhamSatelliteMap"
 import DashboardClientWrapper from "@/components/dashboard/DashboardClientWrapper"
-
-const SatelliteImageryCard = dynamicImport(
-  () => import("@/components/dashboard/satellite-imagery-card").then((m) => m.SatelliteImageryCard),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-[500px] w-full rounded-xl border border-white/10 bg-muted/40 flex items-center justify-center text-sm text-muted-foreground">
-        Loading satellite map…
-      </div>
-    ),
-  },
-)
 
 import { SoilCropAnalytics } from "@/components/dashboard/soil-crop-analytics"
 import { AiAgronomistWidget } from "@/components/dashboard/ai-agronomist-widget"
@@ -55,9 +39,6 @@ const MAX_DASHBOARD_FIELDS = 12
 const DEFAULT_CENTER: [number, number] = [eosdaPublicConfig.center.lng, eosdaPublicConfig.center.lat]
 const FEDDAN_IN_SQUARE_METERS = 4200
 
-// Feature flag to avoid rendering two heavy maps on dashboard
-const SHOW_SATELLITE_CARD = process.env.NEXT_PUBLIC_DASHBOARD_SATELLITE_CARD === "true"
-
 function isValidUuid(value: string | null | undefined): value is string {
   if (!value) return false
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
@@ -66,7 +47,6 @@ function isValidUuid(value: string | null | undefined): value is string {
 type Lang = "ar" | "en"
 
 function detectLanguage(): Lang {
-  // Respect app language cookie if present; else fall back to Accept-Language
   try {
     const jar = cookies()
     const stored = jar.get("adham-agritech-language")?.value
@@ -166,16 +146,6 @@ type FieldRow = {
     latitude?: number | string | null
     longitude?: number | string | null
   }[] | null
-}
-
-type DashboardTaskRow = {
-  id: string
-  name: string
-  due_date: string | null
-  status: "pending" | "in_progress" | "completed"
-  field?: {
-    name?: string | null
-  } | null
 }
 
 function parseNumber(value: unknown): number | null {
@@ -405,199 +375,139 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="glass-card p-6 rounded-2xl shadow-3d">
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-          {t.dash_title}
-        </h2>
-        <p className="text-gray-400 mt-2">{t.dash_subtitle}</p>
+      {/* Header */}
+      <div className="glass-card p-6 rounded-2xl shadow-3d flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
+            {t.dash_title}
+          </h2>
+          <p className="text-gray-400 mt-2">{t.dash_subtitle}</p>
+        </div>
+        <div className="flex gap-2">
+          <QuickActionButton
+            title={t.add_field}
+            href="/dashboard/fields/new"
+            icon={<MapPin className="h-5 w-5" />}
+          />
+          <QuickActionButton
+            title="AI Assistant"
+            href="/dashboard/ai-assistant"
+            icon={<Bot className="h-5 w-5" />}
+          />
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title={t.stats_fields} value={fieldsCount || 0} icon={<MapPin className="h-5 w-5" />} trend={t.stats_fields_trend} />
-        <StatsCard title={t.stats_farms} value={farmsCount || 0} icon={<Sprout className="h-5 w-5" />} trend={t.stats_farms_trend} />
-        <StatsCard
-          title={t.stats_productivity}
-          value={
-            averageNdviPercent !== null
-              ? `${averageNdviPercent}%`
-              : lang === "ar"
-                ? "لا بيانات"
-                : "No data"
-          }
-          icon={<TrendingUp className="h-5 w-5" />}
-          trend={t.stats_productivity_trend}
-          trendPositive
-        />
-        <StatsCard
-          title={t.stats_chlorophyll}
-          value={
-            averageChlorophyllPercent !== null
-              ? `${averageChlorophyllPercent}%`
-              : lang === "ar"
-                ? "لا بيانات"
-                : "No data"
-          }
-          icon={<Leaf className="h-5 w-5" />}
-          trend={t.stats_chlorophyll_trend}
-          trendPositive={averageChlorophyllPercent !== null && averageChlorophyllPercent >= 50}
-        />
-        <StatsCard
-          title={t.stats_water}
-          value={
-            averageMoisture !== null
-              ? `${averageMoisture}%`
-              : "45%" // Fallback/Estimated value
-          }
-          icon={<Droplets className="h-5 w-5" />}
-          trend={averageMoisture !== null ? buildWaterTrendText() : (lang === "ar" ? "تقديري (بناءً على الطقس)" : "Estimated (Weather-based)")}
-          trendPositive={dryFieldsCount === 0}
-        />
-      </div>
+      {/* Main Layout Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
 
-      {(Number(fieldsCount || 0) === 0 && Number(farmsCount || 0) === 0) && (
-        <div className="rounded-xl border border-white/10 bg-background/40 p-5">
-          <p className="text-sm text-muted-foreground mb-3">{t.empty_hint}</p>
-          <div className="flex flex-wrap gap-2">
-            <a href="/dashboard/farms" className="underline text-primary">{t.manage_farms}</a>
-            <span className="text-muted-foreground">•</span>
-            <a href="/dashboard/fields/new" className="underline text-primary">{t.add_field}</a>
+        {/* Left Column: Stats & Health (1/4) */}
+        <div className="space-y-6 xl:col-span-1">
+          <ServiceHealthCard services={healthSnapshot.services} language={lang} />
+
+          <div className="grid grid-cols-1 gap-4">
+            <StatsCard title={t.stats_fields} value={fieldsCount || 0} icon={<MapPin className="h-5 w-5" />} trend={t.stats_fields_trend} />
+            <StatsCard title={t.stats_farms} value={farmsCount || 0} icon={<Sprout className="h-5 w-5" />} trend={t.stats_farms_trend} />
+            <StatsCard
+              title={t.stats_productivity}
+              value={averageNdviPercent !== null ? `${averageNdviPercent}%` : (lang === "ar" ? "لا بيانات" : "No data")}
+              icon={<TrendingUp className="h-5 w-5" />}
+              trend={t.stats_productivity_trend}
+              trendPositive
+            />
+            <StatsCard
+              title={t.stats_water}
+              value={averageMoisture !== null ? `${averageMoisture}%` : "45%"}
+              icon={<Droplets className="h-5 w-5" />}
+              trend={averageMoisture !== null ? buildWaterTrendText() : (lang === "ar" ? "تقديري" : "Estimated")}
+              trendPositive={dryFieldsCount === 0}
+            />
           </div>
         </div>
-      )}
 
-      <ServiceHealthCard services={healthSnapshot.services} language={lang} />
+        {/* Center Column: Digital Twin Map (2/4) */}
+        <div className="xl:col-span-2 space-y-6">
+          <Card className="glass-card border-primary/20 shadow-3d overflow-hidden h-full min-h-[600px] flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <Layers3 className="h-5 w-5 text-primary" />
+                {t.card_3d_title}
+              </CardTitle>
+              <Link href="/dashboard/satellite" className="text-sm text-primary underline underline-offset-4">{t.go_satellite}</Link>
+            </CardHeader>
+            <CardContent className="flex-1 p-0 relative">
+              <AdhamSatelliteMap
+                coords={analyticsFields.length > 0 ? analyticsFields[0].polygon : null}
+                fieldId={analyticsFields.length > 0 ? analyticsFields[0].id : null}
+                esodaKey={process.env.NEXT_PUBLIC_EOSDA_API_KEY || ''}
+              />
+            </CardContent>
+          </Card>
 
-      <Card className="glass-card border-primary/20 shadow-3d overflow-hidden">
-        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Layers3 className="h-5 w-5 text-primary" />
-              {t.card_3d_title}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {t.card_3d_desc}
-            </p>
-          </div>
-          <a href="/dashboard/satellite" className="text-sm text-primary underline underline-offset-4">{t.go_satellite}</a>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {analyticsFields.length === 0 && (
-            <div className="rounded-lg border border-white/10 bg-background/50 p-3 text-sm text-muted-foreground">
-              {t.add_boundaries_hint}
+          {/* Timeline & Analytics below map */}
+          {analyticsFields.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <CropTimeline
+                cropType={analyticsFields[0].crop || 'Wheat'}
+                plantingDate={null}
+              />
+              <SoilCropAnalytics fieldId={analyticsFields[0].id} />
             </div>
           )}
-          {/* <FarmAnalyticsMap
-            fields={analyticsFields}
-            isLoading={false}
-            error={null}
-            height={400}
-          /> */}
-          <AdhamSatelliteMap
-            coords={analyticsFields.length > 0 ? analyticsFields[0].polygon : null}
-            esodaKey={process.env.NEXT_PUBLIC_EOSDA_API_KEY || ''}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Satellite Imagery Card (optional, disabled by default to avoid double maps) */}
-      {SHOW_SATELLITE_CARD ? <SatelliteImageryCard /> : null}
-
-      {analyticsFields.length > 0 && (
-        <div className="mt-6 space-y-6">
-          <CropTimeline
-            cropType={analyticsFields[0].crop || 'Wheat'}
-            plantingDate={null} // TODO: Add planting_date to database schema
-          />
-          <SoilCropAnalytics fieldId={analyticsFields[0].id} />
         </div>
-      )}
 
-      <AiAgronomistWidget
-        fieldId={analyticsFields.length > 0 ? analyticsFields[0].id : undefined}
-        cropType={analyticsFields.length > 0 ? analyticsFields[0].crop : undefined}
-      />
+        {/* Right Column: AI & Weather (1/4) */}
+        <div className="space-y-6 xl:col-span-1">
+          <WeatherWidget
+            latitude={analyticsFields[0]?.center?.[1]}
+            longitude={analyticsFields[0]?.center?.[0]}
+            locationName={analyticsFields[0]?.name}
+          />
 
+          <AiAgronomistWidget
+            fieldId={analyticsFields.length > 0 ? analyticsFields[0].id : undefined}
+            cropType={analyticsFields.length > 0 ? analyticsFields[0].crop : undefined}
+            mode="embedded"
+          />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Weather Widget */}
-        {/* Weather Widget */}
-        <WeatherWidget
-          latitude={analyticsFields[0]?.center?.[1]}
-          longitude={analyticsFields[0]?.center?.[0]}
-          locationName={analyticsFields[0]?.name}
-        />
-
-        {/* Zero-Input Flow Wrapper */}
-        <div className="col-span-12 lg:col-span-8">
-          <DashboardClientWrapper initialCoords={analyticsFields.length > 0 ? analyticsFields[0].polygon : null} />
-        </div>
-        {/* Alerts */}
-        <Card className="glass-card border-primary/20 shadow-3d hover:shadow-3d-lg transition-all duration-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              التنبيهات والإشعارات
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {notifications && notifications.length > 0 ? (
-                notifications.map((notification) => (
-                  <div key={notification.id} className="flex items-start gap-3 rounded-lg border p-3">
-                    <div
-                      className={`mt-0.5 h-2 w-2 rounded-full ${notification.type === "alert"
-                        ? "bg-destructive"
-                        : notification.type === "warning"
-                          ? "bg-yellow-500"
-                          : "bg-primary"
-                        }`}
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{notification.title_ar || notification.title}</p>
-                      <p className="text-xs text-muted-foreground">{notification.message_ar || notification.message}</p>
+          <Card className="glass-card border-primary/20 shadow-3d">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5" />
+                {lang === "ar" ? "التنبيهات" : "Alerts"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {notifications && notifications.length > 0 ? (
+                  notifications.map((notification) => (
+                    <div key={notification.id} className="flex items-start gap-3 rounded-lg border border-white/5 bg-white/5 p-3">
+                      <div
+                        className={`mt-0.5 h-2 w-2 rounded-full ${notification.type === "alert"
+                          ? "bg-destructive"
+                          : notification.type === "warning"
+                            ? "bg-yellow-500"
+                            : "bg-primary"
+                          }`}
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{notification.title_ar || notification.title}</p>
+                        <p className="text-xs text-muted-foreground">{notification.message_ar || notification.message}</p>
+                      </div>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-sm text-muted-foreground py-4">لا توجد إشعارات جديدة</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  ))
+                ) : (
+                  <p className="text-center text-sm text-muted-foreground py-4">
+                    {lang === "ar" ? "لا توجد إشعارات" : "No new alerts"}
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
       </div>
 
-      <Card className="glass-card border-primary/20 shadow-3d">
-        <CardHeader>
-          <CardTitle>إجراءات سريعة</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <QuickActionButton
-              title="إضافة حقل"
-              href="/dashboard/fields/new"
-              icon={<MapPin className="h-5 w-5" />}
-            />
-            <QuickActionButton
-              title="تحليل التربة"
-              href="/dashboard/soil-analysis/new"
-              icon={<Droplets className="h-5 w-5" />}
-            />
-            <QuickActionButton
-              title="جدولة الري"
-              href="/dashboard/irrigation/new"
-              icon={<Sprout className="h-5 w-5" />}
-            />
-            <QuickActionButton
-              title="إطلاق المساعد الذكي"
-              href="/dashboard/ai-assistant"
-              icon={<Bot className="h-5 w-5" />}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <KnowledgeCard language={lang} />
-
+      {/* Demo Workgroups (if enabled) */}
       {process.env.NEXT_PUBLIC_SHOW_DEMO_WORKGROUPS === "true" && (
         <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
           <div className="space-y-4">
@@ -614,6 +524,10 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
+
+      <div className="hidden">
+        <DashboardClientWrapper initialCoords={analyticsFields.length > 0 ? analyticsFields[0].polygon : null} />
+      </div>
     </div>
   )
 }
@@ -637,10 +551,10 @@ function StatsCard({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground group-hover:text-primary/80 transition-colors">{title}</p>
-            <p className="text-3xl font-bold mt-2 text-foreground">{value}</p>
+            <p className="text-2xl font-bold mt-2 text-foreground">{value}</p>
             {trend && <p className={`text-xs mt-1 ${trendPositive ? "text-primary" : "text-muted-foreground"}`}>{trend}</p>}
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-110 transition-transform duration-300">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:scale-110 transition-transform duration-300">
             {icon}
           </div>
         </div>
@@ -661,7 +575,7 @@ function QuickActionButton({
   return (
     <a
       href={href}
-      className="flex items-center justify-center gap-3 rounded-xl border border-white/5 bg-card/50 p-5 text-center transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 group"
+      className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-card/50 px-4 py-2 text-center transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 group"
     >
       {icon && <span className="text-primary group-hover:scale-110 transition-transform">{icon}</span>}
       <span className="text-sm font-medium text-foreground group-hover:text-primary">{title}</span>
@@ -700,24 +614,23 @@ function ServiceHealthCard({ services, language }: { services: ServiceHealthSnap
   const servicesView = services.map(localiseService)
   return (
     <Card className="glass-card border-primary/20 shadow-3d">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-foreground">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-foreground text-lg">
           <ShieldCheck className="h-5 w-5 text-primary" />
           {t.health_title}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-2">
           {servicesView.map((service) => (
             <div
               key={service.id}
-              className="flex flex-col gap-2 rounded-xl border border-white/5 bg-card/30 p-4 sm:flex-row sm:items-center sm:justify-between hover:bg-white/5 transition-colors"
+              className="flex items-center justify-between rounded-lg border border-white/5 bg-card/30 p-2 hover:bg-white/5 transition-colors"
             >
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground">{service.label}</p>
-                {service.details && <p className="mt-1 text-xs text-muted-foreground">{service.details}</p>}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground truncate">{service.label}</p>
               </div>
-              <span className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${statusClasses(service.status)}`}>
+              <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold ml-2 ${statusClasses(service.status)}`}>
                 {statusLabel(service.status, language)}
               </span>
             </div>
@@ -761,124 +674,4 @@ function statusLabel(status: ServiceHealthStatus, language: Lang) {
     default:
       return STRINGS.ar.status_down
   }
-}
-
-function KnowledgeCard({ language }: { language: Lang }) {
-  const sections = language === "en"
-    ? [
-      {
-        title: "How your farm connects to Adham AgriTech",
-        description:
-          "Adham AgriTech turns field boundaries, soil tests, sensors, and satellite feeds into a single, live map of your farm.",
-        bullets: [
-          "Draw or import your fields once; we store the geometry securely in your private workspace.",
-          "Link weather, satellite imagery and soil analysis to every field automatically.",
-          "Use the same account from mobile or desktop so your decisions travel with you.",
-        ],
-      },
-      {
-        title: "From raw data to agronomic decisions",
-        description:
-          "Each data point passes through a pipeline of quality checks, analytics, and AI models before it appears as a simple indicator or alert.",
-        bullets: [
-          "Normalise NDVI, chlorophyll and moisture indices per crop and growth stage.",
-          "Combine satellite trends with local weather and soil profiles for context.",
-          "Translate complex analytics into clear recommendations you can act on today.",
-        ],
-      },
-      {
-        title: "Irrigation, health and soil insights in one view",
-        description:
-          "The 3D field view shows vegetation strength, soil moisture saturation and risk zones so you can plan irrigation, spraying and scouting with confidence.",
-        bullets: [
-          "Follow NDVI and chlorophyll curves over time to spot yield-impacting trends early.",
-          "Use moisture saturation bands to know which blocks really need water.",
-          "Log soil analyses once and reuse them across seasons and AI reports.",
-        ],
-      },
-      {
-        title: "Data ownership and privacy",
-        description:
-          "You remain the owner of your farm data. Adham AgriTech uses it only to analyse your fields and generate actionable insights, with export options whenever you need them.",
-        bullets: [
-          "All field geometries, measurements and alerts are stored in your private workspace.",
-          "Integration keys for external services stay on the server side only.",
-          "You can export reports or raw tables if you want to run your own analysis.",
-        ],
-      },
-    ]
-    : [
-      {
-        title: "كيف ترتبط مزرعتك بمنصة Adham AgriTech",
-        description:
-          "تجمع المنصة حدود الحقول، ونتائج تحاليل التربة، وقراءات الحساسات، وبيانات الأقمار الصناعية في خريطة حية واحدة لمزرعتك.",
-        bullets: [
-          "ترسم حدود الحقول مرة واحدة فقط، ونحفظها بأمان في مساحة بيانات خاصة بحسابك.",
-          "نربط الطقس وصور الأقمار الصناعية وتحليل التربة بكل حقل بشكل آلي.",
-          "تستخدم نفس الحساب من الهاتف أو الكمبيوتر، فتنتقل قراراتك معك في أي مكان.",
-        ],
-      },
-      {
-        title: "من البيانات الخام إلى قرار زراعي واضح",
-        description:
-          "تمر كل قراءة عبر سلسلة من فحوصات الجودة والتحليلات ونماذج الذكاء الاصطناعي قبل أن تظهر لك كمؤشر بسيط أو تنبيه مفهوم.",
-        bullets: [
-          "تطبيع مؤشرات NDVI والكلوروفيل والرطوبة لكل محصول ومرحلة نمو.",
-          "دمج اتجاهات الأقمار الصناعية مع الطقس المحلي وخصائص التربة لفهم أعمق.",
-          "تحويل التحليلات المعقدة إلى توصيات عملية يمكنك تنفيذها في نفس اليوم.",
-        ],
-      },
-      {
-        title: "الري وصحة النبات والتربة في واجهة واحدة",
-        description:
-          "يُظهر العرض ثلاثي الأبعاد قوة الغطاء النباتي وتشبع التربة بالماء ومناطق الخطر، لتخطط للري والرش والمتابعة الميدانية بثقة.",
-        bullets: [
-          "متابعة منحنيات NDVI والكلوروفيل عبر الزمن لاكتشاف المشكلات قبل أن تضرب الغلة.",
-          "استخدام نطاقات تشبع الرطوبة لمعرفة أي القطع تحتاج إلى الري فعلاً.",
-          "تسجيل تحاليل التربة مرة واحدة وإعادة استخدامها في المواسم والتقارير الذكية.",
-        ],
-      },
-      {
-        title: "ملكية البيانات وخصوصيتها",
-        description:
-          "أنت مالك بيانات مزرعتك. تستخدم Adham AgriTech هذه البيانات فقط لتحليل حقولك وإنتاج رؤى قابلة للتنفيذ، مع إمكانية تصديرها في أي وقت.",
-        bullets: [
-          "تُخزَّن حدود الحقول والقراءات والتنبيهات في مساحة خاصة بحسابك.",
-          "تتم إدارة اتصال المنصة بالخدمات الخارجية بصورة آمنة دون تعقيد على المزارع.",
-          "يمكنك تصدير الجداول أو التقارير إذا أردت تشغيل تحليلاتك الخاصة.",
-        ],
-      },
-    ]
-
-  return (
-    <Card className="glass-card border-emerald-500/25 shadow-3d">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-emerald-300" />
-          {language === "ar" ? "دليل استخدام منصة Adham AgriTech" : "How to use Adham AgriTech"}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-6 md:grid-cols-2">
-          {sections.map((section) => (
-            <div
-              key={section.title}
-              className="rounded-2xl border border-white/10 bg-background/40 p-5 shadow-inner"
-            >
-              <h4 className="text-lg font-semibold text-white mb-2">{section.title}</h4>
-              <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{section.description}</p>
-              <ul className="space-y-2 text-xs text-white/80">
-                {section.bullets.map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
 }

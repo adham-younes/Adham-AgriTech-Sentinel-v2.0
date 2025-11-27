@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react"
 import maplibregl, { type StyleSpecification } from "maplibre-gl"
+import "maplibre-gl/dist/maplibre-gl.css"
 import type { FeatureCollection, Polygon } from "geojson"
 import { eosdaPublicConfig } from "@/lib/config/eosda"
 

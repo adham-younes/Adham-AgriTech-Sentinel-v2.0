@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import mapboxgl from "mapbox-gl"
-import "mapbox-gl/dist/mapbox-gl.css"
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import MapboxDraw from "@mapbox/mapbox-gl-draw"
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css"
 import area from "@turf/area"
@@ -23,7 +23,7 @@ interface FieldBoundaryEditorProps {
 }
 
 const DEFAULT_CENTER: [number, number] = [31.2357, 30.0444] // Cairo
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+// No token needed for MapLibre with Esri tiles
 
 export function FieldBoundaryEditor({
   value = null,
@@ -35,7 +35,7 @@ export function FieldBoundaryEditor({
   lang = "ar",
 }: FieldBoundaryEditorProps) {
   const mapContainerRef = useRef<HTMLDivElement | null>(null)
-  const mapRef = useRef<mapboxgl.Map | null>(null)
+  const mapRef = useRef<maplibregl.Map | null>(null)
   const drawRef = useRef<MapboxDraw | null>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
 
@@ -43,24 +43,38 @@ export function FieldBoundaryEditor({
   useEffect(() => {
     if (!mapContainerRef.current) return
     if (mapRef.current) return // Initialize only once
-    if (!MAPBOX_TOKEN) {
-      console.error("Mapbox token is missing")
-      return
-    }
 
-    mapboxgl.accessToken = MAPBOX_TOKEN
-
-    const map = new mapboxgl.Map({
+    const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: "mapbox://styles/mapbox/satellite-streets-v12", // Standard Satellite Style
+      style: {
+        version: 8,
+        sources: {
+          'esri-imagery': {
+            type: 'raster',
+            tiles: [
+              'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+            ],
+            tileSize: 256,
+            attribution: 'Esri, Maxar, Earthstar Geographics'
+          }
+        },
+        layers: [
+          {
+            id: 'esri-imagery',
+            type: 'raster',
+            source: 'esri-imagery',
+            paint: {}
+          }
+        ]
+      },
       center: initialCenter || DEFAULT_CENTER,
       zoom: initialZoom,
-      pitch: 0, // Start with 2D for easier drawing
+      pitch: 0,
       attributionControl: false,
     })
 
-    map.addControl(new mapboxgl.NavigationControl(), "top-left")
-    map.addControl(new mapboxgl.ScaleControl(), "bottom-left")
+    map.addControl(new maplibregl.NavigationControl(), "top-left");
+    map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), "bottom-left");
 
     map.on("load", () => {
       setMapLoaded(true)
@@ -173,32 +187,33 @@ export function FieldBoundaryEditor({
         ]
       })
 
-      map.addControl(draw, "top-right")
-      drawRef.current = draw
+      // Add draw control (cast to any to satisfy type system)
+      map.addControl(draw as any, "top-right");
+      drawRef.current = draw;
 
       // Event Listeners
-      map.on('draw.create', updateArea)
-      map.on('draw.delete', updateArea)
-      map.on('draw.update', updateArea)
+      map.on('draw.create', updateArea);
+      map.on('draw.delete', updateArea);
+      map.on('draw.update', updateArea);
 
       // Load initial value if present
       if (value) {
         const feature = {
           type: 'Feature',
           properties: {},
-          geometry: value
-        } as any
-        draw.add(feature)
+          geometry: value,
+        } as any;
+        draw.add(feature);
 
-        // Fit bounds
-        const bounds = new mapboxgl.LngLatBounds()
-        value.coordinates[0].forEach((coord: any) => {
-          bounds.extend(coord)
-        })
-        map.fitBounds(bounds, { padding: 50 })
+        // Fit bounds using MapLibre's LngLatBounds
+        const bounds = new maplibregl.LngLatBounds();
+        (value as any).coordinates[0].forEach((coord: any) => {
+          bounds.extend(coord);
+        });
+        map.fitBounds(bounds, { padding: 50 });
 
         // Calculate initial area
-        updateArea({ features: [feature] })
+        updateArea({ features: [feature] });
       }
     })
 

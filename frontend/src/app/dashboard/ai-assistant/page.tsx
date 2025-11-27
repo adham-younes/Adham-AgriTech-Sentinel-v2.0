@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback, type ChangeEvent, type FormEvent } from 'react'
+import { Suspense, useState, useEffect, useRef, useMemo, useCallback, type ChangeEvent, type FormEvent } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -45,7 +45,7 @@ const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
 const MAX_ATTACHMENTS = 4
 
-export default function AIAssistantPage() {
+function AIAssistantContent() {
   const { t, language, direction, toggleLanguage } = useTranslation()
   const isArabic = language === 'ar'
   const searchParams = useSearchParams()
@@ -56,6 +56,8 @@ export default function AIAssistantPage() {
   const [attachments, setAttachments] = useState<ImageAttachment[]>([])
   const [attachmentError, setAttachmentError] = useState<string | null>(null)
   const [aiReady, setAiReady] = useState<boolean | null>(null)
+  const [aiProviders, setAiProviders] = useState<any[]>([])
+  const [currentProvider, setCurrentProvider] = useState<string | null>(null)
   const [activeFieldId, setActiveFieldId] = useState(() => searchParams?.get('field') ?? '')
   const [isMobileHistoryOpen, setIsMobileHistoryOpen] = useState(false)
   const [plantReport, setPlantReport] = useState<PlantInspectionReport | null>(null)
@@ -143,6 +145,12 @@ export default function AIAssistantPage() {
         const payload = await res.json()
         if (typeof payload?.availableCount === 'number') {
           setAiReady(payload.availableCount > 0)
+          setAiProviders(payload.providers || [])
+          // Set current provider (first available one)
+          const available = (payload.providers || []).find((p: any) => p.available);
+          if (available) {
+            setCurrentProvider(available.name)
+          }
         } else {
           setAiReady(null)
         }
@@ -153,33 +161,37 @@ export default function AIAssistantPage() {
     void checkProviders()
   }, [])
 
+  // Load recent chat history for the current user from Supabase
+  const loadChatHistory = useCallback(async () => {
+    try {
+      if (!supabase) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      setChatHistory(data || []);
+    } catch (error) {
+      console.error('[AI Assistant] Error loading chat history:', error);
+    }
+  }, [supabase]);
+
+  // Load chat history on component mount when supabase is ready
+  useEffect(() => {
+    if (supabase) {
+      void loadChatHistory();
+    }
+  }, [supabase]);
+
   const exampleQuestions = useMemo(
     () => [t('ai_assistant.example1'), t('ai_assistant.example2'), t('ai_assistant.example3')],
     [language, t],
   )
   const historyToggleLabel = isMobileHistoryOpen ? t('ai_assistant.history_toggle.hide') : t('ai_assistant.history_toggle.show')
-
-  async function loadChatHistory() {
-    try {
-      if (!supabase) return
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data, error } = await supabase
-        .from('ai_chat_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10)
-
-      if (error) throw error
-      setChatHistory(data || [])
-    } catch (error) {
-      console.error('[AI Assistant] Error loading chat history:', error)
-    }
-  }
 
   const helperText = isArabic
     ? `ارفع حتى ${MAX_ATTACHMENTS} صور PNG أو JPG (بحد أقصى 8 ميجابايت لكل صورة) لتحليلها داخل منصة أدهم.`
@@ -268,16 +280,25 @@ export default function AIAssistantPage() {
     setMessages((prev) => [...prev, message])
   }
 
-  const saveHistory = async (prompt: string, reply: string) => {
+  const saveMessage = async (role: 'user' | 'assistant', content: string) => {
     if (!supabase) return
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) return
-      await supabase.from('ai_chat_history').insert({ user_id: user.id, message: prompt, response: reply, language })
+
+      await fetch('/api/ai-assistant/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          role,
+          content
+        })
+      })
     } catch (error) {
-      console.error('[AI Assistant] Error saving history:', error)
+      console.error('[AI Assistant] Error saving message:', error)
     }
   }
 
@@ -305,6 +326,9 @@ export default function AIAssistantPage() {
     setInput('')
     setIsLoading(true)
 
+    // Save user message
+    void saveMessage('user', userContent)
+
     try {
       const response = await fetch('/api/ai-assistant', {
         method: 'POST',
@@ -317,14 +341,23 @@ export default function AIAssistantPage() {
         }),
       })
 
+      // Update current provider from response headers
+      const providerName = response.headers.get('X-AI-Provider-Name')
+      if (providerName) {
+        setCurrentProvider(providerName)
+      }
+
       const data = (await response.json().catch(() => ({}))) as { reply?: unknown; error?: string; plantInsights?: PlantInspectionReport }
       if (!response.ok || !data?.reply) {
         const friendlyError = interpretAssistantError(data?.error ?? (data as any)?.message)
-        appendMessage({
+        const errorMessage: Message = {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
           content: friendlyError,
-        })
+        }
+        appendMessage(errorMessage)
+        void saveMessage('assistant', friendlyError)
+
         if (usedAttachments) {
           setPlantReport(null)
         }
@@ -344,13 +377,15 @@ export default function AIAssistantPage() {
         content: replyContent,
       }
       appendMessage(assistantMessage)
-      await saveHistory(userContent, replyContent)
+      void saveMessage('assistant', replyContent)
     } catch (error) {
       console.error('[AI Assistant] Request failed:', error)
       const fallback = isArabic
         ? 'تعذر إرسال الطلب، يرجى المحاولة مرة أخرى بعد قليل.'
         : 'Unable to reach the assistant. Please try again shortly.'
-      appendMessage({ id: `assistant-${Date.now()}`, role: 'assistant', content: fallback })
+      const errorMessage: Message = { id: `assistant-${Date.now()}`, role: 'assistant', content: fallback }
+      appendMessage(errorMessage)
+      void saveMessage('assistant', fallback)
     } finally {
       setAttachments([])
       setAttachmentError(null)
@@ -525,13 +560,23 @@ export default function AIAssistantPage() {
 
       <div className="grid gap-6 xl:gap-8 lg:grid-cols-1 xl:grid-cols-[minmax(0,3.5fr)_minmax(320px,1fr)]">
         <div className="space-y-4">
-          <Card className="flex flex-col min-h-[72dvh] sm:min-h-[480px] lg:min-h-[520px] xl:h-[820px]">
+          <Card className="flex flex-col h-[calc(100vh-180px)] overflow-hidden border-none shadow-lg bg-card/50 backdrop-blur-sm">
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+              {currentProvider && (
+                <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-2 text-xs flex items-center justify-between">
+                  <span className="text-emerald-200">
+                    {isArabic ? '🤖 المزود الحالي:' : '🤖 Current AI Provider:'} <strong>{currentProvider}</strong>
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    {isArabic ? 'نشط' : 'Active'}
+                  </Badge>
+                </div>
+              )}
               {aiReady === false && (
                 <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
                   {isArabic
-                    ? 'المساعد غير متاح حاليًا على هذا الحساب. إذا استمر ظهور هذه الرسالة، يرجى التواصل مع مسؤول المنصة.'
-                    : 'The assistant is currently unavailable for this workspace. If this keeps appearing, please contact your platform administrator.'}
+                    ? 'المساعد غير متاح حاليًا. تأكد من تكوين OPENAI_API_KEY أو XAI_API_KEY في متغيرات البيئة.'
+                    : 'The assistant is currently unavailable. Please ensure OPENAI_API_KEY or XAI_API_KEY is configured in environment variables.'}
                 </div>
               )}
               {messages.length === 0 ? (
@@ -698,5 +743,13 @@ export default function AIAssistantPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AIAssistantPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <AIAssistantContent />
+    </Suspense>
   )
 }

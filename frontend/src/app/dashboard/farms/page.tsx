@@ -1,18 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, MapPin, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useTranslation } from "@/lib/i18n/use-language"
+import { FarmAnalyticsMap, type FarmAnalyticsFeature } from "@/components/maps/farm-analytics-map"
 
 export default function FarmsPage() {
   const { language, setLanguage } = useTranslation()
   const [farms, setFarms] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [lang, setLang] = useState<"ar" | "en">(language === "en" ? "en" : "ar")
+  const [fields, setFields] = useState<FarmAnalyticsFeature[]>([])
+  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null)
 
   const supabase = createClient()
 
@@ -33,7 +36,7 @@ export default function FarmsPage() {
         fetchFarms()
       }
     }
-    
+
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
@@ -41,15 +44,15 @@ export default function FarmsPage() {
   async function fetchFarms(retryCount = 0) {
     setLoading(true)
     let currentUser = null
-    
+
     try {
       const {
         data: { user },
         error: authError,
       } = await supabase.auth.getUser()
-      
+
       currentUser = user // Store user for fallback
-      
+
       if (authError) throw authError
       if (!user) {
         console.log("[Farms] No user found, showing empty state")
@@ -70,19 +73,19 @@ export default function FarmsPage() {
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         }
       })
-      
+
       if (!response.ok) {
         console.error("[Farms] API response error:", response.status, response.statusText)
-        
+
         // Retry if it's a server error
         if (response.status >= 500 && retryCount < 3) {
           console.log(`[Farms] Retrying... Attempt ${retryCount + 1}/3`)
           return fetchFarms(retryCount + 1)
         }
-        
+
         throw new Error(`Failed to fetch farms: ${response.statusText}`)
       }
-      
+
       const data = await response.json()
       console.log("[Farms] Farms data received:", data)
       setFarms(data.farms || [])
@@ -124,6 +127,64 @@ export default function FarmsPage() {
       setLoading(false)
     }
   }
+
+  // Convert farms and their fields into map features
+  useEffect(() => {
+    const mapFeatures: FarmAnalyticsFeature[] = []
+
+    farms.forEach((farm) => {
+      if (farm.fields && Array.isArray(farm.fields)) {
+        farm.fields.forEach((field: any) => {
+          const parsedCoords = field.boundary_coordinates
+          let polygon: [number, number][] | null = null
+
+          // Parse boundary coordinates
+          if (Array.isArray(parsedCoords) && parsedCoords.length > 0) {
+            polygon = parsedCoords.map((coord: any) => {
+              if (Array.isArray(coord) && coord.length === 2) {
+                return [Number(coord[0]), Number(coord[1])] as [number, number]
+              }
+              return null
+            }).filter((p): p is [number, number] => p !== null)
+          }
+
+          // Calculate center
+          let center: [number, number] = [31.2001, 29.9187] // Default to Egypt
+          if (polygon && polygon.length > 0) {
+            const sumLng = polygon.reduce((sum, p) => sum + p[0], 0)
+            const sumLat = polygon.reduce((sum, p) => sum + p[1], 0)
+            center = [sumLng / polygon.length, sumLat / polygon.length]
+          } else if (field.latitude && field.longitude) {
+            center = [Number(field.longitude), Number(field.latitude)]
+          }
+
+          mapFeatures.push({
+            id: field.id,
+            name: field.name || (lang === "ar" ? "حقل غير مسمى" : "Unnamed field"),
+            crop: field.crop_type || null,
+            areaFeddan: field.area ? Number(field.area) : null,
+            ndvi: field.last_ndvi || field.ndvi_score ? Number(field.last_ndvi || field.ndvi_score) : null,
+            moisture: field.last_moisture || field.moisture_index ? Number(field.last_moisture || field.moisture_index) : null,
+            yieldPotential: null,
+            health: field.last_ndvi ? Number(field.last_ndvi) : null,
+            lastUpdated: null,
+            center,
+            polygon: polygon && polygon.length >= 3 ? polygon : [
+              [center[0] - 0.001, center[1] - 0.001],
+              [center[0] + 0.001, center[1] - 0.001],
+              [center[0] + 0.001, center[1] + 0.001],
+              [center[0] - 0.001, center[1] + 0.001],
+            ],
+          })
+        })
+      }
+    })
+
+    setFields(mapFeatures)
+    if (mapFeatures.length > 0) {
+      setSelectedFieldId(mapFeatures[0].id)
+    }
+  }, [farms, lang])
 
   const t = {
     ar: {
@@ -175,6 +236,31 @@ export default function FarmsPage() {
           </Link>
         </div>
       </div>
+
+      {/* Farm Fields Map */}
+      {!loading && fields.length > 0 && (
+        <Card className="glass-card border-white/10 shadow-depth">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+              {lang === "ar" ? "خريطة الحقول" : "Fields Map"}
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              {lang === "ar"
+                ? "عرض جميع الحقول على الخريطة الفضائية"
+                : "View all fields on satellite map"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FarmAnalyticsMap
+              fields={fields}
+              selectedFieldId={selectedFieldId}
+              onFieldSelect={setSelectedFieldId}
+              isLoading={false}
+              error={null}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12">

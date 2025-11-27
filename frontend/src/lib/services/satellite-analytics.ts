@@ -255,10 +255,35 @@ export class SatelliteAnalyticsService {
         polygon: [number, number][]
     ): Promise<CropHealthMetrics> {
         try {
+            // Fetch real data from EOSDA API via our proxy
+            let currentNDVI = 0.7;
+            let moistureValue = 45;
+
+            try {
+                const response = await fetch('/api/eosda/imagery', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fieldId, polygon, index: 'ndvi' })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.statistics && typeof data.statistics.mean === 'number') {
+                        currentNDVI = data.statistics.mean;
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to fetch real EOSDA data, using fallback', e);
+            }
+
             const ndviData = await this.getNDVITimeSeries(fieldId, 90)
+            // Update the last point in time series to match real data if available
+            if (ndviData.length > 0) {
+                ndviData[ndviData.length - 1].value = currentNDVI;
+            }
+
             const soilMoisture = await this.getSoilMoisture(fieldId, polygon)
 
-            const currentNDVI = ndviData[ndviData.length - 1]?.value || 0.7
             const last30Days = ndviData.slice(-30)
             const avg30d = last30Days.reduce((sum, d) => sum + d.value, 0) / last30Days.length
 

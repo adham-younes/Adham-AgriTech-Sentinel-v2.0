@@ -21,6 +21,7 @@ import {
   Activity,
   Satellite,
   Code,
+  BarChart3,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -47,7 +48,7 @@ const navigationItems = {
   irrigation: { translationKey: "navigation.irrigation", href: "/dashboard/irrigation", icon: Droplets, status: "beta" as NavStatus },
   agronomy: { translationKey: "navigation.agronomy_insights", href: "/dashboard/agronomy-insights", icon: BrainCircuit },
   reports: { translationKey: "navigation.reports", href: "/dashboard/reports", icon: FileText },
-  notifications: { translationKey: "navigation.notifications", href: "/dashboard/notifications", icon: Bell, status: "beta" as NavStatus },
+  analytics: { translationKey: "navigation.analytics", href: "/dashboard/analytics", icon: BarChart3, status: "beta" as NavStatus },
   marketplace: { translationKey: "navigation.marketplace", href: "/dashboard/marketplace", icon: ShoppingCart },
   forum: { translationKey: "navigation.forum", href: "/dashboard/forum", icon: Users },
   services: { translationKey: "navigation.services", href: "/dashboard/services", icon: Activity },
@@ -145,8 +146,8 @@ export function DashboardSidebar({ user, profile }: SidebarProps) {
                                 navStatusTokens[(item as any).status as keyof typeof navStatusTokens]?.className,
                               )}
                             >
-                              {language === "ar" 
-                                ? navStatusTokens[(item as any).status as keyof typeof navStatusTokens]?.ar 
+                              {language === "ar"
+                                ? navStatusTokens[(item as any).status as keyof typeof navStatusTokens]?.ar
                                 : navStatusTokens[(item as any).status as keyof typeof navStatusTokens]?.en
                               }
                             </span>

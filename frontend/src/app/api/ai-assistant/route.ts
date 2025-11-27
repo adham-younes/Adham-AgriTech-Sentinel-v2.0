@@ -183,7 +183,7 @@ async function buildSatelliteContext(fieldId?: string, language: string = "ar") 
     const soilPhosphorus = typeof (data as any)?.soil_phosphorus === "number" ? nf.format((data as any).soil_phosphorus) : null
     const soilPotassium = typeof (data as any)?.soil_potassium === "number" ? nf.format((data as any).soil_potassium) : null
     const cropType = (data as any)?.crop_type || null
-    const plantingDate = (data as any)?.planting_date 
+    const plantingDate = (data as any)?.planting_date
       ? new Intl.DateTimeFormat(language === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium" }).format(new Date((data as any).planting_date))
       : null
     const ndviValue = typeof ndvi?.ndvi_value === "number" ? nf.format(ndvi.ndvi_value) : null
@@ -723,7 +723,7 @@ export async function POST(request: Request) {
 
   const runWithTimeout = async (provider: typeof active) => {
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 10_000) // 10s per provider
+    const timeout = setTimeout(() => controller.abort(), 60_000) // 60s per provider
     try {
       const messagesWithContext = buildConversation(provider.provider.capabilities.vision)
       const result = await generateText({

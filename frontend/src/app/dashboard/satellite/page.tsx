@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { FarmAnalyticsMap, type FarmAnalyticsFeature } from "@/components/maps/farm-analytics-map"
-import { AdvancedSatelliteMap } from "@/components/satellite/advanced-satellite-map"
+// TEMPORARILY DISABLED - Leaflet initialization issues causing blank page
+// import { AdvancedSatelliteMap } from "@/components/satellite/advanced-satellite-map"
 import { DynamicSoilAnalysis } from "@/components/soil/dynamic-soil-analysis"
 import { AdvancedVRAMaps } from "@/components/precision/advanced-vra-maps-fixed"
 import { useTranslation } from "@/lib/i18n/use-language"
@@ -1054,7 +1055,10 @@ export default function SatellitePage() {
           </CardContent>
         </Card>
 
-        {/* Advanced Satellite Map */}
+        {/* Advanced Satellite Map - TEMPORARILY DISABLED */}
+        {/* Component has Leaflet initialization issues causing TypeError and blank page */}
+        {/* The FarmAnalyticsMap above (line 717) provides the core satellite visualization */}
+        {/*
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-emerald-300">
@@ -1076,6 +1080,7 @@ export default function SatellitePage() {
             />
           </CardContent>
         </Card>
+        */}
 
         {/* Dynamic Soil Analysis */}
         {selectedField && (
