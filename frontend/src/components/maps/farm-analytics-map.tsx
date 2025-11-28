@@ -67,22 +67,24 @@ const LAYER_CONFIG: Record<MapLayer, { name: { ar: string; en: string }; url: st
 const EOSDA_API_KEY = process.env.NEXT_PUBLIC_EOSDA_API_KEY?.trim() || ""
 
 function getLayerUrl(layer: MapLayer) {
-  const baseUrl = LAYER_CONFIG[layer].url
   // EOSDA API requires X-Api-Key header ONLY (not query parameter)
   // Since MapLibre GL doesn't support custom headers, we use proxy endpoint
   if (EOSDA_API_KEY) {
-    // Use proxy endpoint that adds X-Api-Key header
-    // Extract viewId from baseUrl if it's a render endpoint, otherwise use LMS tiles endpoint
-    if (baseUrl.includes('/api/render/')) {
-      // For render API, we need viewId - this will be handled by the component
-      return baseUrl
-    } else {
-      // For LMS tiles, use proxy endpoint
-      const tilePath = baseUrl.replace('https://api-connect.eos.com', '')
-      return `/api/eosda/proxy?path=${encodeURIComponent(tilePath)}`
+    // Map layer names to EOSDA LMS tile layer names
+    const layerMap: Record<MapLayer, string> = {
+      'true-color': 'sentinel2l2a',
+      'ndvi': 'ndvi',
+      'ndmi': 'ndmi',
+      'evi': 'evi',
+      'soil-moisture': 'soil_moisture',
+      'chlorophyll': 'chlorophyll',
     }
+    const eosdaLayer = layerMap[layer] || 'sentinel2l2a'
+    // Use proxy endpoint that adds X-Api-Key header
+    return `/api/eosda/tiles/{z}/{x}/{y}?layer=${eosdaLayer}`
   }
-  return baseUrl
+  // Fallback to original URL if no API key
+  return LAYER_CONFIG[layer].url
 }
 
 function withDefaultSentinelParams(url?: string) {
