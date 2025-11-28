@@ -493,30 +493,32 @@ export function FarmAnalyticsMap({
         <div className="relative">
           <button
             onClick={() => setShowLayers(!showLayers)}
-            className="flex items-center gap-2 bg-black/80 border border-white/20 rounded-lg px-3 py-2 text-white hover:bg-black/90 transition-colors"
+            className="flex items-center gap-2 glass-card border-emerald-500/30 px-3 py-2 text-white hover:bg-emerald-500/20 transition-all shadow-lg backdrop-blur-md"
           >
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: LAYER_CONFIG[activeLayer].color }} />
+            <span className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: LAYER_CONFIG[activeLayer].color }} />
             <span className="text-xs font-medium">{LAYER_CONFIG[activeLayer].name[lang === "ar" ? "ar" : "en"]}</span>
           </button>
 
           {showLayers && (
-            <div className="absolute top-full right-0 mt-2 w-48 bg-black/90 border border-white/20 rounded-xl overflow-hidden shadow-xl backdrop-blur-md">
-              {Object.entries(LAYER_CONFIG).map(([key, config]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    setActiveLayer(key as MapLayer)
-                    setShowLayers(false)
-                  }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs transition-colors ${activeLayer === key
-                    ? "bg-white/10 text-white font-medium"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                    }`}
-                >
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: config.color }} />
-                  {config.name[lang === "ar" ? "ar" : "en"]}
-                </button>
-              ))}
+            <div className="absolute top-full right-0 mt-2 w-56 glass-card border-emerald-500/20 rounded-xl overflow-hidden shadow-xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-2 space-y-1">
+                {Object.entries(LAYER_CONFIG).map(([key, config]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setActiveLayer(key as MapLayer)
+                      setShowLayers(false)
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-all ${activeLayer === key
+                      ? "bg-emerald-500/20 text-emerald-300 font-medium border border-emerald-500/30"
+                      : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
+                      }`}
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: config.color }} />
+                    {config.name[lang === "ar" ? "ar" : "en"]}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>

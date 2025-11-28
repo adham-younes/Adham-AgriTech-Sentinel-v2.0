@@ -635,86 +635,103 @@ export default function SatellitePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent">
-            {t("satellite3d.title")}
-          </h1>
-          <p className="text-gray-400 mt-2 max-w-2xl">{t("satellite3d.subtitle")}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{language === "ar" ? "المزوّد:" : "Provider:"}</span>
-            <select
-              className="rounded-md border bg-background px-2 py-1 text-foreground/80"
-              value={provider}
-              onChange={(e) => setProvider(e.target.value as any)}
-            >
-              <option value="sentinel">{language === "ar" ? "سنتينل هب" : "Sentinel Hub"}</option>
-              <option value="eosda">Satellite View</option>
-              <option value="auto">Auto</option>
-            </select>
+      {/* Header */}
+      <div className="glass-card p-6 rounded-2xl">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-primary bg-clip-text text-transparent flex items-center gap-3">
+              <Activity className="h-8 w-8 text-emerald-400" />
+              {t("satellite3d.title")}
+              <Badge variant="outline" className="ml-2 border-amber-500/50 text-amber-400 bg-amber-500/10">
+                {satelliteAutomationEnabled ? "Live Data" : "Simulation Mode"}
+              </Badge>
+            </h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl">{t("satellite3d.subtitle")}</p>
           </div>
-          <Button
-            variant="outline"
-            className="glass-card border-white/10 flex items-center gap-2"
-            disabled={isLoading}
-          >
-            <Download className="h-4 w-4" />
-            <span>{t("satellite3d.actions.export")}</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground bg-black/20 px-3 py-1.5 rounded-full border border-white/5">
+              <span>{language === "ar" ? "المزوّد:" : "Provider:"}</span>
+              <select
+                className="bg-transparent border-none text-emerald-400 font-medium focus:ring-0 cursor-pointer"
+                value={provider}
+                onChange={(e) => setProvider(e.target.value as any)}
+              >
+                <option value="sentinel">{language === "ar" ? "سنتينل هب" : "Sentinel Hub"}</option>
+                <option value="eosda">EOSDA (Pro)</option>
+                <option value="auto">Auto Select</option>
+              </select>
+            </div>
+            <Button
+              variant="outline"
+              className="glass-card border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 flex items-center gap-2"
+              disabled={isLoading}
+            >
+              <Download className="h-4 w-4" />
+              <span>{t("satellite3d.actions.export")}</span>
+            </Button>
+          </div>
         </div>
       </div>
 
       {requiresLogin && (
-        <div className="rounded-xl border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100">
-          يجب تسجيل الدخول لعرض الحقول الخاصة بك. <a href="/auth/login" className="underline">تسجيل الدخول</a>
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+          يجب تسجيل الدخول لعرض الحقول الخاصة بك. <a href="/auth/login" className="underline hover:text-amber-300">تسجيل الدخول</a>
         </div>
       )}
       {errorMessage && (
-        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100 flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-red-500" />
           {errorMessage}
         </div>
       )}
 
       {/* Empty state for new users */}
       {!isLoading && !errorMessage && !requiresLogin && fields.length === 0 && (
-        <div className="rounded-xl border border-white/10 bg-background/40 p-6">
-          <p className="text-sm text-muted-foreground mb-3">
+        <div className="glass-card p-8 text-center">
+          <div className="mx-auto w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4">
+            <Leaf className="h-8 w-8 text-emerald-400" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">
+            {language === "ar" ? "ابدأ رحلتك الزراعية" : "Start Your Farming Journey"}
+          </h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             {language === "ar"
               ? "لا توجد حقول بعد. أضف مزرعة وحقلاً لعرض التحليلات، أو زر ثورة الزراعة الرقمية لتعلّم كيفية رسم الحدود."
               : "No fields yet. Add a farm and field to view the analytics, or visit the Digital Agriculture Revolution to learn how to map boundaries."}
           </p>
-          <div className="flex gap-2">
-            <Link href="/dashboard/farms" className="underline text-primary">
-              {language === "ar" ? "إدارة المزارع" : "Manage Farms"}
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link href="/dashboard/farms">
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                {language === "ar" ? "إدارة المزارع" : "Manage Farms"}
+              </Button>
             </Link>
-            <span className="text-muted-foreground">•</span>
-            <Link href="/dashboard/fields/new" className="underline text-primary">
-              {language === "ar" ? "إضافة حقل" : "Add Field"}
-            </Link>
-            <span className="text-muted-foreground">•</span>
-            <Link href="/knowledge-hub" className="underline text-primary">
-              {language === "ar" ? "ثورة الزراعة الرقمية" : "Digital Agriculture Revolution"}
+            <Link href="/dashboard/fields/new">
+              <Button variant="outline" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
+                {language === "ar" ? "إضافة حقل" : "Add Field"}
+              </Button>
             </Link>
           </div>
         </div>
       )}
 
       <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
-        <Card className="glass-card">
-          <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <Card className="glass-card border-emerald-500/20">
+          <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-white/5 pb-4">
             <div>
-              <CardTitle>{t("satellite3d.live_view")}</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-emerald-400" />
+                {t("satellite3d.live_view")}
+              </CardTitle>
               <CardDescription>{t("satellite3d.analysis_panel")}</CardDescription>
             </div>
             {selectedField && (
-              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40">
+              <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-3 py-1">
                 {selectedField.name}
               </Badge>
             )}
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 sm:p-6">
             <FarmAnalyticsMap
               fields={fields}
               selectedFieldId={selectedFieldId}
@@ -726,11 +743,11 @@ export default function SatellitePage() {
         </Card>
 
         <div className="space-y-4">
-          <Card className="glass-card">
-            <CardHeader className="flex flex-col gap-2">
+          <Card className="glass-card border-emerald-500/20">
+            <CardHeader className="flex flex-col gap-2 border-b border-white/5 pb-4">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <CardTitle>{selectedField?.name ?? t("satellite3d.select_prompt")}</CardTitle>
+                  <CardTitle className="text-lg">{selectedField?.name ?? t("satellite3d.select_prompt")}</CardTitle>
                   <CardDescription>
                     {selectedField?.crop ?? t("satellite3d.select_prompt")}
                   </CardDescription>
@@ -739,59 +756,68 @@ export default function SatellitePage() {
                   <Badge
                     className={
                       diseaseRisk.level === "high"
-                        ? "bg-amber-500/20 text-amber-100 border-amber-500/50"
+                        ? "bg-red-500/20 text-red-200 border-red-500/50"
                         : diseaseRisk.level === "medium"
-                          ? "bg-amber-500/20 text-amber-100 border-amber-500/50"
-                          : "bg-emerald-500/20 text-emerald-100 border-emerald-500/40"
+                          ? "bg-amber-500/20 text-amber-200 border-amber-500/50"
+                          : "bg-emerald-500/20 text-emerald-200 border-emerald-500/40"
                     }
                   >
                     {language === "ar"
-                      ? `مؤشر إنذار مبكر: ${diseaseRisk.level === "high" ? "مرتفع" : diseaseRisk.level === "medium" ? "متوسط" : "منخفض"
-                      } (${diseaseRisk.score}٪)`
-                      : `Early‑warning index: ${diseaseRisk.level === "high" ? "High" : diseaseRisk.level === "medium" ? "Medium" : "Low"
+                      ? `خطر: ${diseaseRisk.level === "high" ? "مرتفع" : diseaseRisk.level === "medium" ? "متوسط" : "منخفض"
+                      } (${diseaseRisk.score}%)`
+                      : `Risk: ${diseaseRisk.level === "high" ? "High" : diseaseRisk.level === "medium" ? "Medium" : "Low"
                       } (${diseaseRisk.score}%)`}
                   </Badge>
                 )}
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-4">
               {selectedField ? (
                 <>
                   <div className="grid gap-3 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">NDVI</span>
-                      <span className="font-semibold text-emerald-300">{ndviLabel}</span>
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                      <span className="text-gray-400 flex items-center gap-2">
+                        <Leaf className="h-4 w-4 text-emerald-500" />
+                        NDVI (Health)
+                      </span>
+                      <span className="font-bold text-emerald-400">{ndviLabel}</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">{t("satellite3d.moisture")}</span>
-                      <span className="font-semibold text-sky-300">{moistureLabel}</span>
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                      <span className="text-gray-400 flex items-center gap-2">
+                        <Droplets className="h-4 w-4 text-sky-500" />
+                        {t("satellite3d.moisture")}
+                      </span>
+                      <span className="font-bold text-sky-400">{moistureLabel}</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">{t("satellite3d.yield")}</span>
-                      <span className="font-semibold text-yellow-300">{yieldLabel}</span>
+                    <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                      <span className="text-gray-400 flex items-center gap-2">
+                        <LineChart className="h-4 w-4 text-amber-500" />
+                        {t("satellite3d.yield")}
+                      </span>
+                      <span className="font-bold text-amber-400">{yieldLabel}</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">{t("satellite3d.last_updated")}</span>
-                      <span className="font-medium text-gray-200">
+                    <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                      <span className="text-xs text-gray-500">{t("satellite3d.last_updated")}</span>
+                      <span className="text-xs font-mono text-gray-400">
                         {formattedCaptureDate ?? "—"}
                       </span>
                     </div>
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-gray-400">{t("satellite3d.select_prompt")}</p>
+                <p className="text-sm text-gray-400 text-center py-4">{t("satellite3d.select_prompt")}</p>
               )}
             </CardContent>
           </Card>
 
           <div className="space-y-4">
-            <Card className="glass-card">
-              <CardHeader className="flex flex-col gap-2">
+            <Card className="glass-card border-emerald-500/20">
+              <CardHeader className="flex flex-col gap-2 border-b border-white/5 pb-4">
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <CardTitle>{selectedField?.name ?? t("satellite3d.select_prompt")}</CardTitle>
-                    <CardDescription>
-                      {selectedField?.crop ?? t("satellite3d.select_prompt")}
+                    <CardTitle className="text-base">AI Analysis</CardTitle>
+                    <CardDescription className="text-xs">
+                      Powered by Gemini & EOSDA
                     </CardDescription>
                   </div>
                   {diseaseRisk && (
