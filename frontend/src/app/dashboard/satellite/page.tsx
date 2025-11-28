@@ -672,7 +672,7 @@ export default function SatellitePage() {
         </div>
       )}
       {errorMessage && (
-        <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
           {errorMessage}
         </div>
       )}
@@ -739,7 +739,7 @@ export default function SatellitePage() {
                   <Badge
                     className={
                       diseaseRisk.level === "high"
-                        ? "bg-red-500/20 text-red-100 border-red-500/50"
+                        ? "bg-amber-500/20 text-amber-100 border-amber-500/50"
                         : diseaseRisk.level === "medium"
                           ? "bg-amber-500/20 text-amber-100 border-amber-500/50"
                           : "bg-emerald-500/20 text-emerald-100 border-emerald-500/40"

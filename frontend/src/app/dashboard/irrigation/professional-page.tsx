@@ -238,7 +238,7 @@ export default function ProfessionalIrrigationPage() {
 
   const getStatusColor = (value: number, optimal: { min: number; max: number }) => {
     if (value < optimal.min) return "text-orange-600 bg-orange-50 border-orange-200"
-    if (value > optimal.max) return "text-red-600 bg-red-50 border-red-200"
+    if (value > optimal.max) return "text-amber-600 bg-amber-50 border-amber-200"
     return "text-green-600 bg-green-50 border-green-200"
   }
 
@@ -288,7 +288,7 @@ export default function ProfessionalIrrigationPage() {
     if (score >= 85) return { status: t.excellentCondition, color: "bg-emerald-500", textColor: "text-emerald-700", borderColor: "border-emerald-200" }
     if (score >= 70) return { status: t.wellBalanced, color: "bg-green-500", textColor: "text-green-700", borderColor: "border-green-200" }
     if (score >= 50) return { status: t.needsAttention, color: "bg-yellow-500", textColor: "text-yellow-700", borderColor: "border-yellow-200" }
-    return { status: t.criticalIssues, color: "bg-red-500", textColor: "text-red-700", borderColor: "border-red-200" }
+    return { status: t.criticalIssues, color: "bg-amber-500", textColor: "text-amber-700", borderColor: "border-amber-200" }
   }
 
   const getRecommendations = (system: IrrigationSystemData) => {
@@ -663,4 +663,7 @@ export default function ProfessionalIrrigationPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
 

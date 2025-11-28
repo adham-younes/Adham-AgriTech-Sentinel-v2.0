@@ -4,11 +4,10 @@ import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Plus, Loader2, MapPin } from "lucide-react"
+import { Plus, Loader2, MapPin, Leaf, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { useTranslation } from "@/lib/i18n/use-language"
 import { ProfessionalFieldCard } from "@/components/ui/professional-field-card"
-import { formatDateTimeLocale } from "@/lib/utils/date"
 import { useSearchParams } from "next/navigation"
 
 export default function FieldsPage() {
@@ -123,6 +122,8 @@ export default function FieldsPage() {
       moisture: "رطوبة المحصول",
       lastReading: "آخر قراءة",
       criticalOnly: "الحقول الحرجة فقط",
+      aiPowered: "مراقبة ذكية",
+      aiDesc: "نظام مراقبة متكامل يستخدم صور الأقمار الصناعية والذكاء الاصطناعي لتحليل صحة المحاصيل وتوفير توصيات ري دقيقة.",
     },
     en: {
       title: "Fields",
@@ -137,6 +138,8 @@ export default function FieldsPage() {
       moisture: "Crop moisture",
       lastReading: "Last reading",
       criticalOnly: "Critical Fields Only",
+      aiPowered: "Smart Monitoring",
+      aiDesc: "Integrated monitoring system using satellite imagery and AI to analyze crop health and provide precise irrigation recommendations.",
     },
   } as const
 
@@ -167,42 +170,56 @@ export default function FieldsPage() {
   return (
     <div className="space-y-6 min-h-screen">
       {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-amber-400 bg-clip-text text-transparent">
-            {t[lang].title}
-          </h1>
-          <p className="text-gray-400 mt-2">
-            {t[lang].subtitle}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            className="gap-2 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/50"
-            onClick={() => {
-              const next = lang === "ar" ? "en" : "ar"
-              setLang(next)
-              setLanguage(next)
-            }}
-          >
-            {lang === "ar" ? "EN" : "ع"}
-          </Button>
-          <Link href="/dashboard/fields/new">
-            <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-              <Plus className="h-4 w-4 mr-2" />
-              {t[lang].addField}
+      <div className="glass-card p-6 rounded-2xl">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-primary bg-clip-text text-transparent flex items-center gap-3">
+              <Leaf className="h-8 w-8 text-emerald-400" />
+              {t[lang].title}
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              {t[lang].subtitle}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="gap-2 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/50"
+              onClick={() => {
+                const next = lang === "ar" ? "en" : "ar"
+                setLang(next)
+                setLanguage(next)
+              }}
+            >
+              {lang === "ar" ? "EN" : "ع"}
             </Button>
-          </Link>
+            <Link href="/dashboard/fields/new">
+              <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                {t[lang].addField}
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
+
+      {/* AI Info Card */}
+      <Card className="glass-card border-emerald-400/20 p-4">
+        <div className="flex items-start gap-3">
+          <Sparkles className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-semibold text-white mb-1">{t[lang].aiPowered}</p>
+            <p className="text-muted-foreground">{t[lang].aiDesc}</p>
+          </div>
+        </div>
+      </Card>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
         </div>
       ) : visibleFields.length === 0 ? (
-        <Card className="p-12 text-center">
+        <Card className="glass-card p-12 text-center">
           <div className="mx-auto max-w-md space-y-4">
             <div className="mx-auto h-16 w-16 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30">
               <MapPin className="h-8 w-8 text-emerald-400" />
@@ -210,7 +227,7 @@ export default function FieldsPage() {
             <h3 className="text-2xl font-bold text-gray-300">{t[lang].noFields}</h3>
             <p className="text-gray-400">{t[lang].noFieldsDesc}</p>
             <Link href="/dashboard/fields/new">
-              <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+              <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 {t[lang].addField}
               </Button>
