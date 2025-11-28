@@ -4,17 +4,16 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-// Load environment variables from .env.local
-const envPath = path.join(__dirname, '..', '.env.local');
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  envContent.split('\n').forEach(line => {
-    const [key, ...valueParts] = line.split('=');
-    if (key && valueParts.length > 0) {
-      process.env[key.trim()] = valueParts.join('=').trim();
-    }
-  });
-}
+// Load environment variables using dotenv
+const dotenv = require('dotenv');
+
+// Try loading from frontend/.env.local
+const frontendEnvPath = path.join(__dirname, '..', 'frontend', '.env.local');
+dotenv.config({ path: frontendEnvPath });
+
+// Also try root .env.local as backup
+const rootEnvPath = path.join(__dirname, '..', '.env.local');
+dotenv.config({ path: rootEnvPath });
 
 const colors = {
   green: '\x1b[32m',
@@ -43,13 +42,13 @@ function makeRequest(url, options = {}) {
         }
       });
     });
-    
+
     req.on('error', reject);
     req.setTimeout(10000, () => {
       req.destroy();
       reject(new Error('Request timeout'));
     });
-    
+
     if (options.body) {
       req.write(options.body);
     }
@@ -66,7 +65,7 @@ async function testSupabase() {
         'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`
       }
     });
-    
+
     if (response.status === 200) {
       log('✅ Supabase: Working perfectly!', 'green');
       return true;
@@ -95,7 +94,7 @@ async function testOpenAI() {
         max_tokens: 50
       })
     });
-    
+
     if (response.status === 200 && response.data.choices) {
       log('✅ OpenAI: Working perfectly!', 'green');
       log(`   Response: ${response.data.choices[0].message.content}`, 'green');
@@ -168,9 +167,9 @@ async function testOpenWeather() {
       log('   Please get your API key from: https://openweathermap.org/api', 'yellow');
       return false;
     }
-    
+
     const response = await makeRequest(`https://api.openweathermap.org/data/2.5/weather?q=Luxor,EG&appid=${process.env.OPENWEATHER_API_KEY}&units=metric&lang=ar`);
-    
+
     if (response.status === 200 && response.data.main) {
       log('✅ OpenWeather: Working perfectly!', 'green');
       log(`   Temperature: ${response.data.main.temp}°C`, 'green');
@@ -188,7 +187,7 @@ async function testOpenWeather() {
 async function main() {
   log('🚀 Adham AgriTech - API Status Checker', 'bold');
   log('=====================================', 'bold');
-  
+
   const results = {
     supabase: await testSupabase(),
     openai: await testOpenAI(),
@@ -196,14 +195,14 @@ async function main() {
     etherscan: await testEtherscan(),
     openweather: await testOpenWeather()
   };
-  
+
   const working = Object.values(results).filter(Boolean).length;
   const total = Object.keys(results).length;
-  
+
   log('\n📊 Summary:', 'bold');
   log('==========', 'bold');
   log(`✅ Working: ${working}/${total} APIs`, working === total ? 'green' : 'yellow');
-  
+
   if (working < total) {
     log('\n🔧 Next Steps:', 'yellow');
     if (!results.openweather) {
@@ -213,7 +212,7 @@ async function main() {
       log('2. Update Etherscan to V2 API', 'yellow');
     }
   }
-  
+
   log('\n🎉 API testing complete!', 'green');
 }
 
