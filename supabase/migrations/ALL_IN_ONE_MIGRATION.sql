@@ -297,10 +297,10 @@ BEGIN
 END $$;
 
 -- ============================================================================
--- SECTION 10: Security Fixes
+-- SECTION 10: Security Fixes (Optional)
 -- ============================================================================
 
--- RLS on spatial_ref_sys
+-- RLS on spatial_ref_sys (optional - requires ownership, may fail)
 DO $$
 BEGIN
   IF EXISTS (
@@ -308,15 +308,22 @@ BEGIN
     WHERE table_schema = 'public' 
     AND table_name = 'spatial_ref_sys'
   ) THEN
-    ALTER TABLE public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
-    
-    DROP POLICY IF EXISTS "Allow public read access to spatial_ref_sys" ON public.spatial_ref_sys;
-    CREATE POLICY "Allow public read access to spatial_ref_sys"
-    ON public.spatial_ref_sys FOR SELECT
-    TO public
-    USING (true);
-    
-    RAISE NOTICE '✅ RLS enabled on spatial_ref_sys';
+    BEGIN
+      ALTER TABLE public.spatial_ref_sys ENABLE ROW LEVEL SECURITY;
+      
+      DROP POLICY IF EXISTS "Allow public read access to spatial_ref_sys" ON public.spatial_ref_sys;
+      CREATE POLICY "Allow public read access to spatial_ref_sys"
+      ON public.spatial_ref_sys FOR SELECT
+      TO public
+      USING (true);
+      
+      RAISE NOTICE '✅ RLS enabled on spatial_ref_sys';
+    EXCEPTION
+      WHEN insufficient_privilege THEN
+        RAISE NOTICE 'ℹ️ Skipped RLS on spatial_ref_sys (insufficient privileges)';
+      WHEN OTHERS THEN
+        RAISE NOTICE 'ℹ️ Skipped RLS on spatial_ref_sys (not supported)';
+    END;
   END IF;
 END $$;
 
