@@ -215,7 +215,11 @@ export function DashboardClient({ fieldsCount, farmsCount, notifications, servic
       )}
 
       <ServiceHealthCard services={services} preferredLanguage={preferredLanguage} />
-      <SatelliteImageryCard />
+
+      {/* Live Satellite Data Card */}
+      <div className="grid gap-6">
+        <SatelliteImageryCard className="w-full" />
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <WeatherCard preferredLanguage={preferredLanguage} />
