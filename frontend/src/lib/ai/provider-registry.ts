@@ -97,7 +97,7 @@ export class AIProviderRegistry {
     if (trim(process.env.GOOGLE_AI_API_KEY)) {
       const googleKey = trim(process.env.GOOGLE_AI_API_KEY) as string
       const googleClient = createGoogleGenerativeAI({ apiKey: googleKey })
-      const googleModel = trim(process.env.GOOGLE_AI_MODEL) || "gemini-1.5-flash"
+      const googleModel = trim(process.env.GOOGLE_AI_MODEL) || "gemini-2.0-flash"
       providers.push({
         id: "google",
         name: "Google Gemini",
