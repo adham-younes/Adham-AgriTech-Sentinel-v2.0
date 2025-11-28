@@ -186,9 +186,9 @@ async function requestFromEOSDA<T>(path: string, init?: RequestInit & { query?: 
 
   const token = await getEOSDAToken()
   
-  // EOSDA API requires api_key as query parameter (NOT header)
+  // EOSDA API requires X-Api-Key header ONLY (NOT query parameter, NOT Bearer)
   // Documentation: https://doc.eos.com/docs/code-examples/
-  url.searchParams.append("api_key", token)
+  // Format: Header name: X-Api-Key, Value: apk.xxxxx
   
   try {
     const response = await fetch(url.toString(), {
@@ -196,6 +196,7 @@ async function requestFromEOSDA<T>(path: string, init?: RequestInit & { query?: 
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        "X-Api-Key": token, // ✅ Use X-Api-Key header only
         ...fetchInit?.headers,
       },
     })
@@ -1048,15 +1049,17 @@ export function getEOSDATileUrl({
   const apiKey = config.apiKey
 
   // Build tile URL: /api/render/{viewId}/{bands}/{z}/{x}/{y}
+  // Note: api_key should NOT be in query params - use X-Api-Key header instead
   const tilePath = `/api/render/${encodeURIComponent(viewId)}/${encodeURIComponent(bands)}/${z}/${x}/${y}`
   
   const params = new URLSearchParams()
-  params.append("api_key", apiKey)
+  // ❌ Removed: params.append("api_key", apiKey) - Use X-Api-Key header instead
   if (colormap) params.append("COLORMAP", colormap)
   if (minmax) params.append("MIN_MAX", minmax)
   if (calibrate) params.append("CALIBRATE", "true")
 
-  return `${baseUrl}${tilePath}?${params.toString()}`
+  // Return URL without api_key - the caller must add X-Api-Key header
+  return `${baseUrl}${tilePath}${params.toString() ? `?${params.toString()}` : ''}`
 }
 
 // ============================================

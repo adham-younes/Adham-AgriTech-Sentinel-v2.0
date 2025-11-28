@@ -43,8 +43,7 @@ export async function GET(req: Request) {
     const upstream = await fetch(target, {
       method: 'GET',
       headers: {
-        'x-api-key': apiKey,
-        'X-Api-Key': apiKey,
+        'X-Api-Key': apiKey, // ✅ EOSDA API requires X-Api-Key header ONLY (not x-api-key, not Bearer, not query param)
         'Accept': 'image/*,application/octet-stream',
       },
       cache: 'no-store',

@@ -68,10 +68,19 @@ const EOSDA_API_KEY = process.env.NEXT_PUBLIC_EOSDA_API_KEY?.trim() || ""
 
 function getLayerUrl(layer: MapLayer) {
   const baseUrl = LAYER_CONFIG[layer].url
-  // EOSDA API requires api_key as query parameter (not apikey)
+  // EOSDA API requires X-Api-Key header ONLY (not query parameter)
+  // Since MapLibre GL doesn't support custom headers, we use proxy endpoint
   if (EOSDA_API_KEY) {
-    const separator = baseUrl.includes('?') ? '&' : '?'
-    return `${baseUrl}${separator}api_key=${EOSDA_API_KEY}`
+    // Use proxy endpoint that adds X-Api-Key header
+    // Extract viewId from baseUrl if it's a render endpoint, otherwise use LMS tiles endpoint
+    if (baseUrl.includes('/api/render/')) {
+      // For render API, we need viewId - this will be handled by the component
+      return baseUrl
+    } else {
+      // For LMS tiles, use proxy endpoint
+      const tilePath = baseUrl.replace('https://api-connect.eos.com', '')
+      return `/api/eosda/proxy?path=${encodeURIComponent(tilePath)}`
+    }
   }
   return baseUrl
 }

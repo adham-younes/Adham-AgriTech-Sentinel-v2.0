@@ -50,9 +50,24 @@ const EOSDA_INDEX_TILES = {
 const EOSDA_API_KEY = process.env.NEXT_PUBLIC_EOSDA_API_KEY?.trim() || ""
 
 // Enhanced EOSDA tile URLs with authentication
+// EOSDA API requires X-Api-Key header ONLY (not query parameter)
+// Since Leaflet doesn't support custom headers easily, we use proxy endpoint
 const getEOSDATileUrl = (layer: MapLayer) => {
-  const baseUrl = EOSDA_INDEX_TILES[layer]
-  return EOSDA_API_KEY ? `${baseUrl}?apikey=${EOSDA_API_KEY}` : baseUrl
+  if (!EOSDA_API_KEY) {
+    return EOSDA_INDEX_TILES[layer]
+  }
+  // Map layer names to EOSDA LMS tile layer names
+  const layerMap: Record<MapLayer, string> = {
+    'true-color': 'sentinel2l2a',
+    'ndvi': 'ndvi',
+    'ndmi': 'ndmi',
+    'evi': 'evi',
+    'chlorophyll': 'chlorophyll',
+    'soil-moisture': 'soil_moisture',
+  }
+  const eosdaLayer = layerMap[layer] || 'sentinel2l2a'
+  // Use proxy endpoint that adds X-Api-Key header
+  return `/api/eosda/tiles/{z}/{x}/{y}?layer=${eosdaLayer}`
 }
 
 if (typeof window !== 'undefined') {
