@@ -192,28 +192,42 @@ function AIAssistantContent() {
   // Load recent chat history for the current user from Supabase
   const loadChatHistory = useCallback(async () => {
     try {
-      if (!supabase) return;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!supabase) {
+        console.warn('[AI Assistant] Supabase client not available')
+        return
+      }
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) {
+        console.warn('[AI Assistant] User not authenticated:', userError)
+        return
+      }
       const { data, error } = await supabase
         .from('chat_messages')
-        .select('*')
+        .select('id, user_id, role, content, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(10);
-      if (error) throw error;
-      setChatHistory(data || []);
+        .limit(10)
+
+      if (error) {
+        // Table might not exist yet - this is not a critical error
+        console.info('[AI Assistant] Chat history table not available:', error.message)
+        setChatHistory([])
+        return
+      }
+
+      setChatHistory(data || [])
     } catch (error) {
-      console.error('[AI Assistant] Error loading chat history:', error);
+      console.error('[AI Assistant] Unexpected error loading chat history:', error)
+      setChatHistory([])
     }
-  }, [supabase]);
+  }, [supabase])
 
   // Load chat history on component mount when supabase is ready
   useEffect(() => {
     if (supabase) {
-      void loadChatHistory();
+      void loadChatHistory()
     }
-  }, [supabase]);
+  }, [supabase, loadChatHistory])
 
   const exampleQuestions = useMemo(
     () => [t('ai_assistant.example1'), t('ai_assistant.example2'), t('ai_assistant.example3')],
@@ -430,7 +444,7 @@ function AIAssistantContent() {
         <div className="space-y-3">
           {chatHistory.slice(0, 5).map((chat) => (
             <div key={chat.id} className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-              <p className="text-sm font-medium line-clamp-2 mb-1">{chat.message}</p>
+              <p className="text-sm font-medium line-clamp-2 mb-1">{chat.content || chat.message || 'No message'}</p>
               <p className="text-xs text-muted-foreground">
                 {formatChatTimestamp(chat.created_at, isArabic)}
               </p>
