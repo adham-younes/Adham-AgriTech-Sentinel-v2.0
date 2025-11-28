@@ -43,7 +43,7 @@ const createSatelliteStyle = (mode: 'satellite' | 'analysis'): StyleSpecificatio
       type: 'raster',
       tiles: [
         (MAPBOX_TILE_URL as string) ||
-          'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       ],
       tileSize: MAPBOX_TILE_URL ? 512 : 256,
       attribution: MAPBOX_TILE_URL ? 'Imagery © Mapbox' : 'Imagery © Esri, Maxar, Earthstar Geographics',
@@ -98,10 +98,10 @@ export function SatelliteImageryCard() {
   const [overlayData, setOverlayData] = useState<
     | null
     | {
-        url: string
-        coordinates: [number, number][]
-        capturedAt?: string
-      }
+      url: string
+      coordinates: [number, number][]
+      capturedAt?: string
+    }
   >(null)
   const [overlayStatus, setOverlayStatus] = useState<'idle' | 'loading' | 'error'>('idle')
   const supabase = useMemo(() => {
@@ -208,10 +208,10 @@ export function SatelliteImageryCard() {
 
   const applyOverlay = useCallback((data: { url: string; coordinates: [number, number][] }) => {
     if (!map.current) return;
-    
+
     // Ensure we have exactly 4 coordinates
     const safeCoordinates = ensureFourPoints(data.coordinates);
-    
+
     // Clean up existing layers and sources
     if (map.current.getLayer('field-imagery')) {
       map.current.removeLayer('field-imagery');
@@ -219,7 +219,7 @@ export function SatelliteImageryCard() {
     if (map.current.getSource('field-imagery')) {
       map.current.removeSource('field-imagery');
     }
-    
+
     // Add the image source with safe coordinates
     map.current.addSource('field-imagery', {
       type: 'image',
@@ -340,11 +340,11 @@ export function SatelliteImageryCard() {
             const capturedAt = payload.capturedAt ?? new Date().toISOString()
             const eosdaBounds = payload.bounds
               ? ([
-                  [payload.bounds.west, payload.bounds.north],
-                  [payload.bounds.east, payload.bounds.north],
-                  [payload.bounds.east, payload.bounds.south],
-                  [payload.bounds.west, payload.bounds.south],
-                ] as [number, number][])
+                [payload.bounds.west, payload.bounds.north],
+                [payload.bounds.east, payload.bounds.north],
+                [payload.bounds.east, payload.bounds.south],
+                [payload.bounds.west, payload.bounds.south],
+              ] as [number, number][])
               : overlayBounds
 
             setOverlayData({ url: payload.url, coordinates: eosdaBounds, capturedAt })
@@ -451,12 +451,12 @@ export function SatelliteImageryCard() {
             </div>
 
             {overlayStatus === 'loading' && (
-            <div className="absolute top-4 left-4 rounded-full bg-black/70 px-4 py-1 text-xs text-gray-200">
-              جارٍ تحميل صورة Sentinel Hub عالية الدقة...
-            </div>
+              <div className="absolute top-4 left-4 rounded-full bg-black/70 px-4 py-1 text-xs text-gray-200">
+                جارٍ تحميل صورة Sentinel Hub عالية الدقة...
+              </div>
             )}
             {overlayStatus === 'error' && (
-              <div className="absolute top-4 left-4 rounded-full bg-red-500/30 px-4 py-1 text-xs text-red-100">
+              <div className="absolute top-4 left-4 rounded-full bg-amber-500/30 px-4 py-1 text-xs text-amber-100">
                 تعذر تحميل صورة Sentinel Hub، تم عرض الخريطة الافتراضية.
               </div>
             )}

@@ -64,7 +64,7 @@ export function SoilCropAnalytics({ fieldId }: { fieldId: string }) {
             value: `${Math.round(data.healthScore)}%`,
             icon: Activity,
             color: data.healthScore > 75 ? "text-emerald-500" : data.healthScore > 50 ? "text-yellow-500" : "text-red-500",
-            bg: data.healthScore > 75 ? "bg-emerald-500/10" : data.healthScore > 50 ? "bg-yellow-500/10" : "bg-red-500/10",
+            bg: data.healthScore > 75 ? "bg-emerald-500/10" : data.healthScore > 50 ? "bg-yellow-500/10" : "bg-amber-500/10",
             border: data.healthScore > 75 ? "border-emerald-500/20" : data.healthScore > 50 ? "border-yellow-500/20" : "border-red-500/20",
             info: language === "ar" ? "مقياس عام لصحة الحقل بناءً على جميع المؤشرات" : "Overall field health score based on all indicators"
         },
@@ -212,7 +212,7 @@ export function SoilCropAnalytics({ fieldId }: { fieldId: string }) {
                             </h4>
                             <div className="space-y-2">
                                 {data.alerts.map(alert => (
-                                    <div key={alert.id} className="flex items-start gap-2 p-2 rounded bg-red-500/10 border border-red-500/20">
+                                    <div key={alert.id} className="flex items-start gap-2 p-2 rounded bg-amber-500/10 border border-amber-500/20">
                                         <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
                                         <div>
                                             <p className="text-sm font-medium text-white">{alert.message}</p>

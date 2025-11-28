@@ -86,7 +86,7 @@ export function TaskPlannerCard() {
   const taskBadge = (priority: PlannerTask["priority"]) => {
     switch (priority) {
       case "high":
-        return "bg-red-500/20 text-red-200 border-red-500/40"
+        return "bg-amber-500/20 text-amber-200 border-amber-500/40"
       case "medium":
         return "bg-amber-500/20 text-amber-200 border-amber-500/40"
       default:
@@ -177,9 +177,8 @@ export function TaskPlannerCard() {
                 {tasks.map((task) => (
                   <div
                     key={task.id}
-                    className={`rounded-xl border border-white/10 bg-white/5 p-3 ${
-                      task.status === "done" ? "opacity-70" : ""
-                    }`}
+                    className={`rounded-xl border border-white/10 bg-white/5 p-3 ${task.status === "done" ? "opacity-70" : ""
+                      }`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>

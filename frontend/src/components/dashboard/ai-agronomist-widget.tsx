@@ -67,7 +67,7 @@ export function AiAgronomistWidget({ fieldId, cropType, mode = 'floating' }: AiA
                                     <div className="flex items-center justify-between">
                                         <h4 className="font-bold text-white text-lg flex items-center gap-2">
                                             {insight.title}
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${insight.type === 'alert' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${insight.type === 'alert' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
                                                 insight.type === 'tip' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
                                                     'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                                                 }`}>

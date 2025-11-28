@@ -40,14 +40,14 @@ export function IrrigationRecommendation({ moisture, weatherCondition, cropType 
     }
 
     return (
-        <Card className={`mb-6 border-l-4 ${status === "urgent" ? "border-l-red-500 bg-red-500/5" :
-                status === "warning" ? "border-l-yellow-500 bg-yellow-500/5" :
-                    "border-l-emerald-500 bg-emerald-500/5"
+        <Card className={`mb-6 border-l-4 ${status === "urgent" ? "border-l-amber-500 bg-amber-500/5" :
+            status === "warning" ? "border-l-yellow-500 bg-yellow-500/5" :
+                "border-l-emerald-500 bg-emerald-500/5"
             }`}>
             <CardContent className="p-4 flex items-start gap-4">
-                <div className={`p-2 rounded-full ${status === "urgent" ? "bg-red-100 text-red-600" :
-                        status === "warning" ? "bg-yellow-100 text-yellow-600" :
-                            "bg-emerald-100 text-emerald-600"
+                <div className={`p-2 rounded-full ${status === "urgent" ? "bg-amber-100 text-amber-600" :
+                    status === "warning" ? "bg-yellow-100 text-yellow-600" :
+                        "bg-emerald-100 text-emerald-600"
                     }`}>
                     {status === "good" ? <CheckCircle2 className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
                 </div>

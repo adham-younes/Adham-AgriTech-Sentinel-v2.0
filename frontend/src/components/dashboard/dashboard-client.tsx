@@ -278,7 +278,7 @@ function ServiceHealthCard({ services, preferredLanguage }: { services: ServiceH
   const statusBadge: Record<ServiceHealthStatus, string> = {
     operational: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
     degraded: "bg-amber-500/10 text-amber-200 border-amber-500/30",
-    down: "bg-red-500/10 text-red-200 border-red-500/30",
+    down: "bg-amber-500/10 text-amber-200 border-amber-500/30",
   }
 
   return (

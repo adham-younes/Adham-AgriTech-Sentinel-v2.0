@@ -39,9 +39,10 @@ const alertConfig = {
     },
     nutrient_deficiency: {
         icon: AlertCircle,
-        color: "text-red-400",
-        bgColor: "bg-red-500/10",
-        borderColor: "border-red-500/20"
+        color: "text-amber-400", // Changed from red to amber
+        bgColor: "bg-amber-500/10",
+        borderColor: "border-amber-500/30",
+        iconColor: "text-amber-500"
     }
 }
 

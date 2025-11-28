@@ -10,7 +10,7 @@ interface WorkgroupChannelCardProps {
 }
 
 const severityMap: Record<string, string> = {
-  high: "text-red-400 bg-red-400/10 border-red-400/40",
+  high: "text-amber-400 bg-amber-400/10 border-amber-400/40",
   medium: "text-amber-400 bg-amber-400/10 border-amber-400/40",
   low: "text-emerald-400 bg-emerald-400/10 border-emerald-400/40",
 }

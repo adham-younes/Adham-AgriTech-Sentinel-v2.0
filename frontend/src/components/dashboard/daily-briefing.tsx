@@ -54,9 +54,9 @@ export function DailyBriefing({ weather, alertCount, userName }: DailyBriefingPr
 
                     {/* Alerts Pill */}
                     {alertCount > 0 ? (
-                        <div className="flex items-center gap-2 bg-red-500/10 px-4 py-2 rounded-full border border-red-500/20">
-                            <AlertTriangle className="h-4 w-4 text-red-400" />
-                            <span className="text-sm font-medium text-red-200">
+                        <div className="flex items-center gap-2 bg-amber-500/10 px-4 py-2 rounded-full border border-amber-500/20">
+                            <AlertTriangle className="h-4 w-4 text-amber-400" />
+                            <span className="text-sm font-medium text-amber-200">
                                 {isAr ? `${alertCount} تنبيهات نشطة` : `${alertCount} Active Alerts`}
                             </span>
                         </div>
