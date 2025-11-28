@@ -30,6 +30,26 @@ NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_token
 NEXT_PUBLIC_MAPBOX_STYLE=satellite-v9
 ```
 
+### AI Services Configuration
+```bash
+# Google Gemini (Gemini AI)
+GOOGLE_AI_API_KEY=AIzaSyCjVqxv4vy8gXy3O0BNEp9dAB_UBKI2mh0
+GOOGLE_AI_MODEL=gemini-2.0-flash
+
+# Groq AI
+GROQ_API_KEY=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
+GROQ_MODEL=llama-3.3-70b-versatile
+
+# OpenAI (optional)
+OPENAI_API_KEY=your_openai_key
+OPENAI_MODEL=gpt-4o-mini
+
+# xAI Grok (optional)
+XAI_API_KEY=your_xai_api_key
+XAI_MODEL=grok-2-latest
+XAI_BASE_URL=https://api.x.ai/v1
+```
+
 ### Other Optional Variables
 ```bash
 # Sentinel Hub (optional)
@@ -38,6 +58,9 @@ NEXT_PUBLIC_DISABLE_SENTINEL=false
 
 # MapTiler (optional)
 NEXT_PUBLIC_MAPTILER_KEY=your_maptiler_key
+
+# Weather API
+OPENWEATHER_API_KEY=bf14cf140dd3f8ddfd62b4fd9f6f9795
 ```
 
 ## Vercel Deployment
