@@ -375,7 +375,7 @@ export function ProfessionalFieldCard({
         {metrics?.weather?.latest && (
           <div className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-900/30 to-cyan-900/30 rounded-lg mb-4 border border-emerald-500/30">
             <div className="flex items-center gap-2">
-              <CloudRain className="h-4 w-4 text-blue-400" />
+              <CloudRain className="h-4 w-4 text-cyan-400" />
               <span className="text-sm text-foreground">
                 {metrics.weather.latest.condition || "--"}
               </span>
@@ -424,8 +424,8 @@ export function ProfessionalFieldCard({
             <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-emerald-400/20 hover:bg-emerald-400/10">
               <Satellite className="h-4 w-4 text-emerald-400" />
             </Button>
-            <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-purple-400/20 hover:bg-purple-400/10">
-              <Activity className="h-4 w-4 text-purple-400" />
+            <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-emerald-400/20 hover:bg-emerald-400/10">
+              <Activity className="h-4 w-4 text-emerald-400" />
             </Button>
             <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-primary/20 hover:bg-primary/10">
               <Leaf className="h-4 w-4 text-primary" />
