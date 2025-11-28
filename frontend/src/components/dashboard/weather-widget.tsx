@@ -1,9 +1,9 @@
 "use client"
 
+import { memo, useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Cloud, Droplets, Wind, CloudRain, Sun } from "lucide-react"
 import { useTranslation } from "@/lib/i18n/use-language"
-import { useState, useEffect } from "react"
 
 interface WeatherWidgetProps {
     latitude?: number
@@ -106,3 +106,12 @@ export function WeatherWidget({ latitude, longitude, locationName }: WeatherWidg
         </Card>
     )
 }
+
+// Memoize component to prevent unnecessary re-renders
+export default memo(WeatherWidget, (prevProps, nextProps) => {
+  return (
+    prevProps.latitude === nextProps.latitude &&
+    prevProps.longitude === nextProps.longitude &&
+    prevProps.locationName === nextProps.locationName
+  )
+})

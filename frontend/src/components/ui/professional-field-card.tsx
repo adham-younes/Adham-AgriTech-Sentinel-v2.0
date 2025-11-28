@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -479,3 +480,17 @@ export function ProfessionalFieldCard({
     </Card>
   )
 }
+
+// Memoize component to prevent unnecessary re-renders
+export default memo(ProfessionalFieldCard, (prevProps, nextProps) => {
+  // Only re-render if these props change
+  return (
+    prevProps.field.id === nextProps.field.id &&
+    prevProps.field.last_ndvi === nextProps.field.last_ndvi &&
+    prevProps.field.last_moisture === nextProps.field.last_moisture &&
+    prevProps.field.last_temperature === nextProps.field.last_temperature &&
+    prevProps.field.last_reading_at === nextProps.field.last_reading_at &&
+    prevProps.lang === nextProps.lang &&
+    JSON.stringify(prevProps.metrics) === JSON.stringify(nextProps.metrics)
+  )
+})

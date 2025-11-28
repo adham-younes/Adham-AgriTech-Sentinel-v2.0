@@ -5,6 +5,16 @@
  * Abstracts database access and integrates business logic.
  * 
  * @module services/core/farm-service
+ * 
+ * @example
+ * ```typescript
+ * const supabase = createClient()
+ * const farmService = new FarmService(supabase)
+ * const farms = await farmService.getFarmsForUser(userId)
+ * ```
+ * 
+ * @author Adham AgriTech
+ * @since 1.0.0
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -225,6 +235,142 @@ export class FarmService {
       return {
         canAccommodate: false,
         reason: 'An error occurred while checking accommodation'
+      }
+    }
+  }
+
+  /**
+   * Get farm statistics
+   */
+  async getFarmStatistics(farmId: string): Promise<{
+    totalFields: number
+    totalArea: number
+    activeFields: number
+    averageNDVI: number | null
+  }> {
+    try {
+      const { data: fields, error } = await this.supabase
+        .from('fields')
+        .select('id, area, status, last_ndvi')
+        .eq('farm_id', farmId)
+
+      if (error) throw error
+
+      const totalFields = fields?.length || 0
+      const totalArea = fields?.reduce((sum, f) => sum + (typeof f.area === 'number' ? f.area : 0), 0) || 0
+      const activeFields = fields?.filter(f => f.status === 'active').length || 0
+      
+      const ndviValues = fields
+        ?.map(f => f.last_ndvi)
+        .filter((v): v is number => typeof v === 'number' && !isNaN(v) && v >= -1 && v <= 1) || []
+      
+      const averageNDVI = ndviValues.length > 0
+        ? ndviValues.reduce((sum, v) => sum + v, 0) / ndviValues.length
+        : null
+
+      return {
+        totalFields,
+        totalArea,
+        activeFields,
+        averageNDVI,
+      }
+    } catch (error) {
+      console.error('[FarmService] Error getting farm statistics:', error)
+      return {
+        totalFields: 0,
+        totalArea: 0,
+        activeFields: 0,
+        averageNDVI: null,
+      }
+    }
+  }
+
+  /**
+   * Create a new farm
+   */
+  async createFarm(params: {
+    name: string
+    userId: string
+    totalArea?: number | null
+    latitude?: number | null
+    longitude?: number | null
+    location?: string | null
+  }): Promise<{ success: boolean; data?: Farm; error?: string }> {
+    try {
+      const { data, error } = await this.supabase
+        .from('farms')
+        .insert({
+          name: params.name.trim(),
+          owner_id: params.userId,
+          total_area: params.totalArea || null,
+          latitude: params.latitude || null,
+          longitude: params.longitude || null,
+        })
+        .select('id, name, total_area, latitude, longitude, owner_id')
+        .single()
+
+      if (error) throw error
+
+      // Also add to farm_owners bridge table
+      await this.supabase
+        .from('farm_owners')
+        .insert({
+          farm_id: data.id,
+          user_id: params.userId,
+          role: 'owner',
+        })
+
+      return {
+        success: true,
+        data: data as Farm,
+      }
+    } catch (error) {
+      console.error('[FarmService] Error creating farm:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to create farm',
+      }
+    }
+  }
+
+  /**
+   * Update farm
+   */
+  async updateFarm(
+    farmId: string,
+    updates: {
+      name?: string
+      totalArea?: number | null
+      latitude?: number | null
+      longitude?: number | null
+      location?: string | null
+    }
+  ): Promise<{ success: boolean; data?: Farm; error?: string }> {
+    try {
+      const updateData: Record<string, any> = {}
+      if (updates.name !== undefined) updateData.name = updates.name.trim()
+      if (updates.totalArea !== undefined) updateData.total_area = updates.totalArea
+      if (updates.latitude !== undefined) updateData.latitude = updates.latitude
+      if (updates.longitude !== undefined) updateData.longitude = updates.longitude
+
+      const { data, error } = await this.supabase
+        .from('farms')
+        .update(updateData)
+        .eq('id', farmId)
+        .select('id, name, total_area, latitude, longitude, owner_id')
+        .single()
+
+      if (error) throw error
+
+      return {
+        success: true,
+        data: data as Farm,
+      }
+    } catch (error) {
+      console.error('[FarmService] Error updating farm:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update farm',
       }
     }
   }
