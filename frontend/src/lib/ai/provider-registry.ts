@@ -97,7 +97,7 @@ export class AIProviderRegistry {
     if (trim(process.env.GOOGLE_AI_API_KEY)) {
       const googleKey = trim(process.env.GOOGLE_AI_API_KEY) as string
       const googleClient = createGoogleGenerativeAI({ apiKey: googleKey })
-      const googleModel = trim(process.env.GOOGLE_AI_MODEL) || "gemini-1.5-pro-latest"
+      const googleModel = trim(process.env.GOOGLE_AI_MODEL) || "gemini-1.5-flash"
       providers.push({
         id: "google",
         name: "Google Gemini",
@@ -116,8 +116,8 @@ export class AIProviderRegistry {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean)
-    // Force Groq as primary provider as requested by user, ignoring env var for now
-    const primaryEnv = "groq"
+
+    const primaryEnv = trim(process.env.AI_PRIMARY_PROVIDER)
 
     if (orderEnv.length > 0) {
       providers.sort((a, b) => {
