@@ -154,7 +154,7 @@ export default function FieldsPage() {
     const critical =
       (ndvi != null && ndvi < 0.3) || (moisture != null && moisture < 25) || (heat != null && heat > 36)
     const badgeColor = (() => {
-      if (critical) return "bg-red-600/80"
+      if (critical) return "bg-amber-600/80"
       if (ndvi != null && ndvi < 0.4) return "bg-emerald-600/60"
       if (ndvi != null && ndvi < 0.6) return "bg-emerald-600/80"
       return "bg-emerald-600"

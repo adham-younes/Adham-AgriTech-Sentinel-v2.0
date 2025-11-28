@@ -256,33 +256,33 @@ export function ProfessionalFieldCard({
       return "text-gray-400 bg-gray-900/30 border-gray-700/30"
     }
 
-    // NDVI/EVI: >0.6 Green, 0.3-0.6 Yellow, <0.3 Red
+    // NDVI/EVI: >0.6 Green, 0.3-0.6 Yellow, <0.3 Amber
     if (indexName === "ndvi" || indexName === "evi") {
       if (value >= 0.6) return "text-emerald-400 bg-emerald-400/10 border-emerald-400/20"
       if (value >= 0.3) return "text-yellow-400 bg-yellow-400/10 border-yellow-400/20"
-      return "text-red-400 bg-red-400/10 border-red-400/20"
+      return "text-amber-500 bg-amber-500/10 border-amber-500/20"
     }
 
-    // Moisture: >60% Green, 30-60% Yellow, <30% Red
+    // Moisture: >60% Emerald, 30-60% Yellow, <30% Amber
     if (indexName === "moisture") {
-      if (value >= 60) return "text-blue-400 bg-blue-400/10 border-blue-400/20"
+      if (value >= 60) return "text-emerald-400 bg-emerald-400/10 border-emerald-400/20"
       if (value >= 30) return "text-yellow-400 bg-yellow-400/10 border-yellow-400/20"
-      return "text-red-400 bg-red-400/10 border-red-400/20"
+      return "text-amber-500 bg-amber-500/10 border-amber-500/20"
     }
 
-    // Chlorophyll: >0.5 Green, 0.3-0.5 Yellow, <0.3 Red
+    // Chlorophyll: >0.5 Green, 0.3-0.5 Yellow, <0.3 Amber
     if (indexName === "chlorophyll") {
       if (value >= 0.5) return "text-emerald-400 bg-emerald-400/10 border-emerald-400/20"
       if (value >= 0.3) return "text-yellow-400 bg-yellow-400/10 border-yellow-400/20"
-      return "text-red-400 bg-red-400/10 border-red-400/20"
+      return "text-amber-500 bg-amber-500/10 border-amber-500/20"
     }
 
     // Default dark theme colors for other indices
     const darkColors = {
-      nri: "text-lime-400 bg-lime-400/10 border-lime-400/20",
+      nri: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
       dswi: "text-amber-400 bg-amber-400/10 border-amber-400/20",
-      ndwi: "text-blue-400 bg-blue-400/10 border-blue-400/20",
-      temperature: "text-orange-400 bg-orange-400/10 border-orange-400/20"
+      ndwi: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20",
+      temperature: "text-amber-400 bg-amber-400/10 border-amber-400/20"
     }
     return darkColors[indexName as keyof typeof darkColors] || "text-gray-400 bg-gray-900/30 border-gray-700/30"
   }
@@ -329,9 +329,9 @@ export function ProfessionalFieldCard({
               <span className="text-xl font-bold text-white">{Math.round(healthScore)}</span>
               <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gray-900 rounded-full border-2 border-gray-700 flex items-center justify-center">
                 {alertCount > 0 ? (
-                  <AlertTriangle className="h-3 w-3 text-red-500" />
+                  <AlertTriangle className="h-3 w-3 text-amber-500" />
                 ) : (
-                  <CheckCircle className="h-3 w-3 text-green-500" />
+                  <CheckCircle className="h-3 w-3 text-emerald-500" />
                 )}
               </div>
             </div>
@@ -373,7 +373,7 @@ export function ProfessionalFieldCard({
 
         {/* Weather Info */}
         {metrics?.weather?.latest && (
-          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-900/30 to-cyan-900/30 rounded-lg mb-4 border border-blue-500/30">
+          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-900/30 to-cyan-900/30 rounded-lg mb-4 border border-emerald-500/30">
             <div className="flex items-center gap-2">
               <CloudRain className="h-4 w-4 text-blue-400" />
               <span className="text-sm text-foreground">
@@ -421,8 +421,8 @@ export function ProfessionalFieldCard({
           </Button>
 
           <div className="flex gap-1">
-            <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-blue-400/20 hover:bg-blue-400/10">
-              <Satellite className="h-4 w-4 text-blue-400" />
+            <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-emerald-400/20 hover:bg-emerald-400/10">
+              <Satellite className="h-4 w-4 text-emerald-400" />
             </Button>
             <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-purple-400/20 hover:bg-purple-400/10">
               <Activity className="h-4 w-4 text-purple-400" />
