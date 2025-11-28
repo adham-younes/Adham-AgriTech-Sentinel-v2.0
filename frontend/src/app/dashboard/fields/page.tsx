@@ -176,7 +176,6 @@ export default function FieldsPage() {
             <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-primary bg-clip-text text-transparent flex items-center gap-3">
               <Leaf className="h-8 w-8 text-emerald-400" />
               {t[lang].title}
-              <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full border border-emerald-500/30">v2.1 Live</span>
             </h1>
             <p className="text-muted-foreground mt-2">
               {t[lang].subtitle}
