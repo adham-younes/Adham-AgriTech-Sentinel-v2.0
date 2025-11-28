@@ -67,7 +67,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public, pg_temp;
 
-RAISE NOTICE '✅ Helper functions created';
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Helper functions created';
+END $$;
 
 -- ============================================================================
 -- SECTION 4: Create Organizations Table
@@ -88,7 +91,10 @@ CREATE TRIGGER update_organizations_updated_at
 
 ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
 
-RAISE NOTICE '✅ Organizations table created';
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Organizations table created';
+END $$;
 
 -- ============================================================================
 -- SECTION 5: Add Multi-tenancy Columns
@@ -149,7 +155,10 @@ CREATE INDEX IF NOT EXISTS idx_fields_geom ON public.fields USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_fields_farm_id ON public.fields(farm_id);
 CREATE INDEX IF NOT EXISTS idx_field_analytics_multi ON public.field_analytics(field_id, acquisition_date DESC, metric_type);
 
-RAISE NOTICE '✅ Performance indexes created';
+DO $$
+BEGIN
+  RAISE NOTICE '✅ Performance indexes created';
+END $$;
 
 -- ============================================================================
 -- SECTION 8: Data Migration
@@ -282,7 +291,10 @@ CREATE POLICY "Allow organization admins to update their organization"
 ON public.organizations FOR UPDATE
 USING (id = public.get_current_org_id());
 
-RAISE NOTICE '✅ RLS policies created';
+DO $$
+BEGIN
+  RAISE NOTICE '✅ RLS policies created';
+END $$;
 
 -- ============================================================================
 -- SECTION 10: Security Fixes
