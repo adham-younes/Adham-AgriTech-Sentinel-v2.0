@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Activity, Droplets, Leaf, LineChart, Download, Eye, Loader2 } from "lucide-react"
+import { Activity, Droplets, Leaf, LineChart, Download, Eye, Loader2, MapPin, Info } from "lucide-react"
 import Link from "next/link"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -262,7 +262,40 @@ export default function SatellitePage() {
   const [ndviHistory, setNdviHistory] = useState<NdviHistoryPoint[]>([])
   const [moistureHistory, setMoistureHistory] = useState<NdviHistoryPoint[]>([])
   const [diseaseRisk, setDiseaseRisk] = useState<{ level: "low" | "medium" | "high"; score: number } | null>(null)
-  const satelliteAutomationEnabled = isFeatureEnabled("soilAnalysisAutomation")
+  // Check if EOSDA is actually configured and working
+  const [eosdaConfigured, setEosdaConfigured] = useState(false)
+  
+  useEffect(() => {
+    // Check EOSDA configuration - verify API key exists
+    const checkEOSDA = async () => {
+      try {
+        // First check if API key is configured
+        const hasApiKey = Boolean(eosdaPublicConfig.apiKey && eosdaPublicConfig.apiKey.trim().length > 0)
+        
+        if (!hasApiKey) {
+          setEosdaConfigured(false)
+          return
+        }
+        
+        // Then verify it's working by checking health endpoint
+        const res = await fetch('/api/system/health')
+        const data = await res.json()
+        const eosdaStatus = data.services?.find((s: any) => s.name === 'Satellite analytics' || s.id === 'eosda')
+        const isOperational = eosdaStatus?.status === 'operational'
+        
+        setEosdaConfigured(isOperational && hasApiKey)
+      } catch (error) {
+        console.error("[Satellite] EOSDA check failed:", error)
+        // If API key exists, assume it's configured even if health check fails
+        const hasApiKey = Boolean(eosdaPublicConfig.apiKey && eosdaPublicConfig.apiKey.trim().length > 0)
+        setEosdaConfigured(hasApiKey)
+      }
+    }
+    
+    checkEOSDA()
+  }, [])
+  
+  const satelliteAutomationEnabled = Boolean(eosdaPublicConfig.apiKey && eosdaPublicConfig.apiKey.trim().length > 0) && eosdaConfigured
   const [satelliteInsight, setSatelliteInsight] = useState<SatelliteAnalysisResponse | null>(null)
   const [satelliteInsightLoading, setSatelliteInsightLoading] = useState(false)
   const [satelliteInsightError, setSatelliteInsightError] = useState<string | null>(null)
@@ -636,17 +669,45 @@ export default function SatellitePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-card p-6 rounded-2xl">
+      <div className="glass-card p-6 rounded-2xl border border-emerald-500/20">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-primary bg-clip-text text-transparent flex items-center gap-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
               <Activity className="h-8 w-8 text-emerald-400" />
-              {t("satellite3d.title")}
-              <Badge variant="outline" className="ml-2 border-amber-500/50 text-amber-400 bg-amber-500/10">
-                {satelliteAutomationEnabled ? "Live Data" : "Simulation Mode"}
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-primary bg-clip-text text-transparent">
+                {language === "ar" ? "ذكاء المزارع ثلاثي الأبعاد" : "3D Farm Intelligence"}
+              </h1>
+            </div>
+            <p className="text-muted-foreground mb-3 max-w-2xl">
+              {language === "ar" 
+                ? "مراقبة تفاعلية للحقول مع تحليلات NDVI ورطوبة التربة من بيانات الأقمار الصناعية EOSDA"
+                : "Interactive field monitoring with NDVI and soil moisture analytics from EOSDA satellite data"}
+            </p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Badge 
+                variant="outline" 
+                className={`${
+                  satelliteAutomationEnabled 
+                    ? "border-emerald-500/50 text-emerald-400 bg-emerald-500/10" 
+                    : "border-amber-500/50 text-amber-400 bg-amber-500/10"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`h-2 w-2 rounded-full ${satelliteAutomationEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                  {satelliteAutomationEnabled 
+                    ? (language === "ar" ? "بيانات مباشرة من EOSDA" : "Live EOSDA Data")
+                    : (language === "ar" ? "بيانات تجريبية" : "Demo Data")
+                  }
+                </div>
               </Badge>
-            </h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl">{t("satellite3d.subtitle")}</p>
+              {!satelliteAutomationEnabled && (
+                <p className="text-xs text-amber-400/80">
+                  {language === "ar" 
+                    ? "⚠️ البيانات الحالية تجريبية. قم بضبط EOSDA API لعرض البيانات المباشرة."
+                    : "⚠️ Current data is demo. Configure EOSDA API for live data."}
+                </p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground bg-black/20 px-3 py-1.5 rounded-full border border-white/5">
@@ -719,11 +780,15 @@ export default function SatellitePage() {
         <Card className="glass-card border-emerald-500/20">
           <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-white/5 pb-4">
             <div>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Eye className="h-5 w-5 text-emerald-400" />
-                {t("satellite3d.live_view")}
+                {language === "ar" ? "خريطة الحقول التفاعلية" : "Interactive Field Map"}
               </CardTitle>
-              <CardDescription>{t("satellite3d.analysis_panel")}</CardDescription>
+              <CardDescription className="text-xs mt-1">
+                {language === "ar" 
+                  ? "مراقبة تفاعلية للحقول مع تحليلات NDVI ورطوبة التربة من بيانات EOSDA"
+                  : "Interactive field monitoring with NDVI and soil moisture analytics from EOSDA data"}
+              </CardDescription>
             </div>
             {selectedField && (
               <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-3 py-1">
@@ -732,13 +797,17 @@ export default function SatellitePage() {
             )}
           </CardHeader>
           <CardContent className="p-0 sm:p-6">
-            <FarmAnalyticsMap
-              fields={fields}
-              selectedFieldId={selectedFieldId}
-              onFieldSelect={setSelectedFieldId}
-              isLoading={isLoading}
-              error={null}
-            />
+            <div className="relative min-h-[520px]">
+              <FarmAnalyticsMap
+                fields={fields}
+                selectedFieldId={selectedFieldId}
+                onFieldSelect={setSelectedFieldId}
+                isLoading={isLoading}
+                error={errorMessage}
+                lang={language}
+                height={520}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -746,10 +815,15 @@ export default function SatellitePage() {
           <Card className="glass-card border-emerald-500/20">
             <CardHeader className="flex flex-col gap-2 border-b border-white/5 pb-4">
               <div className="flex items-center justify-between gap-2">
-                <div>
-                  <CardTitle className="text-lg">{selectedField?.name ?? t("satellite3d.select_prompt")}</CardTitle>
-                  <CardDescription>
-                    {selectedField?.crop ?? t("satellite3d.select_prompt")}
+                <div className="flex-1">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-emerald-400" />
+                    {selectedField?.name ?? (language === "ar" ? "تفاصيل الحقل" : "Field Details")}
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-1">
+                    {selectedField?.crop 
+                      ? (language === "ar" ? `نوع المحصول: ${selectedField.crop}` : `Crop: ${selectedField.crop}`)
+                      : (language === "ar" ? "اختر حقل لعرض التفاصيل" : "Select a field to view details")}
                   </CardDescription>
                 </div>
                 {diseaseRisk && (
@@ -815,9 +889,14 @@ export default function SatellitePage() {
               <CardHeader className="flex flex-col gap-2 border-b border-white/5 pb-4">
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <CardTitle className="text-base">AI Analysis</CardTitle>
-                    <CardDescription className="text-xs">
-                      Powered by Gemini & EOSDA
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Info className="h-4 w-4 text-cyan-400" />
+                      {language === "ar" ? "تحليلات الأقمار الصناعية المتقدمة" : "Advanced Satellite Analytics"}
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-1">
+                      {language === "ar" 
+                        ? "مدعوم بـ Gemini & EOSDA"
+                        : "Powered by Gemini & EOSDA"}
                     </CardDescription>
                   </div>
                   {diseaseRisk && (
@@ -1108,24 +1187,53 @@ export default function SatellitePage() {
         </Card>
         */}
 
-        {/* Dynamic Soil Analysis */}
+        {/* Advanced Analytics Sections */}
         {selectedField && (
-          <DynamicSoilAnalysis
-            fieldId={selectedField.id}
-            latitude={selectedField.center[0] || undefined}
-            longitude={selectedField.center[1] || undefined}
-            fieldName={selectedField.name || undefined}
-          />
-        )}
+          <div className="space-y-6">
+            <Card className="glass-card border-emerald-500/20">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Droplets className="h-5 w-5 text-sky-400" />
+                  {language === "ar" ? "تحليل التربة الديناميكي" : "Dynamic Soil Analysis"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" 
+                    ? "تحليل متقدم لخصائص التربة بناءً على بيانات الأقمار الصناعية من EOSDA"
+                    : "Advanced soil properties analysis based on EOSDA satellite data"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DynamicSoilAnalysis
+                  fieldId={selectedField.id}
+                  latitude={selectedField.center?.[1] || selectedField.center?.[0] || undefined}
+                  longitude={selectedField.center?.[0] || selectedField.center?.[1] || undefined}
+                  fieldName={selectedField.name || undefined}
+                />
+              </CardContent>
+            </Card>
 
-        {/* Advanced VRA Maps */}
-        {selectedField && (
-          <AdvancedVRAMaps
-            fieldId={selectedField.id}
-            latitude={selectedField.center[0] || undefined}
-            longitude={selectedField.center[1] || undefined}
-            fieldName={selectedField.name || undefined}
-          />
+            <Card className="glass-card border-emerald-500/20">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <LineChart className="h-5 w-5 text-purple-400" />
+                  {language === "ar" ? "خرائط التطبيق المتغير (VRA)" : "Variable Rate Application Maps"}
+                </CardTitle>
+                <CardDescription>
+                  {language === "ar" 
+                    ? "خرائط دقيقة لتطبيق الأسمدة والمبيدات بناءً على تحليل الحقل من بيانات EOSDA"
+                    : "Precision maps for fertilizer and pesticide application based on EOSDA field analysis"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AdvancedVRAMaps
+                  fieldId={selectedField.id}
+                  latitude={selectedField.center[0] || undefined}
+                  longitude={selectedField.center[1] || undefined}
+                  fieldName={selectedField.name || undefined}
+                />
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </div>

@@ -71,6 +71,12 @@ export default function NewFieldPage() {
   })
 
   const supabase = useMemo(() => createClient(), [])
+  
+  // Initialize Farm Service
+  const farmService = useMemo(() => {
+    const { FarmService } = require('@/lib/services/core/farm-service')
+    return new FarmService(supabase)
+  }, [supabase])
 
   useEffect(() => {
     if (language === "ar" || language === "en") {
@@ -308,8 +314,21 @@ export default function NewFieldPage() {
 
   const showAreaWarning = useMemo(() => {
     if (selectedFarmAreaFeddan == null || currentAreaFeddan == null) return false
+    // Show warning if field area is more than 20% larger than farm area
     return currentAreaFeddan > selectedFarmAreaFeddan * 1.2
   }, [selectedFarmAreaFeddan, currentAreaFeddan])
+
+  // Synchronous version for immediate UI feedback
+  const areaValidationErrorSync = useMemo(() => {
+    if (selectedFarmAreaFeddan == null || currentAreaFeddan == null) return null
+    // Block if field area is more than 150% of farm area (clearly wrong)
+    if (currentAreaFeddan > selectedFarmAreaFeddan * 1.5) {
+      return lang === "ar"
+        ? `خطأ: مساحة الحقل (${currentAreaFeddan.toFixed(2)} فدان) أكبر بكثير من مساحة المزرعة (${selectedFarmAreaFeddan.toFixed(2)} فدان). يرجى مراجعة الحدود المرسومة.`
+        : `Error: Field area (${currentAreaFeddan.toFixed(2)} feddan) is much larger than farm area (${selectedFarmAreaFeddan.toFixed(2)} feddan). Please review the drawn boundary.`
+    }
+    return null
+  }, [selectedFarmAreaFeddan, currentAreaFeddan, lang])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -342,6 +361,35 @@ export default function NewFieldPage() {
         return
       }
       setBoundaryError(null)
+
+      // Validate area against farm area using Farm Service
+      if (formData.farm_id && resolvedAreaFeddan !== null) {
+        try {
+          const validation = await farmService.validateFarmArea(
+            formData.farm_id,
+            resolvedAreaFeddan,
+            lang
+          )
+          
+          if (!validation.valid) {
+            setFormError(validation.error || t[lang].areaVsFarmWarning)
+            setBoundaryError(validation.error || t[lang].areaVsFarmWarning)
+            setLoading(false)
+            return
+          }
+        } catch (error) {
+          console.error('[FieldForm] Error validating area:', error)
+          // Continue with submission if validation fails (non-blocking)
+        }
+      }
+      
+      // Also check synchronous validation
+      if (areaValidationErrorSync) {
+        setFormError(areaValidationErrorSync)
+        setBoundaryError(areaValidationErrorSync)
+        setLoading(false)
+        return
+      }
 
       let resolvedAreaFeddan = autoAreaFeddan
 
@@ -630,12 +678,17 @@ export default function NewFieldPage() {
                   </div>
                 </div>
               )}
-              {showAreaWarning && selectedFarmAreaFeddan != null && currentAreaFeddan != null && (
-                <p className="text-xs text-amber-600">
+              {areaValidationErrorSync && (
+                <div className="rounded-lg border border-red-500/50 bg-red-500/20 p-3 text-xs text-red-100">
+                  {areaValidationErrorSync}
+                </div>
+              )}
+              {showAreaWarning && !areaValidationErrorSync && selectedFarmAreaFeddan != null && currentAreaFeddan != null && (
+                <div className="rounded-lg border border-amber-500/50 bg-amber-500/20 p-3 text-xs text-amber-100">
                   {t[lang].areaVsFarmWarning
                     .replace("{field}", currentAreaFeddan.toFixed(2))
                     .replace("{farm}", selectedFarmAreaFeddan.toFixed(2))}
-                </p>
+                </div>
               )}
             </div>
 
@@ -686,26 +739,25 @@ export default function NewFieldPage() {
                   : undefined
               }
               height={420}
-              enforceFourPoints
             />
-            <div className="space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100">
+            <div className="space-y-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-100">
               <p className="font-semibold">
                 {lang === "ar" ? "تعليمات رسم الحدود" : "Boundary drawing tips"}
               </p>
-              <ul className="list-disc space-y-1 pl-4 text-amber-50/90">
+              <ul className="list-disc space-y-1 pl-4 text-emerald-50/90">
                 {(lang === "ar"
                   ? [
-                    "حدد أربع نقاط مرتبة (اتجاه عقارب الساعة) حول الحقل. سيتم إغلاق المضلع تلقائياً عند النقطة الرابعة.",
-                    "اضغط مرتين أو اختر زر \"إنهاء الرسم\" لقفل الحدود قبل الحفظ.",
-                    "استخدم زر \"مسح الحدود\" إذا لم يتم تسجيل النقاط كما تريد.",
+                    "ارسم نقاط متتابعة حول الحقل (مثلث، مربع، أو أي شكل)؛ يُغلق المضلع تلقائياً عند اكتمال الرسم.",
+                    "انقر نقراً مزدوجاً أو استخدم \"إنهاء الرسم\" لقفل الحدود قبل الحفظ.",
+                    "استخدم زر \"مسح الحدود\" إذا أخطأت في النقر—ثم أعد رسم الحدود.",
                   ]
                   : [
-                    "Drop four corner points sequentially (clockwise) around the field; the polygon closes automatically.",
-                    "Double-click or use “Finish drawing” to lock the boundary before saving.",
-                    "Hit “Clear boundary” if a tap misses—then re-place the points.",
+                    "Draw sequential points around the field (triangle, square, or any shape); the polygon closes automatically when drawing is complete.",
+                    "Double-click or use \"Finish drawing\" to lock the boundary before saving.",
+                    "Hit \"Clear boundary\" if a tap misses—then redraw the boundary.",
                   ]
-                ).map((tip) => (
-                  <li key={tip}>{tip}</li>
+                ).map((tip, idx) => (
+                  <li key={idx}>{tip}</li>
                 ))}
               </ul>
             </div>

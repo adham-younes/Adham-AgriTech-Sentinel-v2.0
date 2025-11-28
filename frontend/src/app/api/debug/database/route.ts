@@ -6,9 +6,9 @@ export async function GET() {
     const supabase = createServiceSupabaseClient()
     
     // Check if fields table exists and has data
-    const { data: fields, error: fieldsError } = await supabase
+    const { data: fields, error: fieldsError, count: fieldsCount } = await supabase
       .from("fields")
-      .select("count", { count: "exact", head: true })
+      .select("*", { count: "exact", head: true })
     
     if (fieldsError) {
       return NextResponse.json({ 
@@ -18,9 +18,9 @@ export async function GET() {
     }
     
     // Check if farms table exists and has data
-    const { data: farms, error: farmsError } = await supabase
+    const { data: farms, error: farmsError, count: farmsCount } = await supabase
       .from("farms")
-      .select("count", { count: "exact", head: true })
+      .select("*", { count: "exact", head: true })
     
     if (farmsError) {
       return NextResponse.json({ 
@@ -30,9 +30,9 @@ export async function GET() {
     }
     
     // Check if farm_owners table exists
-    const { data: farmOwners, error: farmOwnersError } = await supabase
+    const { data: farmOwners, error: farmOwnersError, count: farmOwnersCount } = await supabase
       .from("farm_owners")
-      .select("count", { count: "exact", head: true })
+      .select("*", { count: "exact", head: true })
     
     if (farmOwnersError) {
       return NextResponse.json({ 
@@ -42,9 +42,9 @@ export async function GET() {
     }
     
     // Check if users table exists and has data
-    const { data: users, error: usersError } = await supabase
+    const { data: users, error: usersError, count: usersCount } = await supabase
       .from("users")
-      .select("count", { count: "exact", head: true })
+      .select("*", { count: "exact", head: true })
     
     if (usersError) {
       return NextResponse.json({ 
@@ -89,16 +89,16 @@ export async function GET() {
       .limit(5)
     
     return NextResponse.json({
-      fieldsCount: fields,
-      farmsCount: farms,
-      farmOwnersCount: farmOwners,
-      usersCount: users,
+      fieldsCount: fieldsCount ?? 0,
+      farmsCount: farmsCount ?? 0,
+      farmOwnersCount: farmOwnersCount ?? 0,
+      usersCount: usersCount ?? 0,
       sampleFields: sampleFields || [],
       sampleFarms: sampleFarms || [],
       sampleUsersWithFarmsAndFields: sampleUsers || [],
       fieldFarmRelations: fieldFarmRelations || [],
       message: "Database tables exist",
-      hasSampleData: (Array.isArray(fields) ? fields.length : 0) > 0 && (Array.isArray(farms) ? farms.length : 0) > 0,
+      hasSampleData: (fieldsCount ?? 0) > 0 && (farmsCount ?? 0) > 0,
       hasUserRelations: (Array.isArray(sampleUsers) && sampleUsers.length > 0)
     })
   } catch (error) {

@@ -8,6 +8,7 @@ import { Plus, Loader2, MapPin, Leaf, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { useTranslation } from "@/lib/i18n/use-language"
 import { ProfessionalFieldCard } from "@/components/ui/professional-field-card"
+import { EarlyWarningBanner } from "@/components/dashboard/early-warning-banner"
 import { useSearchParams } from "next/navigation"
 
 export default function FieldsPage() {
@@ -167,6 +168,17 @@ export default function FieldsPage() {
 
   const visibleFields = filterCritical ? decoratedFields.filter((f) => f.critical) : decoratedFields
 
+  // Calculate summary statistics
+  const totalFields = fields.length
+  const healthyFields = decoratedFields.filter(f => f.ndvi != null && f.ndvi >= 0.6).length
+  const criticalFields = decoratedFields.filter(f => f.critical).length
+  const ndviValues = decoratedFields
+    .map(f => f.ndvi)
+    .filter((v): v is number => v != null && !isNaN(v) && v >= -1 && v <= 1)
+  const avgNDVI = ndviValues.length > 0
+    ? ndviValues.reduce((sum, v) => sum + v, 0) / ndviValues.length
+    : 0
+
   return (
     <div className="space-y-6 min-h-screen">
       {/* Header */}
@@ -203,13 +215,62 @@ export default function FieldsPage() {
         </div>
       </div>
 
-      {/* AI Info Card */}
-      <Card className="glass-card border-emerald-400/20 p-4">
-        <div className="flex items-start gap-3">
-          <Sparkles className="h-5 w-5 text-emerald-400 mt-0.5 shrink-0" />
-          <div className="text-sm">
-            <p className="font-semibold text-white mb-1">{t[lang].aiPowered}</p>
-            <p className="text-muted-foreground">{t[lang].aiDesc}</p>
+      {/* Professional Smart Monitoring Card */}
+      <Card className="glass-card border-emerald-400/30 bg-gradient-to-br from-emerald-950/40 via-black/60 to-cyan-950/40 backdrop-blur-xl p-6 shadow-2xl">
+        <div className="flex items-start gap-4">
+          <div className="relative">
+            <div className="absolute inset-0 bg-emerald-400/20 blur-xl rounded-full"></div>
+            <div className="relative bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 p-3 rounded-xl border border-emerald-400/30">
+              <Sparkles className="h-6 w-6 text-emerald-400" />
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-bold text-emerald-400">{t[lang].aiPowered}</h3>
+              <span className="px-2 py-0.5 text-xs font-medium bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-400/30">
+                {lang === "ar" ? "مباشر" : "LIVE"}
+              </span>
+            </div>
+            <p className="text-sm text-gray-300 leading-relaxed mb-4">{t[lang].aiDesc}</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+              <div className="bg-black/40 rounded-lg p-3 border border-emerald-500/20">
+                <div className="text-xs text-emerald-400/70 mb-1">{lang === "ar" ? "الأقمار الصناعية" : "Satellite"}</div>
+                <div className="text-sm font-semibold text-white">EOSDA</div>
+              </div>
+              <div className="bg-black/40 rounded-lg p-3 border border-emerald-500/20">
+                <div className="text-xs text-emerald-400/70 mb-1">{lang === "ar" ? "الذكاء الاصطناعي" : "AI Engine"}</div>
+                <div className="text-sm font-semibold text-white">Gemini</div>
+              </div>
+              <div className="bg-black/40 rounded-lg p-3 border border-emerald-500/20">
+                <div className="text-xs text-emerald-400/70 mb-1">{lang === "ar" ? "تحليل التربة" : "Soil Analysis"}</div>
+                <div className="text-sm font-semibold text-white">NPK+</div>
+              </div>
+              <div className="bg-black/40 rounded-lg p-3 border border-emerald-500/20">
+                <div className="text-xs text-emerald-400/70 mb-1">{lang === "ar" ? "توقعات الإنتاجية" : "Yield Forecast"}</div>
+                <div className="text-sm font-semibold text-white">AI</div>
+              </div>
+            </div>
+            {/* Summary Stats */}
+            {totalFields > 0 && (
+              <div className="mt-4 pt-4 border-t border-emerald-500/20 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-emerald-400">{totalFields}</div>
+                  <div className="text-xs text-gray-400">{lang === "ar" ? "إجمالي الحقول" : "Total Fields"}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">{healthyFields}</div>
+                  <div className="text-xs text-gray-400">{lang === "ar" ? "حقول صحية" : "Healthy"}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-amber-400">{criticalFields}</div>
+                  <div className="text-xs text-gray-400">{lang === "ar" ? "حقول حرجة" : "Critical"}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-cyan-400">{avgNDVI.toFixed(2)}</div>
+                  <div className="text-xs text-gray-400">{lang === "ar" ? "متوسط NDVI" : "Avg NDVI"}</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </Card>
@@ -235,18 +296,29 @@ export default function FieldsPage() {
           </div>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {visibleFields.map((field) => (
-            <ProfessionalFieldCard
-              key={field.id || `field-${Math.random()}`}
-              field={field}
-              metrics={fieldMetrics[field.id] || null}
-              onClick={() => {
-                window.location.href = `/dashboard/fields/${field.id}`
-              }}
-              lang={lang}
-            />
-          ))}
+        <div className="space-y-6">
+          {/* Early Warning Banner for first critical field */}
+          {visibleFields.find((f) => f.critical) && (
+            <EarlyWarningBanner fieldId={visibleFields.find((f) => f.critical)!.id} />
+          )}
+          
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {visibleFields.map((field) => (
+              <div key={field.id || `field-${Math.random()}`} className="space-y-3">
+                {field.critical && (
+                  <EarlyWarningBanner fieldId={field.id} />
+                )}
+                <ProfessionalFieldCard
+                  field={field}
+                  metrics={fieldMetrics[field.id] || null}
+                  onClick={() => {
+                    window.location.href = `/dashboard/fields/${field.id}`
+                  }}
+                  lang={lang}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

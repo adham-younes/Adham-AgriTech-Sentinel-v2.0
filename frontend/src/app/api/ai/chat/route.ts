@@ -605,6 +605,99 @@ async function buildFieldInsightBlock(fieldId?: string, language: string = "ar")
   }
 }
 
+/**
+ * Save plant analysis results to Supabase database
+ */
+async function savePlantAnalysisToDatabase(
+  fieldId: string | undefined,
+  images: Attachment[],
+  report: PlantInspectionReport,
+  language: string = "ar"
+): Promise<void> {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      console.warn("[AI Assistant] User not authenticated, skipping database save")
+      return
+    }
+
+    // Get field info if fieldId provided
+    let cropType: string | null = null
+    if (fieldId) {
+      const { data: field } = await supabase
+        .from("fields")
+        .select("crop_type")
+        .eq("id", fieldId)
+        .single()
+      cropType = field?.crop_type || null
+    }
+
+    // Extract detected diseases and pests from matches
+    const detectedDiseases = (report.matches || [])
+      .filter(match => match.warnings && match.warnings.length > 0)
+      .flatMap(match => 
+        match.warnings!.map(warning => ({
+          name: warning,
+          name_ar: warning, // TODO: Translate
+          severity: "medium" as const,
+          confidence: match.probability || 0
+        }))
+      )
+
+    // Generate recommendations based on matches
+    const recommendations = (report.matches || [])
+      .slice(0, 3)
+      .map(match => ({
+        type: "identification" as const,
+        action: language === "ar" 
+          ? `تم التعرف على ${match.preferredName}`
+          : `Identified as ${match.preferredName}`,
+        priority: "medium" as const,
+        details: match.description || ""
+      }))
+
+    // Save each image analysis
+    for (const [index, image] of images.entries()) {
+      const match = report.matches?.[index]
+      
+      const analysisData = {
+        user_id: user.id,
+        field_id: fieldId || null,
+        crop_type: cropType,
+        image_url: image.data, // Base64 data URL
+        analysis_type: "plant_id" as const,
+        provider: report.provider || "plant.id",
+        model_version: "v3",
+        results: report,
+        confidence_score: match?.probability ? Math.round(match.probability) : null,
+        detected_diseases: detectedDiseases.length > 0 ? detectedDiseases : null,
+        detected_pests: null, // Plant.id doesn't detect pests directly
+        plant_species: match?.preferredName || null,
+        plant_scientific_name: match?.scientificName || null,
+        plant_common_names: match?.commonNames || null,
+        recommendations: recommendations.length > 0 ? recommendations : null,
+        treatment_suggestions: null
+      }
+
+      const { error } = await supabase
+        .from("plant_disease_analyses")
+        .insert(analysisData)
+
+      if (error) {
+        console.error("[AI Assistant] Error saving plant analysis:", error)
+        // Continue with other images even if one fails
+      } else {
+        console.log("[AI Assistant] Successfully saved plant analysis to database")
+      }
+    }
+  } catch (error) {
+    console.error("[AI Assistant] Unexpected error saving plant analysis:", error)
+    // Non-critical, don't throw
+  }
+}
+
 async function loadContext({
   images,
   fieldId,
@@ -637,6 +730,14 @@ async function loadContext({
                   ? `نتائج خدمة Plant.id:\n${report.summary}`
                   : `Plant.id findings:\n${report.summary}`,
               )
+            }
+            
+            // Save analysis to database
+            try {
+              await savePlantAnalysisToDatabase(fieldId, images, report, language)
+            } catch (dbError) {
+              console.warn("[AI Assistant] Failed to save analysis to database:", dbError)
+              // Non-critical error, continue
             }
           }
         } catch (error) {
@@ -756,13 +857,39 @@ export async function POST(request: Request) {
         response.headers.set("X-Knowledge-Articles", JSON.stringify(articleSuggestions))
         return response
       } catch (err) {
-        console.error("[AI Assistant] Provider failed", err)
+        const errorMessage = err instanceof Error ? err.message : String(err)
+        console.error(`[AI Assistant] Provider ${active.provider.id} failed:`, errorMessage)
+        
+        // Log detailed error for debugging
+        if (errorMessage.includes("API key") || errorMessage.includes("authentication")) {
+          console.error(`[AI Assistant] Authentication error with ${active.provider.id}. Check API key.`)
+        }
+        
         aiProviderRegistry.markCurrentProviderUnavailable()
         attempts += 1
-        if (attempts >= maxAttempts) break
+        
+        if (attempts >= maxAttempts) {
+          // All providers failed - return detailed error
+          const errorDetails = language === "ar"
+            ? `جميع مزودي الذكاء الاصطناعي غير متاحين. آخر خطأ: ${errorMessage.slice(0, 100)}`
+            : `All AI providers unavailable. Last error: ${errorMessage.slice(0, 100)}`
+          
+          return new Response(
+            JSON.stringify({
+              reply: language === "ar"
+                ? "تعذر الاتصال بخدمات الذكاء الاصطناعي حالياً. يرجى التحقق من إعدادات API أو المحاولة لاحقاً."
+                : "Unable to connect to AI services. Please check API settings or try again later.",
+              error: errorDetails,
+            }),
+            { status: 503, headers: { "Content-Type": "application/json" } },
+          )
+        }
+        
         try {
           active = aiProviderRegistry.tryNextModel()
-        } catch {
+          console.log(`[AI Assistant] Trying next provider: ${active.provider.id}`)
+        } catch (fallbackError) {
+          console.error("[AI Assistant] No fallback providers available")
           break
         }
       }
@@ -772,8 +899,8 @@ export async function POST(request: Request) {
       JSON.stringify({
         reply:
           language === "ar"
-            ? "تعذر تشغيل المساعد حالياً. يرجى المحاولة لاحقاً."
-            : "Assistant is unavailable right now. Please try again later.",
+            ? "تعذر تشغيل المساعد حالياً. يرجى المحاولة لاحقاً أو التحقق من إعدادات API."
+            : "Assistant is unavailable right now. Please try again later or check API settings.",
       }),
       { status: 500, headers: { "Content-Type": "application/json" } },
     )

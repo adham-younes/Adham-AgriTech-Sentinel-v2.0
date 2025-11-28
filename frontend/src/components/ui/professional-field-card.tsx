@@ -212,7 +212,7 @@ export function ProfessionalFieldCard({
     if (score >= 85) return { status: "excellent", color: "bg-primary", textColor: "text-primary", borderColor: "border-primary/50" }
     if (score >= 70) return { status: "good", color: "bg-primary/80", textColor: "text-primary/90", borderColor: "border-primary/40" }
     if (score >= 55) return { status: "fair", color: "bg-yellow-600", textColor: "text-yellow-400", borderColor: "border-yellow-600/50" }
-    return { status: "poor", color: "bg-destructive", textColor: "text-destructive", borderColor: "border-destructive/50" }
+    return { status: "poor", color: "bg-amber-500/20", textColor: "text-amber-200", borderColor: "border-amber-500/30" }
   }
 
   const healthScore = calculateHealthScore()
@@ -292,104 +292,139 @@ export function ProfessionalFieldCard({
   }
 
   return (
-    <Card className={`overflow-hidden hover:shadow-3d transition-all duration-300 border ${healthStatus.borderColor} bg-black/60 backdrop-blur-md`}>
-      {/* Health Status Header */}
-      <div className={`h-3 ${healthStatus.color}`} />
+    <Card className={`glass-card border-emerald-400/30 bg-gradient-to-br from-emerald-950/40 via-black/60 to-cyan-950/40 backdrop-blur-xl overflow-hidden hover:shadow-2xl hover:scale-[1.01] transition-all duration-300 ${healthStatus.status === "poor" ? "border-amber-500/30" : healthStatus.status === "fair" ? "border-yellow-500/30" : "border-emerald-400/30"}`}>
+      {/* Health Status Top Bar - Hidden for poor status */}
+      {healthStatus.status !== "poor" && (
+        <div className={`h-1.5 bg-gradient-to-r ${healthStatus.status === "excellent" ? "from-emerald-500 to-emerald-400" : healthStatus.status === "good" ? "from-emerald-600 to-emerald-500" : "from-yellow-500 to-yellow-400"}`} />
+      )}
 
       <div className="p-6">
-        {/* Field Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-green-400 mb-2">{field.name}</h3>
-            <div className="flex flex-wrap items-center gap-2 text-sm text-green-300/70">
-              {field.area && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  {field.area} {lang === "ar" ? "فدان" : "feddan"}
+        {/* Field Header - Matching Smart Monitoring Style */}
+        <div className="flex items-start justify-between mb-5">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-xl font-bold text-emerald-400">{field.name}</h3>
+              {alertCount > 0 && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-amber-500/20 text-amber-300 rounded-full border border-amber-500/30">
+                  {lang === "ar" ? "حرج" : "Critical"}
                 </span>
               )}
-              {field.farms && (
-                <span className="flex items-center gap-1">
-                  <Home className="h-4 w-4" />
-                  {field.farms.name}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs mb-3">
+              {field.area && (
+                <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-emerald-500/20 text-emerald-300 font-semibold">
+                  {field.area.toFixed(1)} {lang === "ar" ? "فدان" : "feddan"}
                 </span>
               )}
               {field.crop_type && (
-                <span className="flex items-center gap-1">
-                  <Sprout className="h-4 w-4" />
+                <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-cyan-500/20 text-cyan-300 font-semibold">
                   {field.crop_type}
+                </span>
+              )}
+              {field.farms && (
+                <span className="px-2.5 py-1 rounded-lg bg-black/40 border border-blue-500/20 text-blue-300 font-semibold truncate max-w-[120px]">
+                  {field.farms.name}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Health Score Circle */}
-          <div className="text-center">
-            <div className={`relative w-16 h-16 rounded-full ${healthStatus.color} flex items-center justify-center`}>
-              <span className="text-xl font-bold text-white">{Math.round(healthScore)}</span>
-              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gray-900 rounded-full border-2 border-gray-700 flex items-center justify-center">
-                {alertCount > 0 ? (
-                  <AlertTriangle className="h-3 w-3 text-amber-500" />
-                ) : (
-                  <CheckCircle className="h-3 w-3 text-emerald-500" />
-                )}
-              </div>
+          {/* Health Score - Matching Smart Monitoring Style */}
+          <div className="text-center ml-4 flex-shrink-0">
+            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-2 ${
+              healthStatus.status === "poor" 
+                ? "bg-amber-500/15 border-amber-500/30" 
+                : healthStatus.status === "fair"
+                ? "bg-yellow-500/20 border-yellow-500/40"
+                : healthStatus.status === "good"
+                ? "bg-emerald-500/20 border-emerald-500/40"
+                : "bg-emerald-500/30 border-emerald-400/50"
+            }`}>
+              <span className={`text-2xl font-bold ${
+                healthStatus.status === "poor" 
+                  ? "text-amber-200" 
+                  : healthStatus.status === "fair"
+                  ? "text-yellow-300"
+                  : "text-emerald-300"
+              }`}>
+                {Math.round(healthScore)}
+              </span>
             </div>
-            <div className={`text-xs ${healthStatus.status === "poor" ? "text-gray-400" : "text-green-400"} mt-1`}>{t[healthStatus.status as keyof typeof t]}</div>
+            <div className={`text-xs font-semibold mt-2 px-2 py-0.5 rounded-full ${
+              healthStatus.status === "poor" 
+                ? "text-amber-200 bg-amber-500/15 border border-amber-500/25" 
+                : healthStatus.status === "fair"
+                ? "text-yellow-300 bg-yellow-500/20 border border-yellow-500/30"
+                : healthStatus.status === "good"
+                ? "text-emerald-300 bg-emerald-500/20 border border-emerald-500/30"
+                : "text-emerald-200 bg-emerald-500/30 border border-emerald-400/40"
+            }`}>
+              {t[healthStatus.status as keyof typeof t]}
+            </div>
           </div>
         </div>
 
-        {/* Professional Metrics Grid */}
-        <div className="grid grid-cols-4 gap-3 mb-4">
+        {/* Metrics Grid - Matching Smart Monitoring Style */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
           {[
             { key: "ndvi", value: displayMetrics.ndvi },
             { key: "evi", value: displayMetrics.evi },
             { key: "moisture", value: displayMetrics.moisture },
             { key: "dswi", value: displayMetrics.dswi }
-          ].map(({ key, value }) => (
-            <div key={key} className={`text-center p-2 rounded-lg border ${getIndexColor(key, value)}`}>
-              <div className="flex items-center justify-center mb-1">
-                {getIndexIcon(key)}
+          ].map(({ key, value }) => {
+            const colorClasses = getIndexColor(key, value)
+            return (
+              <div key={key} className="bg-black/40 rounded-lg p-3 border border-emerald-500/20 text-center hover:bg-black/50 transition-colors">
+                <div className="text-xs text-emerald-400/70 mb-1">{getIndexLabel(key)}</div>
+                <div className="text-lg font-semibold text-white">
+                  {value !== null && value !== undefined
+                    ? key === "moisture" ? `${value.toFixed(1)}%` : value.toFixed(2)
+                    : "--"
+                  }
+                </div>
               </div>
-              <div className="text-xs font-medium text-muted-foreground">{getIndexLabel(key)}</div>
-              <div className="text-sm font-bold text-foreground">
-                {value !== null && value !== undefined
-                  ? key === "moisture" ? `${value.toFixed(1)}%` : value.toFixed(2)
-                  : "--"
-                }
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
-        {/* Health Progress Bar */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-foreground">{t.fieldHealth}</span>
-            <span className="text-sm text-muted-foreground">{Math.round(healthScore)}%</span>
+        {/* Field Health Progress - Matching Smart Monitoring Style */}
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-emerald-400">{t.fieldHealth}</span>
+            <span className={`text-sm font-bold ${
+              healthScore >= 70 ? "text-emerald-400" : 
+              healthScore >= 50 ? "text-yellow-400" : 
+              "text-emerald-300"
+            }`}>
+              {Math.round(healthScore)}%
+            </span>
           </div>
-          <Progress value={healthScore} className="h-2" />
+          <div className="relative h-2 bg-black/40 rounded-full overflow-hidden border border-emerald-500/20">
+            <div 
+              className={`h-full rounded-full transition-all duration-500 ${
+                healthScore >= 70 ? "bg-gradient-to-r from-emerald-500 to-emerald-400" : 
+                healthScore >= 50 ? "bg-gradient-to-r from-yellow-500 to-yellow-400" : 
+                "bg-gradient-to-r from-emerald-500/80 to-emerald-400/80"
+              }`}
+              style={{ width: `${Math.min(100, Math.max(0, healthScore))}%` }}
+            />
+          </div>
         </div>
 
-        {/* Weather Info */}
+        {/* Weather Info - Matching Smart Monitoring Style */}
         {metrics?.weather?.latest && (
-          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-900/30 to-cyan-900/30 rounded-lg mb-4 border border-emerald-500/30">
-            <div className="flex items-center gap-2">
-              <CloudRain className="h-4 w-4 text-cyan-400" />
-              <span className="text-sm text-foreground">
-                {metrics.weather.latest.condition || "--"}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-green-300/70">
+          <div className="flex items-center justify-between p-3 bg-black/40 rounded-lg border border-emerald-500/20 mb-5">
+            <span className="text-sm font-semibold text-gray-300">
+              {metrics.weather.latest.condition || (lang === "ar" ? "معتدل" : "Mild conditions")}
+            </span>
+            <div className="flex items-center gap-3 text-sm">
               {metrics.weather.latest.temperature && (
-                <span className="flex items-center gap-1">
-                  <Thermometer className="h-3 w-3" />
+                <span className="text-white font-semibold">
                   {metrics.weather.latest.temperature.toFixed(1)}°C
                 </span>
               )}
               {metrics.weather.latest.humidity && (
-                <span className="flex items-center gap-1">
-                  <Droplets className="h-3 w-3" />
+                <span className="text-white font-semibold">
                   {metrics.weather.latest.humidity}%
                 </span>
               )}
@@ -397,46 +432,35 @@ export function ProfessionalFieldCard({
           </div>
         )}
 
-        {/* Professional Alerts */}
+        {/* Alerts - Matching Smart Monitoring Style */}
         {alertCount > 0 && (
-          <Alert className="mb-4 border-orange-500/30 bg-gray-900 text-orange-400">
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
-            <AlertDescription className="text-sm text-orange-300">
-              {lang === "ar"
-                ? `${alertCount} مؤشرات حرجة تتطلب تدخل فوري`
-                : `${alertCount} critical indicators require immediate attention`
-              }
-            </AlertDescription>
-          </Alert>
+          <div className="mb-5 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400" />
+              <span className="text-xs font-semibold text-amber-300">
+                {lang === "ar"
+                  ? `${alertCount} مؤشرات حرجة تتطلب تدخل فوري`
+                  : `${alertCount} critical indicators require immediate attention`
+                }
+              </span>
+            </div>
+          </div>
         )}
 
-        {/* Professional Action Buttons */}
+        {/* Action Button - Matching Smart Monitoring Style */}
         <div className="flex gap-2">
           <Button
             onClick={onClick}
-            className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg"
+            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-all duration-300"
           >
             <Eye className="h-4 w-4 mr-2" />
             {t.viewDetails}
           </Button>
-
-          <div className="flex gap-1">
-            <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-emerald-400/20 hover:bg-emerald-400/10">
-              <Satellite className="h-4 w-4 text-emerald-400" />
-            </Button>
-            <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-emerald-400/20 hover:bg-emerald-400/10">
-              <Activity className="h-4 w-4 text-emerald-400" />
-            </Button>
-            <Button variant="outline" size="sm" className="h-9 w-9 p-0 border-primary/20 hover:bg-primary/10">
-              <Leaf className="h-4 w-4 text-primary" />
-            </Button>
-          </div>
         </div>
 
-        {/* Professional Footer */}
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Calendar className="h-3 w-3" />
+        {/* Footer - Matching Smart Monitoring Style */}
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-emerald-500/20">
+          <div className="text-xs text-gray-400">
             {(() => {
               const dateValue = field.last_reading_at || metrics?.ndvi?.date
               return dateValue
@@ -447,8 +471,7 @@ export function ProfessionalFieldCard({
                 : "--"
             })()}
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3" />
+          <div className="text-xs text-gray-400 truncate max-w-[120px]">
             {field.farms?.name || "--"}
           </div>
         </div>

@@ -204,12 +204,22 @@ function calculateHealthScore(metrics: SoilMetrics): number {
 
 export async function POST(request: Request) {
   try {
-    const body: SoilAnalysisRequest = await request.json()
+    let body: SoilAnalysisRequest
+    try {
+      body = await request.json()
+    } catch (parseError) {
+      console.error("[Soil Analysis] Failed to parse request body:", parseError)
+      return NextResponse.json(
+        { error: "INVALID_REQUEST", message: "Invalid JSON in request body" },
+        { status: 400 }
+      )
+    }
+    
     const { fieldId, latitude, longitude, includeHistorical = false, dateRange } = body
 
     if (!fieldId && (!latitude || !longitude)) {
       return NextResponse.json(
-        { error: "Either fieldId or coordinates (latitude, longitude) are required" },
+        { error: "MISSING_PARAMS", message: "Either fieldId or coordinates (latitude, longitude) are required" },
         { status: 400 }
       )
     }
@@ -246,15 +256,20 @@ export async function POST(request: Request) {
           farms!fields_farm_id_fkey ( id, name, latitude, longitude )
         `)
         .eq("id", fieldId)
-        .single()
+        .maybeSingle()
 
-      if (fieldError || !field) {
+      if (fieldError) {
+        console.error("[Soil Analysis] Field query error:", fieldError)
+        return NextResponse.json({ error: "FIELD_QUERY_FAILED", message: fieldError.message }, { status: 500 })
+      }
+
+      if (!field) {
         return NextResponse.json({ error: "FIELD_NOT_FOUND" }, { status: 404 })
       }
 
       fieldData = field
-      fieldLatitude = field.latitude
-      fieldLongitude = field.longitude
+      fieldLatitude = field.latitude || latitude
+      fieldLongitude = field.longitude || longitude
     }
 
     // Fetch satellite data

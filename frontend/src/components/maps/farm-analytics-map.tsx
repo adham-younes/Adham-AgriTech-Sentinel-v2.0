@@ -68,7 +68,12 @@ const EOSDA_API_KEY = process.env.NEXT_PUBLIC_EOSDA_API_KEY?.trim() || ""
 
 function getLayerUrl(layer: MapLayer) {
   const baseUrl = LAYER_CONFIG[layer].url
-  return EOSDA_API_KEY ? `${baseUrl}?apikey=${EOSDA_API_KEY}` : baseUrl
+  // EOSDA API requires api_key as query parameter (not apikey)
+  if (EOSDA_API_KEY) {
+    const separator = baseUrl.includes('?') ? '&' : '?'
+    return `${baseUrl}${separator}api_key=${EOSDA_API_KEY}`
+  }
+  return baseUrl
 }
 
 function withDefaultSentinelParams(url?: string) {
@@ -244,7 +249,6 @@ export function FarmAnalyticsMap({
 
   const featureCollection = useMemo(() => toFeatureCollection(fields), [fields])
   const [activeLayer, setActiveLayer] = useState<MapLayer>("true-color")
-  const [showLayers, setShowLayers] = useState(false)
 
   const ensureLayers = useCallback((map: maplibregl.Map) => {
     if (!map.getSource("farm-fields")) {
@@ -276,8 +280,15 @@ export function FarmAnalyticsMap({
             "#166534", // أخضر داكن
           ],
           // تقليل الارتفاع بشكل كبير حتى لا يظهر كمكعب ضخم
-          "fill-extrusion-height": ["*", ["get", "yield"], 1],
-          "fill-extrusion-opacity": 0.9,
+          "fill-extrusion-height": [
+            "interpolate",
+            ["linear"],
+            ["get", "ndvi"],
+            0.3, 5,   // Minimum height for low NDVI
+            0.7, 15,  // Medium height for good NDVI
+            0.9, 25   // Maximum height for excellent NDVI
+          ],
+          "fill-extrusion-opacity": 0.85,
         },
       })
     }
@@ -333,33 +344,52 @@ export function FarmAnalyticsMap({
     const map = mapRef.current
     if (!map || !mapReadyRef.current) return
 
-    // Remove existing raster layers if any (except base)
+    // Remove existing EOSDA raster layers
     const layers = ["eosda-layer"]
     layers.forEach(id => {
-      if (map.getLayer(id)) map.removeLayer(id)
-      if (map.getSource(id)) map.removeSource(id)
+      if (map.getLayer(id)) {
+        map.removeLayer(id)
+      }
+      if (map.getSource(id)) {
+        map.removeSource(id)
+      }
     })
 
-    if (activeLayer !== "true-color" || EOSDA_API_KEY) {
-      // Add new layer
-      const url = getLayerUrl(activeLayer)
-      map.addSource("eosda-layer", {
-        type: "raster",
-        tiles: [url],
-        tileSize: 256,
-        attribution: "EOS Data Analytics"
-      })
+    // Add EOSDA layer for all layer types
+    if (EOSDA_API_KEY) {
+      try {
+        const url = getLayerUrl(activeLayer)
+        if (url) {
+          map.addSource("eosda-layer", {
+            type: "raster",
+            tiles: [url],
+            tileSize: 256,
+            attribution: "EOS Data Analytics",
+            maxzoom: 18,
+          })
 
-      map.addLayer({
-        id: "eosda-layer",
-        type: "raster",
-        source: "eosda-layer",
-        paint: { "raster-opacity": 0.7 },
-        layout: { visibility: "visible" }
-      }, "field-outline") // Place below field outlines
+          map.addLayer({
+            id: "eosda-layer",
+            type: "raster",
+            source: "eosda-layer",
+            paint: { 
+              "raster-opacity": activeLayer === "true-color" ? 1.0 : (activeLayer === "ndvi" || activeLayer === "evi" ? 0.8 : 0.7)
+            },
+            layout: { visibility: "visible" }
+          }, activeLayer === "true-color" ? "esri-imagery" : "field-outline")
+          
+          console.log(`[FarmAnalyticsMap] Added EOSDA layer: ${activeLayer}`, url)
+        } else {
+          console.warn(`[FarmAnalyticsMap] No URL generated for layer: ${activeLayer}`)
+        }
+      } catch (error) {
+        console.error("[FarmAnalyticsMap] Error adding EOSDA layer:", error)
+      }
+    } else {
+      console.warn("[FarmAnalyticsMap] EOSDA API key not available, using base imagery only")
     }
 
-  }, [activeLayer])
+  }, [activeLayer, fields])
 
   const updateSource = useCallback(
     (map: maplibregl.Map) => {
@@ -406,9 +436,44 @@ export function FarmAnalyticsMap({
       mapReadyRef.current = true
       ensureLayers(map)
       updateSource(map)
+      
+      // Enable 3D terrain if Mapbox token is available
+      if (MAPBOX_TOKEN) {
+        try {
+          map.addSource("mapbox-dem", {
+            type: "raster-dem",
+            url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+            tileSize: 512,
+            maxzoom: 14,
+          })
+          map.setTerrain({ source: "mapbox-dem", exaggeration: 1.2 })
+        } catch (error) {
+          console.warn("[FarmAnalyticsMap] 3D terrain not available:", error)
+        }
+      }
+      
       if (fields.length > 0) {
         fitMapToFields(map)
         initialFitRef.current = true
+      } else {
+        // Set default view if no fields
+        map.easeTo({
+          center: DEFAULT_CENTER,
+          zoom: DEFAULT_ZOOM_LEVEL,
+          duration: 0,
+        })
+      }
+    })
+    
+    // Handle map errors
+    map.on("error", (e) => {
+      console.error("[FarmAnalyticsMap] Map error:", e)
+    })
+    
+    // Handle source errors
+    map.on("sourcedata", (e) => {
+      if (e.isSourceLoaded && e.sourceId && e.sourceId.includes("eosda")) {
+        console.log("[FarmAnalyticsMap] EOSDA source loaded:", e.sourceId)
       }
     })
 
@@ -471,54 +536,74 @@ export function FarmAnalyticsMap({
       />
 
       {isLoading && (
-        <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1.5 text-xs text-gray-100 border border-white/10">
-          جارٍ تحميل خريطة الحقول…
+        <div className="absolute top-3 left-3 z-20 rounded-lg bg-black/80 backdrop-blur-sm px-4 py-2 text-xs text-gray-100 border border-white/20 shadow-lg">
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-3 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+            {lang === "ar" ? "جارٍ تحميل خريطة الحقول…" : "Loading field map…"}
+          </div>
         </div>
       )}
 
       {!isLoading && error && (
-        <div className="absolute top-3 left-3 rounded-full bg-red-900/70 px-3 py-1.5 text-xs text-red-100 border border-red-400/30">
-          {error}
+        <div className="absolute top-3 left-3 z-20 rounded-lg bg-red-900/90 backdrop-blur-sm px-4 py-2 text-xs text-red-100 border border-red-400/40 shadow-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-red-300">⚠️</span>
+            {error}
+          </div>
         </div>
       )}
 
       {showNoData && (
-        <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-1.5 text-xs text-gray-200 border border-white/10">
-          لا توجد حقول مسجلة بعد.
+        <div className="absolute inset-0 flex items-center justify-center z-10">
+          <div className="glass-card border-emerald-500/30 px-6 py-4 rounded-xl text-center max-w-sm">
+            <div className="text-4xl mb-3">🌾</div>
+            <h3 className="text-sm font-semibold text-white mb-2">
+              {lang === "ar" ? "لا توجد حقول مسجلة" : "No Fields Registered"}
+            </h3>
+            <p className="text-xs text-gray-400 mb-4">
+              {lang === "ar" 
+                ? "أضف حقولاً إلى مزرعتك لعرض الخرائط والتحليلات"
+                : "Add fields to your farm to view maps and analytics"}
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Layer Switcher */}
-      <div className="absolute top-3 right-14 z-10">
-        <div className="relative">
-          <button
-            onClick={() => setShowLayers(!showLayers)}
-            className="flex items-center gap-2 glass-card border-emerald-500/30 px-3 py-2 text-white hover:bg-emerald-500/20 transition-all shadow-lg backdrop-blur-md"
-          >
-            <span className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: LAYER_CONFIG[activeLayer].color }} />
-            <span className="text-xs font-medium">{LAYER_CONFIG[activeLayer].name[lang === "ar" ? "ar" : "en"]}</span>
-          </button>
-
-          {showLayers && (
-            <div className="absolute top-full right-0 mt-2 w-56 glass-card border-emerald-500/20 rounded-xl overflow-hidden shadow-xl backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200">
-              <div className="p-2 space-y-1">
-                {Object.entries(LAYER_CONFIG).map(([key, config]) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      setActiveLayer(key as MapLayer)
-                      setShowLayers(false)
-                    }}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-all ${activeLayer === key
-                      ? "bg-emerald-500/20 text-emerald-300 font-medium border border-emerald-500/30"
-                      : "text-gray-400 hover:text-white hover:bg-white/5 border border-transparent"
-                      }`}
-                  >
-                    <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: config.color }} />
-                    {config.name[lang === "ar" ? "ar" : "en"]}
-                  </button>
-                ))}
-              </div>
+      {/* Layer Switcher - Horizontal List at Top Center */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
+        <div className="flex items-center gap-1.5 glass-card border-emerald-500/30 px-3 py-2 rounded-xl shadow-2xl backdrop-blur-xl">
+          {Object.entries(LAYER_CONFIG).map(([key, config]) => (
+            <button
+              key={key}
+              onClick={() => {
+                setActiveLayer(key as MapLayer)
+                // Force map to reload tiles for the new layer
+                const map = mapRef.current
+                if (map && mapReadyRef.current) {
+                  // Trigger tile reload by removing and re-adding the layer
+                  const source = map.getSource("eosda-layer")
+                  if (source) {
+                    const layer = map.getLayer("eosda-layer")
+                    if (layer) map.removeLayer("eosda-layer")
+                    map.removeSource("eosda-layer")
+                  }
+                  // Layer will be re-added by useEffect
+                }
+              }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeLayer === key
+                  ? "bg-emerald-500/30 text-emerald-200 border-2 border-emerald-500/60 shadow-lg"
+                  : "text-gray-400 hover:text-white hover:bg-white/10 border border-transparent"
+              }`}
+              title={config.name[lang === "ar" ? "ar" : "en"]}
+            >
+              <span className="w-2.5 h-2.5 rounded-full shadow-sm border border-white/30" style={{ backgroundColor: config.color }} />
+              <span className="hidden sm:inline">{config.name[lang === "ar" ? "ar" : "en"]}</span>
+            </button>
+          ))}
+          {!EOSDA_API_KEY && (
+            <div className="ml-2 px-2 py-1 text-[10px] text-amber-400/80 border-l border-amber-500/20">
+              {lang === "ar" ? "تجريبي" : "Demo"}
             </div>
           )}
         </div>

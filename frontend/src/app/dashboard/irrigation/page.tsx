@@ -184,7 +184,11 @@ export default function IrrigationPage() {
       {/* Global Recommendation based on first system/field if available */}
       {systems.length > 0 && fieldInsights[systems[0].field_id] && (
         <IrrigationRecommendation
-          moisture={fieldInsights[systems[0].field_id]?.satellite?.soilMoisture?.value ?? undefined}
+          moisture={
+            typeof fieldInsights[systems[0].field_id]?.satellite?.soilMoisture?.value === "number"
+              ? fieldInsights[systems[0].field_id].satellite.soilMoisture.value
+              : undefined
+          }
           cropType={systems[0].fields?.crop_type}
         />
       )}

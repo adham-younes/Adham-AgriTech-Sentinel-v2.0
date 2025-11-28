@@ -30,14 +30,31 @@ const AdhamSatelliteMap = ({ coords, fieldId, esodaKey }) => {
     const [layerData, setLayerData] = useState(null);
 
     useEffect(() => {
-        if (coords && coords.length > 0) {
-            // Calculate center of polygon
-            const lats = coords.map(c => c[0]);
-            const lngs = coords.map(c => c[1]);
+        if (coords && Array.isArray(coords) && coords.length > 0) {
+            // Validate coordinates format: should be [lat, lng] or [lng, lat]
+            // Try to detect format by checking if first coord[0] is in valid lat range
+            const firstCoord = coords[0];
+            if (!firstCoord || !Array.isArray(firstCoord) || firstCoord.length < 2) {
+                console.warn("[AdhamSatelliteMap] Invalid coordinate format:", firstCoord);
+                return;
+            }
+            
+            // Assume format is [lat, lng] if lat is between -90 and 90
+            const isLatFirst = Math.abs(firstCoord[0]) <= 90;
+            const lats = coords.map(c => isLatFirst ? c[0] : c[1]);
+            const lngs = coords.map(c => isLatFirst ? c[1] : c[0]);
+            
             const minLat = Math.min(...lats);
             const maxLat = Math.max(...lats);
             const minLng = Math.min(...lngs);
             const maxLng = Math.max(...lngs);
+            
+            // Validate bounds
+            if (isNaN(minLat) || isNaN(maxLat) || isNaN(minLng) || isNaN(maxLng)) {
+                console.warn("Invalid coordinate values");
+                return;
+            }
+            
             setLat((minLat + maxLat) / 2);
             setLng((minLng + maxLng) / 2);
         }
@@ -136,61 +153,78 @@ const AdhamSatelliteMap = ({ coords, fieldId, esodaKey }) => {
 
         mapboxgl.accessToken = MAPBOX_TOKEN;
 
+        // Use Mapbox satellite style for better quality
         map.current = new mapboxgl.Map({
             container: mapContainer.current,
-            style: {
-                version: 8,
-                sources: {
-                    'esri-satellite': {
-                        type: 'raster',
-                        tiles: [
-                            'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-                        ],
-                        tileSize: 256,
-                        attribution: 'Esri, Maxar, Earthstar Geographics'
-                    }
-                },
-                layers: [
-                    {
-                        id: 'esri-satellite-layer',
-                        type: 'raster',
-                        source: 'esri-satellite',
-                        paint: {}
-                    }
-                ]
-            },
+            style: 'mapbox://styles/mapbox/satellite-v9', // Use Mapbox satellite style
             center: [lng, lat],
             zoom: zoom,
             pitch: pitch,
-            bearing: -17.6,
-            antialias: true
+            bearing: 0, // Reset bearing for better view
+            antialias: true,
+            preserveDrawingBuffer: true // For better rendering
         });
 
         map.current.on('load', () => {
             setMapLoaded(true);
 
-            // Add 3D terrain source
-            map.current.addSource('mapbox-dem', {
-                'type': 'raster-dem',
-                'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-                'tileSize': 512,
-                'maxzoom': 14
-            });
-            map.current.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+            // Add 3D terrain source only if Mapbox token is valid
+            try {
+                map.current.addSource('mapbox-dem', {
+                    'type': 'raster-dem',
+                    'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+                    'tileSize': 512,
+                    'maxzoom': 14
+                });
+                map.current.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.2 }); // Reduced exaggeration for realism
+            } catch (error) {
+                console.warn("3D terrain not available:", error);
+                // Continue without terrain
+            }
 
-            // Add sky layer
-            map.current.addLayer({
-                'id': 'sky',
-                'type': 'sky',
-                'paint': {
-                    'sky-type': 'atmosphere',
-                    'sky-atmosphere-sun': [0.0, 0.0],
-                    'sky-atmosphere-sun-intensity': 15
+            // Add sky layer only if terrain is available
+            try {
+                map.current.addLayer({
+                    'id': 'sky',
+                    'type': 'sky',
+                    'paint': {
+                        'sky-type': 'atmosphere',
+                        'sky-atmosphere-sun': [0.0, 0.0],
+                        'sky-atmosphere-sun-intensity': 10 // Reduced intensity
+                    }
+                });
+            } catch (error) {
+                console.warn("Sky layer not available:", error);
+            }
+
+            // Add navigation controls
+            map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+            if (coords && Array.isArray(coords) && coords.length > 0) {
+                // Validate and convert coordinates to [lng, lat] format for Mapbox
+                const firstCoord = coords[0];
+                if (!Array.isArray(firstCoord) || firstCoord.length < 2) {
+                    console.warn("Invalid coordinate format in map initialization");
+                    return;
                 }
-            });
+                
+                // Detect format: [lat, lng] or [lng, lat]
+                const isLatFirst = Math.abs(firstCoord[0]) <= 90;
+                const mapboxCoords = coords.map(c => {
+                    if (!Array.isArray(c) || c.length < 2) return null;
+                    return isLatFirst ? [c[1], c[0]] : [c[0], c[1]]; // Always [lng, lat] for Mapbox
+                }).filter(c => c !== null);
 
-            if (coords && coords.length > 0) {
-                const mapboxCoords = coords.map(c => [c[1], c[0]]);
+                if (mapboxCoords.length < 3) {
+                    console.warn("Not enough valid coordinates for polygon");
+                    return;
+                }
+
+                // Close the polygon if not already closed
+                if (mapboxCoords[0][0] !== mapboxCoords[mapboxCoords.length - 1][0] ||
+                    mapboxCoords[0][1] !== mapboxCoords[mapboxCoords.length - 1][1]) {
+                    mapboxCoords.push(mapboxCoords[0]);
+                }
 
                 map.current.addSource('field', {
                     'type': 'geojson',
@@ -199,40 +233,60 @@ const AdhamSatelliteMap = ({ coords, fieldId, esodaKey }) => {
                         'geometry': {
                             'type': 'Polygon',
                             'coordinates': [mapboxCoords]
+                        },
+                        'properties': {
+                            'name': 'Field Boundary'
                         }
                     }
                 });
 
+                // Add field fill layer (2D for better compatibility)
                 map.current.addLayer({
                     'id': 'field-fill',
-                    'type': 'fill-extrusion', // Changed to fill-extrusion for 3D
+                    'type': 'fill',
                     'source': 'field',
                     'layout': {},
                     'paint': {
-                        'fill-extrusion-color': BRAND.accent,
-                        'fill-extrusion-height': 20, // 20 meters height
-                        'fill-extrusion-opacity': 0.3,
-                        'fill-extrusion-base': 0
+                        'fill-color': BRAND.accent,
+                        'fill-opacity': 0.2
                     }
                 });
 
+                // Add field outline
                 map.current.addLayer({
                     'id': 'field-outline',
                     'type': 'line',
                     'source': 'field',
-                    'layout': {},
+                    'layout': {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
                     'paint': {
                         'line-color': BRAND.accent,
-                        'line-width': 2,
-                        'line-dasharray': [2, 1]
+                        'line-width': 3,
+                        'line-opacity': 0.8
                     }
                 });
 
-                // Fly to field
+                // Fly to field with smooth animation
                 const bounds = new mapboxgl.LngLatBounds();
                 mapboxCoords.forEach(coord => bounds.extend(coord));
-                map.current.fitBounds(bounds, { padding: 50 });
+                map.current.fitBounds(bounds, { 
+                    padding: 80,
+                    duration: 1500,
+                    maxZoom: 16
+                });
+            } else {
+                // Default view for Egypt
+                map.current.setCenter([31.2357, 30.0444]);
+                map.current.setZoom(13);
             }
+        });
+
+        // Handle map errors gracefully
+        map.current.on('error', (e) => {
+            console.error("Map error:", e);
+            setMapLoaded(true); // Show map even with errors
         });
 
         return () => {
@@ -292,16 +346,16 @@ const AdhamSatelliteMap = ({ coords, fieldId, esodaKey }) => {
 
             {/* Status Indicator */}
             {mapLoaded && (
-                <div className="absolute bottom-6 left-6 z-[400] bg-black/80 backdrop-blur-md px-4 py-3 rounded-lg border border-primary/30 shadow-glow">
+                <div className="absolute bottom-6 left-6 z-[400] bg-black/80 backdrop-blur-md px-4 py-3 rounded-lg border border-primary/30 shadow-lg">
                     <div className="flex items-center gap-3">
                         <div className="relative">
-                            <div className={`w-3 h-3 rounded-full animate-pulse ${layerLoading ? 'bg-yellow-400' : 'bg-primary'}`}></div>
-                            {!layerLoading && <div className="absolute top-0 left-0 w-3 h-3 bg-primary rounded-full animate-ping opacity-50"></div>}
+                            <div className={`w-3 h-3 rounded-full ${layerLoading ? 'bg-yellow-400 animate-pulse' : 'bg-emerald-500'}`}></div>
+                            {!layerLoading && <div className="absolute top-0 left-0 w-3 h-3 bg-emerald-500 rounded-full animate-ping opacity-75"></div>}
                         </div>
                         <div>
-                            <div className="text-xs text-gray-400 font-mono tracking-wider">SYSTEM STATUS</div>
-                            <div className={`text-sm font-bold tracking-widest ${layerLoading ? 'text-yellow-400' : 'text-primary'}`}>
-                                {layerLoading ? 'PROCESSING...' : '3D TWIN: ONLINE'}
+                            <div className="text-xs text-gray-400 font-mono tracking-wider uppercase">Map Status</div>
+                            <div className={`text-sm font-semibold ${layerLoading ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                                {layerLoading ? 'Loading Layer...' : 'Live Satellite View'}
                             </div>
                         </div>
                     </div>

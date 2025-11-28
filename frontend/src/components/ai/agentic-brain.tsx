@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -342,7 +342,7 @@ export function AgenticBrain({ fieldId, fieldName, lang = "ar", onDataUpdate }: 
                 {Math.round(stats.avgConfidence * 100)}% {lang === "ar" ? "ثقة" : "confidence"}
               </div>
               <div className="text-xs text-white/70">
-                {stats.total} {lang === "ar" "insights"}
+                {stats.total} {lang === "ar" ? "رؤى" : "insights"}
               </div>
             </div>
           </div>

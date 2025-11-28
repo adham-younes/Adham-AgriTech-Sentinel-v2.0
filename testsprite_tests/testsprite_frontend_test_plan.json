@@ -1,0 +1,470 @@
+[
+  {
+    "id": "TC001",
+    "title": "User Registration with Valid Data",
+    "description": "Verify that a new user can successfully register using valid credentials and receive confirmation.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the signup page."
+      },
+      {
+        "type": "action",
+        "description": "Fill the registration form with valid email, username, and password."
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user receives a confirmation message and account is created."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "User Login with Correct Credentials",
+    "description": "Verify user login is successful with correct email and password and session is established.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page."
+      },
+      {
+        "type": "action",
+        "description": "Input a registered email and correct password."
+      },
+      {
+        "type": "action",
+        "description": "Click the login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is redirected to the dashboard and token/session is established."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "User Login Failure with Incorrect Credentials",
+    "description": "Verify login fails with invalid password and an appropriate error message is shown.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page."
+      },
+      {
+        "type": "action",
+        "description": "Input a registered email with an incorrect password."
+      },
+      {
+        "type": "action",
+        "description": "Click the login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that an error message indicating invalid credentials is displayed."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Farm Creation with Valid Polygon Boundary",
+    "description": "Verify that a user can create a farm by drawing a polygon boundary and the system validates the area correctly.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to create new farm page."
+      },
+      {
+        "type": "action",
+        "description": "Draw a polygon boundary within allowed area constraints."
+      },
+      {
+        "type": "action",
+        "description": "Fill in farm details like name and location."
+      },
+      {
+        "type": "action",
+        "description": "Submit the farm creation form."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify farm is created and polygon boundary is saved and displayed on the map."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Farm Creation Boundary Area Validation",
+    "description": "Ensure system rejects farm polygon boundary if area exceeds farm area by more than 50%.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to create farm page."
+      },
+      {
+        "type": "action",
+        "description": "Draw a polygon boundary exceeding 150% of the allowable farm area."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to submit the farm creation form."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an error or validation message prevents the farm creation."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Add Field with Crop and Soil Type Tracking",
+    "description": "Verify adding a new field with polygon boundary, selecting crop type, and soil type successfully saves the data.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to add new field page within a farm."
+      },
+      {
+        "type": "action",
+        "description": "Draw field polygon boundary inside the farm limits."
+      },
+      {
+        "type": "action",
+        "description": "Select crop type and soil type from dropdowns."
+      },
+      {
+        "type": "action",
+        "description": "Submit the field creation form."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify new field is saved with correct boundary, crop, and soil data and visible on maps."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Real-Time Satellite Imagery Layer Rendering",
+    "description": "Validate satellite imagery layers (NDVI, EVI, NDMI, chlorophyll, moisture) are fetched and rendered on 3D terrain correctly with fallbacks.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to satellite imagery dashboard."
+      },
+      {
+        "type": "action",
+        "description": "Select each imagery layer one by one (NDVI, EVI, NDMI, chlorophyll, moisture)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify each layer loads and renders appropriately on the 3D map."
+      },
+      {
+        "type": "action",
+        "description": "Disable primary EOSDA API to simulate failure."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify fallback EOSDA API support activates and imagery layers still load properly."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "AI Assistant Plant Disease Image Analysis",
+    "description": "Verify that uploading a plant image triggers multi-provider AI analysis and returns disease diagnosis and treatment advice.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to AI Assistant with plant disease diagnostic feature."
+      },
+      {
+        "type": "action",
+        "description": "Upload a clear image of a diseased plant leaf."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify AI-powered multi-provider analysis is triggered and results are returned."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify diagnosis details and treatment advice are displayed to the user."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Soil Health Parameter Analysis and Recommendation",
+    "description": "Check that soil analysis shows accurate NPK, pH, moisture, organic content values and provides tailored fertilization recommendations.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to soil analysis page."
+      },
+      {
+        "type": "action",
+        "description": "Input or fetch soil data parameters for a selected field."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system calculates and displays correct NPK, pH, moisture, and organic content."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that appropriate fertilization recommendations based on data are shown."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "AI-Powered Irrigation Scheduling and Recommendations",
+    "description": "Validate that irrigation recommendations are generated based on integrated soil moisture and weather data.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to irrigation management dashboard."
+      },
+      {
+        "type": "action",
+        "description": "Ensure soil moisture and current weather data are up to date for the selected field."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify AI generates irrigation schedule and watering recommendations accordingly."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Early Warning System for Agricultural Risks",
+    "description": "Validate that the system detects vegetation stress, drought, disease, and temperature risks and issues alerts with severity levels.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate or input conditions causing vegetation stress or drought in test environment."
+      },
+      {
+        "type": "action",
+        "description": "Access the dashboard and early warning alerts section."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an automated alert is generated and displayed with proper severity assessment."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "AI-Based Crop Yield Prediction Accuracy",
+    "description": "Check that yield predictions are generated with confidence scores and estimated harvest dates using historical and real-time data.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to yield prediction module for a selected farm or field."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the system displays crop yield forecasts with confidence scores and harvest date estimates."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Weather Data Integration and Display",
+    "description": "Validate that current weather, 7-day forecast, and weather alerts are accurately fetched and displayed in the UI and linked with farming modules.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the weather dashboard."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify current weather conditions and forecast data are correctly displayed."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that weather alerts appear and are actionable by agricultural modules such as irrigation or warnings."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Crop Monitoring Timeline and Health Trend",
+    "description": "Verify the crop monitoring timeline views the development stages and tracks health scores with trend analytics over time.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to crop monitoring page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify timeline shows crop growth stages clearly."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify health scoring is accurate and trends are graphed and updated over growth periods."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Reports Export Functionality",
+    "description": "Check that farm and field reports and analytics can be generated and exported in supported formats.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to reports & analytics section."
+      },
+      {
+        "type": "action",
+        "description": "Generate a report for specific farm or field data."
+      },
+      {
+        "type": "action",
+        "description": "Export the report in available formats (PDF, CSV, etc.)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the report exports correctly with all selected data intact."
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Multi-language Support and Accessibility",
+    "description": "Verify the UI supports both Arabic and English languages with accurate translations and accessibility features.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Switch application language to Arabic and navigate through key modules."
+      },
+      {
+        "type": "assertion",
+        "description": "Validate the correctness and completeness of Arabic translations."
+      },
+      {
+        "type": "action",
+        "description": "Switch application language back to English and verify content."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify accessibility features comply with standards (e.g., keyboard navigation, ARIA labels)."
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Map Visualization with Field Boundaries and Analytical Overlays",
+    "description": "Verify 3D maps properly display farm and field polygons along with satellite and analytical overlays interactively.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to map visualization modules."
+      },
+      {
+        "type": "action",
+        "description": "Toggle display of field boundaries and satellite analytical overlays."
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure polygons are accurate and overlays align correctly on the 3D terrain map."
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "System Health Check for External Services",
+    "description": "Ensure platform health checks correctly report statuses of EOSDA API, Plant.id AI, Weather API, and sensor integrations.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Trigger system health check manually or via scheduled task."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify status of each external service is fetched and displayed accurately."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error conditions are reported properly if a service is down."
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Centralized Error Handling with UI Notification",
+    "description": "Verify that any client or server errors are caught by error boundaries and logged with user-friendly notifications.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate an API failure or client-side UI error."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error boundary catches the error preventing crash."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error is logged and a relevant error message or UI fallback is displayed to the user."
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Session Timeout and User Logout",
+    "description": "Verify that user sessions expire after inactivity and users are logged out and redirected to login page.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login to the application and remain inactive until session timeout triggers."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user session is invalidated and user is redirected to the login page."
+      }
+    ]
+  }
+]

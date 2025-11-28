@@ -3,6 +3,7 @@ import Link from "next/link"
 import { cookies, headers } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import {
   Sprout,
   MapPin,
@@ -110,7 +111,7 @@ const STRINGS: Record<Lang, Record<string, string>> = {
     add_field: "Add field",
     card_3d_title: "3D Farm Intelligence",
     card_3d_desc: "Field footprints with NDVI elevation and soil moisture over Mapbox.",
-    go_satellite: "Open satellite console",
+    go_satellite: "Open Satellite Console",
     add_boundaries_hint: "Add field boundaries to see 3D analytics instantly.",
     weather_title: "Weather",
     weather_partly: "Partly clear",
@@ -437,36 +438,72 @@ export default async function DashboardPage() {
         {/* Center Column: Digital Twin Map (2/4) */}
         <div className="xl:col-span-2 space-y-6">
           <Card className="glass-card border-primary/20 shadow-3d overflow-hidden h-full min-h-[600px] flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="flex items-center gap-2">
-                <Layers3 className="h-5 w-5 text-primary" />
-                {t.card_3d_title}
-              </CardTitle>
-              <Link href="/dashboard/satellite" className="text-sm text-primary underline underline-offset-4">{t.go_satellite}</Link>
+            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                  <Layers3 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    {t.card_3d_title}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {lang === "ar" 
+                      ? "خرائط تفاعلية مع تحليلات NDVI ورطوبة التربة من EOSDA"
+                      : "Interactive maps with NDVI and soil moisture analytics from EOSDA"}
+                  </p>
+                </div>
+              </div>
+              <Link 
+                href="/dashboard/satellite" 
+                className="text-sm text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+              >
+                {t.go_satellite}
+              </Link>
             </CardHeader>
-            <CardContent className="flex-1 p-0 relative">
-              <AdhamSatelliteMap
-                coords={analyticsFields.length > 0 ? analyticsFields[0].polygon : null}
-                fieldId={analyticsFields.length > 0 ? analyticsFields[0].id : null}
-                esodaKey={process.env.NEXT_PUBLIC_EOSDA_API_KEY || ''}
-              />
+            <CardContent className="flex-1 p-0 relative bg-black/20">
+              {analyticsFields.length > 0 ? (
+                <AdhamSatelliteMap
+                  coords={analyticsFields[0].polygon || []}
+                  fieldId={analyticsFields[0].id}
+                  esodaKey={process.env.NEXT_PUBLIC_EOSDA_API_KEY || ''}
+                />
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                  <Layers3 className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                  <h3 className="text-lg font-semibold text-white/80 mb-2">
+                    {lang === "ar" ? "لا توجد حقول لعرضها" : "No fields to display"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                    {lang === "ar" 
+                      ? "أضف حقولاً إلى مزرعتك لعرض الخرائط ثلاثية الأبعاد والتحليلات التفاعلية"
+                      : "Add fields to your farm to view 3D maps and interactive analytics"}
+                  </p>
+                  <Link href="/dashboard/fields/new">
+                    <Button variant="default" className="gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {t.add_field}
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
+        </div>
 
-          {/* Timeline & Analytics below map */}
+        {/* Right Column: Analytics, Timeline, AI & Weather (1/4) */}
+        <div className="space-y-6 xl:col-span-1">
+          {/* Timeline & Analytics - moved here for better organization */}
           {analyticsFields.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <>
               <CropTimeline
                 cropType={analyticsFields[0].crop || 'Wheat'}
                 plantingDate={null}
               />
               <SoilCropAnalytics fieldId={analyticsFields[0].id} />
-            </div>
+            </>
           )}
-        </div>
 
-        {/* Right Column: AI & Weather (1/4) */}
-        <div className="space-y-6 xl:col-span-1">
           <WeatherWidget
             latitude={analyticsFields[0]?.center?.[1]}
             longitude={analyticsFields[0]?.center?.[0]}
@@ -663,8 +700,8 @@ function statusClasses(status: ServiceHealthStatus) {
   }
 }
 
-function statusLabel(status: ServiceHealthStatus, language: Lang) {
-  if (language === "en") {
+function statusLabel(status: ServiceHealthStatus, lang: Lang) {
+  if (lang === "en") {
     switch (status) {
       case "operational":
         return STRINGS.en.status_operational

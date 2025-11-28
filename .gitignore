@@ -144,6 +144,20 @@ dist
 # Temporary folders
 tmp/
 temp/
+/tmp/
+/temp/
+tmp/**/*
+temp/**/*
+**/tmp/**/*
+**/temp/**/*
+
+# Summary and temporary JSON files
+*.summary-*.json
+summary-*.json
+**/summary-*.json
+**/*.summary-*.json
+tmp/**/*.json
+temp/**/*.json
 
 # Editor directories and files
 .vscode/*

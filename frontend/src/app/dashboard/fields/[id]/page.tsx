@@ -174,8 +174,28 @@ export default function FieldDetailsPage({ params }: { params: Promise<{ id: str
   }
 
   useEffect(() => {
+    async function resolveParams() {
+      try {
+        const resolvedParams = await params
+        const id = resolvedParams.id
+        if (id && id !== fieldId) {
+          setFieldId(id)
+          setLoading(true) // Reset loading when field ID changes
+        }
+      } catch (error) {
+        console.error("[FieldDetails] Failed to resolve params:", error)
+        setLoading(false)
+      }
+    }
+    resolveParams()
+  }, [params, fieldId])
+
+  useEffect(() => {
     if (fieldId) {
+      setLoading(true)
       fetchField()
+    } else {
+      setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fieldId])
