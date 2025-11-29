@@ -35,7 +35,7 @@ export const DashboardSidebar = memo(function DashboardSidebar({
     <div className="space-y-6">
       {hasFields && (
         <>
-          <CropTimeline cropType={firstField.crop || 'Wheat'} plantingDate={null} />
+          <CropTimeline cropType={firstField.crop || 'Wheat'} plantingDate={firstField.plantingDate ?? null} />
           <SoilCropAnalytics fieldId={firstField.id} />
         </>
       )}

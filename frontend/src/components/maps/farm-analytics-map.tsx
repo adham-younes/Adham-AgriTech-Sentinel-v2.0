@@ -27,7 +27,7 @@ const MAPBOX_TILE_URL = MAPBOX_TOKEN
 const MAPBOX_ATTRIBUTION = "Imagery \u00A9 Mapbox"
 const EOSDA_TILE_URL =
   process.env.NEXT_PUBLIC_EOSDA_TILE_URL?.trim() ||
-  "https://api.eosda.com";
+  "https://api-connect.eos.com";
 
 type MapLayer = "true-color" | "ndvi" | "ndmi" | "evi" | "soil-moisture" | "chlorophyll"
 
@@ -182,6 +182,7 @@ export interface FarmAnalyticsFeature {
   yieldPotential?: number | null
   health?: number | null
   lastUpdated?: string | null
+  plantingDate?: string | Date | null
   center: [number, number]
   polygon: [number, number][]
 }

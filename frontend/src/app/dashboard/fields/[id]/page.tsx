@@ -71,8 +71,8 @@ const translations = {
   }
 }
 
-const SatelliteMap = dynamic(
-  () => import("@/components/maps/farm-analytics-map").then((mod) => mod.FarmAnalyticsMap),
+const UnifiedMap = dynamic(
+  () => import("@/components/maps/unified-map-with-analytics").then((mod) => mod.UnifiedMapWithAnalytics),
   {
     ssr: false,
     loading: () => (
@@ -80,6 +80,13 @@ const SatelliteMap = dynamic(
         Loading map…
       </div>
     ),
+  },
+)
+
+const ThermalMapViewer = dynamic(
+  () => import("@/components/maps/thermal-map-viewer").then((mod) => mod.ThermalMapViewer),
+  {
+    ssr: false,
   },
 )
 
@@ -733,7 +740,7 @@ export default function FieldDetailsPage({ params }: { params: Promise<{ id: str
             <span className="text-lg font-semibold text-emerald-950">{lang === "ar" ? "خريطة الحقل" : "Field Map"}</span>
           </div>
           <div className="rounded-xl overflow-hidden border border-emerald-200">
-            <SatelliteMap
+            <UnifiedMap
               fields={[{
                 id: field.id,
                 name: field.name,
@@ -748,9 +755,14 @@ export default function FieldDetailsPage({ params }: { params: Promise<{ id: str
                     [fieldCenter[1], fieldCenter[0] + 0.001]
                   ]) as [number, number][],
                 crop: field.crop_type || null,
+                ndvi: parseMaybeNumber(field.last_ndvi ?? field.ndvi_score),
                 health: parseMaybeNumber(field.last_ndvi ?? field.ndvi_score) ?
                   (parseMaybeNumber(field.last_ndvi ?? field.ndvi_score)! * 100) : 50
               }]}
+              defaultLayer="true-color"
+              showLayerControls={true}
+              showNavigationControls={true}
+              lang={lang}
               height={400}
             />
           </div>

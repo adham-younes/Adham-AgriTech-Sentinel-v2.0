@@ -41,15 +41,15 @@ export async function GET() {
       }, { status: 500 })
     }
     
-    // Check if users table exists and has data
-    const { data: users, error: usersError, count: usersCount } = await supabase
-      .from("users")
+    // Check if profiles table exists and has data (users are in auth schema)
+    const { data: profiles, error: profilesError, count: profilesCount } = await supabase
+      .from("profiles")
       .select("*", { count: "exact", head: true })
     
-    if (usersError) {
+    if (profilesError) {
       return NextResponse.json({ 
-        error: "Users table error", 
-        details: usersError.message 
+        error: "Profiles table error", 
+        details: profilesError.message 
       }, { status: 500 })
     }
     
@@ -67,7 +67,7 @@ export async function GET() {
     
     // Get sample user data with their farms and fields
     const { data: sampleUsers, error: sampleUsersError } = await supabase
-      .from("users")
+      .from("profiles")
       .select(`
         id, email,
         farm_owners!inner (
@@ -92,7 +92,7 @@ export async function GET() {
       fieldsCount: fieldsCount ?? 0,
       farmsCount: farmsCount ?? 0,
       farmOwnersCount: farmOwnersCount ?? 0,
-      usersCount: usersCount ?? 0,
+      profilesCount: profilesCount ?? 0,
       sampleFields: sampleFields || [],
       sampleFarms: sampleFarms || [],
       sampleUsersWithFarmsAndFields: sampleUsers || [],

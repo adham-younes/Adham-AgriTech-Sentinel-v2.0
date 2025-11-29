@@ -1,6 +1,5 @@
 import type { LanguageModel } from "ai"
 import { createGroq } from "@ai-sdk/groq"
-import { createOpenAI } from "@ai-sdk/openai"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 
 export interface AIProvider {
@@ -45,40 +44,7 @@ export class AIProviderRegistry {
 
     const trim = (v?: string) => (typeof v === "string" ? v.trim() : v)
 
-    // Priority 1: xAI Grok (User Requested Primary)
-    if (trim(process.env.XAI_API_KEY)) {
-      const xaiKey = trim(process.env.XAI_API_KEY) as string
-      const xaiModel = trim(process.env.XAI_MODEL) || "grok-2-latest"
-      const xaiClient = createOpenAI({
-        apiKey: xaiKey,
-        baseURL: trim(process.env.XAI_BASE_URL) || "https://api.x.ai/v1",
-      })
-      providers.push({
-        id: "xai",
-        name: "xAI Grok",
-        modelId: xaiModel,
-        getModel: () => xaiClient(xaiModel),
-        isAvailable: true,
-        capabilities: { vision: false },
-      })
-    }
-
-    // Priority 2: OpenAI (Fallback)
-    if (trim(process.env.OPENAI_API_KEY)) {
-      const openaiKey = trim(process.env.OPENAI_API_KEY) as string
-      const openaiClient = createOpenAI({ apiKey: openaiKey })
-      const openaiModel = trim(process.env.OPENAI_MODEL) || "gpt-4o-mini"
-      providers.push({
-        id: "openai",
-        name: "OpenAI",
-        modelId: openaiModel,
-        getModel: () => openaiClient(openaiModel),
-        isAvailable: true,
-        capabilities: { vision: true },
-      })
-    }
-
-    // Priority 3: Groq
+    // Priority 1: Groq (Primary)
     if (trim(process.env.GROQ_API_KEY)) {
       const groqKey = trim(process.env.GROQ_API_KEY) as string
       const groqClient = createGroq({ apiKey: groqKey })
@@ -93,24 +59,29 @@ export class AIProviderRegistry {
       })
     }
 
-    // Priority 4: Google Gemini
-    if (trim(process.env.GOOGLE_AI_API_KEY)) {
-      const googleKey = trim(process.env.GOOGLE_AI_API_KEY) as string
-      const googleClient = createGoogleGenerativeAI({ apiKey: googleKey })
-      const googleModel = trim(process.env.GOOGLE_AI_MODEL) || "gemini-2.0-flash"
-      providers.push({
-        id: "google",
-        name: "Google Gemini",
-        modelId: googleModel,
-        getModel: () => googleClient(googleModel),
-        isAvailable: true,
-        capabilities: { vision: true },
-      })
+    // Priority 2: Google Gemini (Fallback)
+    const googleKey = trim(process.env.GOOGLE_AI_API_KEY)
+    if (googleKey && googleKey.length > 10) { // Basic validation: API key should be longer than 10 chars
+      try {
+        const googleClient = createGoogleGenerativeAI({ apiKey: googleKey })
+        const googleModel = trim(process.env.GOOGLE_AI_MODEL) || "gemini-2.0-flash"
+        providers.push({
+          id: "google",
+          name: "Google Gemini",
+          modelId: googleModel,
+          getModel: () => googleClient(googleModel),
+          isAvailable: true,
+          capabilities: { vision: true },
+        })
+      } catch (error) {
+        console.warn("[AI Registry] Failed to initialize Google AI client:", error)
+        // Skip Google AI if initialization fails
+      }
     }
 
     // Allow operator to control provider priority without code changes
-    // AI_PROVIDER_ORDER: comma-separated ids e.g. "xai,groq,openai,google"
-    // AI_PRIMARY_PROVIDER: single id e.g. "xai"
+    // AI_PROVIDER_ORDER: comma-separated ids e.g. "groq,google"
+    // AI_PRIMARY_PROVIDER: single id e.g. "groq"
     const orderEnv = (trim(process.env.AI_PROVIDER_ORDER) || trim(process.env.NEXT_PUBLIC_AI_PROVIDER_ORDER) || "")
       .toLowerCase()
       .split(",")

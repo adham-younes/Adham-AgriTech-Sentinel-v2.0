@@ -3,6 +3,7 @@
 // API Base: https://api-connect.eos.com
 
 import { eosdaPublicConfig, eosdaServerConfig } from "../config/eosda"
+import { logger } from "../utils/logger"
 
 export interface EOSDASatelliteImageRequest {
   center: { latitude: number; longitude: number }
@@ -203,13 +204,21 @@ async function requestFromEOSDA<T>(path: string, init?: RequestInit & { query?: 
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error(`EOSDA API Error [${response.status}]: ${errorText}`)
+      logger.error('EOSDA API request failed', new Error(`EOSDA API Error [${response.status}]: ${errorText}`), {
+        status: response.status,
+        statusText: response.statusText,
+        endpoint: url,
+        errorText: errorText.substring(0, 200)
+      })
       throw new Error(`EOSDA API request failed: ${response.status} ${response.statusText}`)
     }
 
     return await response.json() as T
   } catch (error) {
-    console.error('EOSDA API request failed:', error)
+    logger.error('EOSDA API request failed', error, {
+      endpoint: url,
+      method: fetchInit?.method || 'GET'
+    })
     throw error
   }
 }
@@ -582,7 +591,13 @@ export async function fetchEOSDASatelliteImage({
       source: 'eosda'
     }
   } catch (error: any) {
-    console.error("EOSDA satellite image error:", error)
+    logger.error("EOSDA satellite image error", error, {
+      center,
+      zoom,
+      startDate,
+      endDate,
+      service: "eosda"
+    })
     const message = error instanceof Error ? error.message : String(error || "")
 
     // For network problems, fall back to a synthetic image instead of failing hard
@@ -687,7 +702,12 @@ export async function fetchEOSDANDVI(
 
     throw new Error('NDVI task timed out')
   } catch (error) {
-    console.error('EOSDA NDVI error:', error)
+    logger.error('EOSDA NDVI error', error, {
+      center,
+      startDate,
+      endDate,
+      service: "eosda"
+    })
     // Graceful fallback for demo stability when network/DNS fails
     const message = (error instanceof Error ? error.message : String(error || ''))
     const causeCode = (error as any)?.cause?.code
@@ -861,14 +881,16 @@ export async function fetchEOSDASoilMoisture({
   startDate?: Date
   endDate?: Date
 }): Promise<EOSDAIndexSample> {
+  // For soil moisture, we want values in the 0.3-0.7 range (30-70% when multiplied by 100)
+  // Using offset 11 and scale 0.4 gives us values roughly in that range
   return fetchEOSDAIndexSample({
     center,
     startDate,
     endDate,
     index: "soil_moisture",
-    aliases: ["msavi", "ndmi"],
+    aliases: ["msavi", "ndmi", "ndwi"],
     syntheticOffset: 11,
-    syntheticScale: 1,
+    syntheticScale: 0.4, // Scale to 0-0.4 range, then offset will shift it to ~0.3-0.7
   })
 }
 
@@ -1109,6 +1131,7 @@ export async function getEOSDAThermalMap({
 
   try {
     // Use render API with thermal colormap
+    // Documentation: https://doc.eos.com/docs/render/#thermal-maps
     const response = await requestFromEOSDA<{
       data: {
         image_url: string
@@ -1116,6 +1139,7 @@ export async function getEOSDAThermalMap({
         datetime: string
       }
     }>(`/api/render/${viewId}`, {
+      method: 'GET',
       query: {
         bbox: bbox.join(","),
         width: width.toString(),
@@ -1133,7 +1157,12 @@ export async function getEOSDAThermalMap({
       renderedAt: response.data.datetime,
     }
   } catch (error) {
-    console.error("EOSDA thermal map error:", error)
+    logger.error("EOSDA thermal map error", error, {
+      viewId,
+      index,
+      date,
+      service: "eosda"
+    })
     // Fallback to synthetic
     return {
       imageUrl: SYNTHETIC_IMAGE_URL,
@@ -1257,7 +1286,12 @@ export async function fetchEOSDAStatistics({
       capturedAt: response.data.datetime,
     }
   } catch (error) {
-    console.error("EOSDA statistics error:", error)
+    logger.error("EOSDA statistics error", error, {
+      viewId,
+      index,
+      date,
+      service: "eosda"
+    })
     const message = error instanceof Error ? error.message : String(error || "")
     const causeCode = (error as any)?.cause?.code
     const networkFailure =
@@ -1326,7 +1360,12 @@ export async function fetchEOSDAWeatherSnapshots({
       })) ?? []
     )
   } catch (error) {
-    console.error("EOSDA weather snapshots error:", error)
+    logger.error("EOSDA weather snapshots error", error, {
+      viewId,
+      startDate,
+      endDate,
+      service: "eosda"
+    })
     const message = error instanceof Error ? error.message : String(error || "")
     const causeCode = (error as any)?.cause?.code
     const networkFailure =
@@ -1376,7 +1415,12 @@ export async function fetchEOSDAWeatherRange({
 
     return response
   } catch (error: any) {
-    console.error("EOSDA weather range error:", error)
+    logger.error("EOSDA weather range error", error, {
+      viewId,
+      startDate,
+      endDate,
+      service: "eosda"
+    })
     const message = error instanceof Error ? error.message : String(error || "")
     const causeCode = (error as any)?.cause?.code
     const networkFailure =

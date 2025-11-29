@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { createClient as createSupabaseServerClient } from "@/lib/supabase/server"
 import { createServiceSupabaseClient } from "@/lib/supabase/service-client"
+import { logger } from "@/lib/utils/logger"
 
 type FarmPayload = {
   name?: string
@@ -70,17 +71,17 @@ export async function GET(request: Request) {
       .order("created_at", { ascending: false })
 
     if (farmsError) {
-      console.error("[API] Failed to fetch farms", { error: farmsError, userId: user.id })
+      logger.error("[API] Failed to fetch farms", farmsError, { userId: user.id, endpoint: "GET /api/farms" })
       return NextResponse.json(
         { error: "FARMS_FETCH_FAILED", message: farmsError.message },
         { status: 500 }
       )
     }
 
-    console.log("[API] Successfully fetched farms", { count: farms?.length || 0, userId: user.id })
+    logger.info("[API] Successfully fetched farms", { count: farms?.length || 0, userId: user.id })
     return NextResponse.json({ farms: farms || [] })
   } catch (error) {
-    console.error("[API] Unexpected farms fetch error", error)
+    logger.error("[API] Unexpected farms fetch error", error, { endpoint: "GET /api/farms" })
     const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json({ error: "UNEXPECTED_ERROR", message }, { status: 500 })
   }
@@ -88,23 +89,22 @@ export async function GET(request: Request) {
 
 // Test endpoint for debugging
 export async function PUT(request: Request) {
-  console.log("[API] PUT endpoint called")
+  logger.debug("[API] PUT endpoint called", { endpoint: "PUT /api/farms" })
 
   try {
     // Just test service client creation without database operations
-    console.log("[API] Creating service client...")
+    logger.debug("[API] Creating service client...", { endpoint: "PUT /api/farms" })
     const serviceSupabase = createServiceSupabaseClient()
-    console.log("[API] Service client created successfully")
+    logger.debug("[API] Service client created successfully", { endpoint: "PUT /api/farms" })
 
     return NextResponse.json({
       success: true,
       message: "Service client test passed - no database operations"
     })
   } catch (error) {
-    console.error("[API] Test endpoint error", {
-      message: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : "Unknown"
+    logger.error("[API] Test endpoint error", error, {
+      endpoint: "PUT /api/farms",
+      type: "test_endpoint"
     })
     return NextResponse.json({
       error: "TEST_ERROR",
@@ -159,11 +159,14 @@ export async function POST(request: Request) {
       Object.entries(mutablePayload).filter(([, value]) => value !== undefined),
     )
 
-    console.log("[API/farms] Attempting initial insert with payload:", JSON.stringify(payloadToSend))
+    logger.debug("[API/farms] Attempting initial insert", { 
+      payload: payloadToSend,
+      endpoint: "POST /api/farms"
+    })
 
     const { data: initData, error: initError } = await supabase.from("farms").insert(payloadToSend).select("id").single()
 
-    console.log("[API/farms] Initial insert result:", {
+    logger.debug("[API/farms] Initial insert result", {
       success: !!initData?.id,
       insertedId: initData?.id,
       error: initError ? {
@@ -185,18 +188,19 @@ export async function POST(request: Request) {
       const latMissing = /column\s+latitude\s+does\s+not\s+exist/i.test(msg)
       const lngMissing = /column\s+longitude\s+does\s+not\s+exist/i.test(msg)
 
-      console.log("[API/farms] Error checks:", {
+      logger.debug("[API/farms] Error checks", {
         rlsViolation,
         userIdMissing,
         totalAreaMissing,
         latMissing,
         lngMissing,
-        willAttemptLegacy: rlsViolation || userIdMissing || totalAreaMissing || latMissing || lngMissing
+        willAttemptLegacy: rlsViolation || userIdMissing || totalAreaMissing || latMissing || lngMissing,
+        endpoint: "POST /api/farms"
       })
 
       if (rlsViolation || userIdMissing || totalAreaMissing || latMissing || lngMissing) {
-        console.log("[API/farms] Attempting legacy schema fallback")
-        console.log("[API/farms] Raw payload for legacy extraction:", {
+        logger.debug("[API/farms] Attempting legacy schema fallback", { endpoint: "POST /api/farms" })
+        logger.debug("[API/farms] Raw payload for legacy extraction", {
           body_total_area: body.total_area,
           raw_total_area: raw?.total_area,
           raw_area: raw?.area,
@@ -210,20 +214,23 @@ export async function POST(request: Request) {
         const legacyLat = normalizeNumber(body.latitude ?? coerceNumber(raw?.latitude))
         const legacyLng = normalizeNumber(body.longitude ?? coerceNumber(raw?.longitude))
 
-        console.log("[API/farms] Legacy values after normalization:", {
+        logger.debug("[API/farms] Legacy values after normalization", {
           legacyArea,
           legacyLat,
           legacyLng
         })
 
         if (legacyArea == null || legacyLat == null || legacyLng == null) {
-          console.error("[API/farms] Legacy schema missing required fields!")
+          logger.error("[API/farms] Legacy schema missing required fields", undefined, {
+            endpoint: "POST /api/farms",
+            schema: "legacy"
+          })
           insertError = {
             message: "LEGACY_SCHEMA_REQUIRED_FIELDS_MISSING",
             details: "area, latitude, longitude are required for legacy farms schema",
           }
         } else {
-          console.log("[API/farms] Attempting legacy insert with owner_id")
+          logger.debug("[API/farms] Attempting legacy insert with owner_id", { endpoint: "POST /api/farms" })
           const legacyPayload: Record<string, unknown> = {
             owner_id: user.id,
             name,
@@ -249,10 +256,10 @@ export async function POST(request: Request) {
     }
 
     if (insertError || !insertedId) {
-      console.error("[API] Failed to create farm", {
-        error: insertError,
+      logger.error("[API] Failed to create farm", insertError as Error, {
         forbiddenInRaw,
         insertPayloadKeys: Object.keys(mutablePayload),
+        endpoint: "POST /api/farms"
       })
 
       return NextResponse.json(
@@ -279,16 +286,24 @@ export async function POST(request: Request) {
         })
 
       if (bridgeError) {
-        console.error("[API] Failed to update farm_owners bridge", { error: bridgeError })
+        logger.error("[API] Failed to update farm_owners bridge", bridgeError, {
+          endpoint: "POST /api/farms",
+          farmId: insertedFarmId
+        })
         // Don't fail the request, but log the error
       }
     } catch (bridgeError) {
-      console.error("[API] Unexpected bridge error", bridgeError)
+      logger.error("[API] Unexpected bridge error", bridgeError, {
+        endpoint: "POST /api/farms",
+        farmId: insertedFarmId
+      })
     }
 
     return NextResponse.json({ id: insertedId }, { status: 201 })
   } catch (error) {
-    console.error("[API] Unexpected farm creation error", error)
+    logger.error("[API] Unexpected farm creation error", error, {
+      endpoint: "POST /api/farms"
+    })
     const message = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json({ error: "UNEXPECTED_ERROR", message }, { status: 500 })
   }

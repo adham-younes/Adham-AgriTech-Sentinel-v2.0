@@ -171,11 +171,15 @@ export async function POST(request: Request) {
       typeof chlorophyllSample?.value === "number" ? Number(chlorophyllSample.value.toFixed(2)) : null
     const soilMoistureRaw =
       typeof soilMoistureSample?.value === "number" ? Number(soilMoistureSample.value.toFixed(3)) : null
+    // Convert to percentage: if value is already > 1, assume it's already a percentage
+    // Otherwise, multiply by 100 to convert from 0-1 range to 0-100%
     const soilMoisturePercent =
       soilMoistureRaw == null
         ? null
         : soilMoistureRaw > 1
           ? clampNumber(soilMoistureRaw, 5, 100)
+          : soilMoistureRaw < 0
+          ? null // Invalid negative value
           : clampNumber(Math.round(soilMoistureRaw * 100), 5, 100)
 
     const nutrientEstimates = deriveNutrientEstimates({

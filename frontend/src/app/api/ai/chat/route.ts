@@ -3,6 +3,7 @@ export const runtime = "nodejs"
 import { generateText, type CoreMessage } from "ai"
 
 import { aiProviderRegistry, addProviderHeaders } from "@/lib/ai/provider-registry"
+import { logger } from "@/lib/utils/logger"
 import {
   fetchEOSDANDVI,
   fetchEOSDASatelliteImage,
@@ -244,7 +245,7 @@ async function buildSatelliteContext(fieldId?: string, language: string = "ar") 
       .filter(Boolean)
       .join("\n")
   } catch (error) {
-    console.warn("[AI Assistant] Satellite context failed:", error)
+    logger.warn("[AI Assistant] Satellite context failed", { error, fieldId, service: "satellite_context" })
     return null
   }
 }
@@ -344,7 +345,7 @@ async function buildAgronomicKnowledge(language: string = "ar") {
 
     return sections.length ? sections.join("\n") : null
   } catch (error) {
-    console.warn("[AI Assistant] Agronomic knowledge failed:", error)
+    logger.warn("[AI Assistant] Agronomic knowledge failed", { error, service: "agronomic_knowledge" })
     return null
   }
 }
@@ -600,7 +601,7 @@ async function buildFieldInsightBlock(fieldId?: string, language: string = "ar")
 
     return lines.join("\n")
   } catch (error) {
-    console.warn("[AI Assistant] Field context failed:", error)
+    logger.warn("[AI Assistant] Field context failed", { error, fieldId, service: "field_context" })
     return null
   }
 }
@@ -619,7 +620,7 @@ async function savePlantAnalysisToDatabase(
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      console.warn("[AI Assistant] User not authenticated, skipping database save")
+      logger.warn("[AI Assistant] User not authenticated, skipping database save", { fieldId, service: "plant_analysis" })
       return
     }
 
@@ -686,14 +687,24 @@ async function savePlantAnalysisToDatabase(
         .insert(analysisData)
 
       if (error) {
-        console.error("[AI Assistant] Error saving plant analysis:", error)
+        logger.error("[AI Assistant] Error saving plant analysis", error, {
+          fieldId,
+          imageCount: images.length,
+          service: "plant_analysis"
+        })
         // Continue with other images even if one fails
       } else {
-        console.log("[AI Assistant] Successfully saved plant analysis to database")
+        logger.info("[AI Assistant] Successfully saved plant analysis to database", {
+          fieldId,
+          imageCount: images.length
+        })
       }
     }
   } catch (error) {
-    console.error("[AI Assistant] Unexpected error saving plant analysis:", error)
+    logger.error("[AI Assistant] Unexpected error saving plant analysis", error, {
+      fieldId,
+      service: "plant_analysis"
+    })
     // Non-critical, don't throw
   }
 }
@@ -736,12 +747,12 @@ async function loadContext({
             try {
               await savePlantAnalysisToDatabase(fieldId, images, report, language)
             } catch (dbError) {
-              console.warn("[AI Assistant] Failed to save analysis to database:", dbError)
+              logger.warn("[AI Assistant] Failed to save analysis to database", { error: dbError, fieldId, service: "plant_analysis" })
               // Non-critical error, continue
             }
           }
         } catch (error) {
-          console.warn("[AI Assistant] Plant identification failed:", error)
+          logger.warn("[AI Assistant] Plant identification failed", { error, service: "plant_id" })
         }
       }
     }
@@ -793,12 +804,17 @@ export async function POST(request: Request) {
   aiProviderRegistry.refreshProviders()
   const providers = aiProviderRegistry.getAvailableProviders()
   if (providers.length === 0) {
+    logger.error('[AI Chat] No providers available', undefined, {
+      requiredKeys: ['GROQ_API_KEY', 'GOOGLE_AI_API_KEY'],
+      endpoint: 'POST /api/ai/chat'
+    })
     return new Response(
       JSON.stringify({
         reply:
           language === "ar"
-            ? "لم يتم ضبط مزود الذكاء الاصطناعي بعد."
-            : "No AI provider is configured.",
+            ? "لم يتم تكوين أي مزود للذكاء الاصطناعي. يرجى التحقق من مفاتيح API (Groq أو Google Gemini) في إعدادات Vercel."
+            : "No AI provider is configured. Please verify API keys (Groq or Google Gemini) in Vercel settings.",
+        error: "No AI providers available. Required: GROQ_API_KEY or GOOGLE_AI_API_KEY",
       }),
       { status: 503, headers: { "Content-Type": "application/json" } },
     )
@@ -858,11 +874,32 @@ export async function POST(request: Request) {
         return response
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err)
-        console.error(`[AI Assistant] Provider ${active.provider.id} failed:`, errorMessage)
+        logger.error(`[AI Assistant] Provider ${active.provider.id} failed`, err, {
+          provider: active.provider.id,
+          attempt: attempts + 1,
+          maxAttempts,
+          endpoint: 'POST /api/ai/chat'
+        })
         
         // Log detailed error for debugging
-        if (errorMessage.includes("API key") || errorMessage.includes("authentication")) {
-          console.error(`[AI Assistant] Authentication error with ${active.provider.id}. Check API key.`)
+        if (errorMessage.includes("API key") || errorMessage.includes("authentication") || errorMessage.includes("401") || errorMessage.includes("403")) {
+          logger.error(`[AI Assistant] Authentication error with ${active.provider.id}`, err, {
+            provider: active.provider.id,
+            issue: "api_key_authentication",
+            hint: active.provider.id === "google" 
+              ? "Check GOOGLE_AI_API_KEY in Vercel environment variables"
+              : active.provider.id === "groq"
+              ? "Check GROQ_API_KEY in Vercel environment variables"
+              : "Check API key configuration"
+          })
+          
+          // Mark provider as unavailable if authentication fails
+          if (active.provider.id === "google") {
+            logger.warn(`[AI Assistant] Google AI provider marked as unavailable due to authentication error`, {
+              provider: "google",
+              action: "will_try_groq_fallback"
+            })
+          }
         }
         
         aiProviderRegistry.markCurrentProviderUnavailable()
@@ -887,9 +924,14 @@ export async function POST(request: Request) {
         
         try {
           active = aiProviderRegistry.tryNextModel()
-          console.log(`[AI Assistant] Trying next provider: ${active.provider.id}`)
+          logger.info(`[AI Assistant] Trying next provider: ${active.provider.id}`, {
+            provider: active.provider.id,
+            attempt: attempts + 1
+          })
         } catch (fallbackError) {
-          console.error("[AI Assistant] No fallback providers available")
+          logger.error("[AI Assistant] No fallback providers available", fallbackError, {
+            endpoint: 'POST /api/ai/chat'
+          })
           break
         }
       }

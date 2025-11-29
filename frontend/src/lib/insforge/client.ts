@@ -3,8 +3,17 @@
  * Replaces Supabase for authentication and database operations
  */
 
-const INSFORGE_API_KEY = process.env.NEXT_PUBLIC_INSFORGE_API_KEY || 'ik_5e82d1f87f888ec913ceae583539cb85'
-const INSFORGE_BASE_URL = process.env.NEXT_PUBLIC_INSFORGE_BASE_URL || 'https://9y7cy56f.us-east.insforge.app'
+// Safe access to NEXT_PUBLIC_* env vars in client
+const getPublicEnv = (key: string, fallback: string): string => {
+  if (typeof window === 'undefined') {
+    return process.env[key] || fallback
+  }
+  // Client-side: NEXT_PUBLIC_* vars are available
+  return process.env[key] || fallback
+}
+
+const INSFORGE_API_KEY = getPublicEnv('NEXT_PUBLIC_INSFORGE_API_KEY', 'ik_5e82d1f87f888ec913ceae583539cb85')
+const INSFORGE_BASE_URL = getPublicEnv('NEXT_PUBLIC_INSFORGE_BASE_URL', 'https://9y7cy56f.us-east.insforge.app')
 
 export interface InsForgeUser {
   id: string

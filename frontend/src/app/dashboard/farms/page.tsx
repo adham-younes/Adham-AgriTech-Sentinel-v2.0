@@ -7,7 +7,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Plus, MapPin, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useTranslation } from "@/lib/i18n/use-language"
-import { FarmAnalyticsMap, type FarmAnalyticsFeature } from "@/components/maps/farm-analytics-map"
+import { UnifiedMapWithAnalytics, type FieldFeature } from "@/components/maps/unified-map-with-analytics"
+import type { FarmAnalyticsFeature } from "@/components/maps/farm-analytics-map"
+
+// Convert FarmAnalyticsFeature to FieldFeature
+function convertToFieldFeature(field: FarmAnalyticsFeature): FieldFeature {
+  return {
+    id: field.id,
+    name: field.name,
+    crop: field.crop,
+    polygon: field.polygon || [],
+    center: field.center,
+    ndvi: field.ndvi,
+    health: field.health,
+    moisture: field.moisture,
+    areaFeddan: field.areaFeddan,
+  }
+}
 
 export default function FarmsPage() {
   const { language, setLanguage } = useTranslation()
@@ -251,12 +267,10 @@ export default function FarmsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <FarmAnalyticsMap
-              fields={fields}
+            <UnifiedMapWithAnalytics
+              fields={fields.map(convertToFieldFeature)}
               selectedFieldId={selectedFieldId}
               onFieldSelect={setSelectedFieldId}
-              isLoading={false}
-              error={null}
             />
           </CardContent>
         </Card>

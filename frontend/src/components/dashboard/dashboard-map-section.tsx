@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Layers3, MapPin } from 'lucide-react'
 import AdhamSatelliteMap from '@/components/dashboard/AdhamSatelliteMap'
 import type { FarmAnalyticsFeature } from '@/components/maps/farm-analytics-map'
+import { UnifiedMapWithAnalytics, type FieldFeature } from '@/components/maps/unified-map-with-analytics'
 
 interface DashboardMapSectionProps {
   fields: FarmAnalyticsFeature[]
@@ -61,10 +62,24 @@ export const DashboardMapSection = memo(function DashboardMapSection({
       </CardHeader>
       <CardContent className="flex-1 p-0 relative bg-black/20">
         {hasFields ? (
-          <AdhamSatelliteMap
-            coords={firstField.polygon || []}
-            fieldId={firstField.id}
-            esodaKey={eosdaKey}
+          <UnifiedMapWithAnalytics
+            fields={fields.map(f => ({
+              id: f.id,
+              name: f.name || '',
+              crop: f.crop,
+              polygon: f.polygon,
+              center: f.center,
+              ndvi: f.ndvi,
+              health: f.health,
+              moisture: f.moisture,
+              areaFeddan: f.areaFeddan,
+            })) as FieldFeature[]}
+            selectedFieldId={firstField.id}
+            defaultLayer="true-color"
+            showLayerControls={true}
+            showNavigationControls={true}
+            lang={lang}
+            height="100%"
           />
         ) : (
           <div className="h-full flex flex-col items-center justify-center p-8 text-center">

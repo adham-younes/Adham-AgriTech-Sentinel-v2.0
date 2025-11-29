@@ -13,13 +13,24 @@ function createMockClient(): SupabaseClient {
 }
 
 export function createClient(): SupabaseClient {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  // In Next.js, NEXT_PUBLIC_* variables are available in both server and client
+  // They are replaced at build time, so safe to access directly
+  let supabaseUrl: string | undefined
+  let supabaseKey: string | undefined
+
+  try {
+    // NEXT_PUBLIC_* vars are available in client-side
+    supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  } catch (error) {
+    // If process.env access fails (shouldn't happen with NEXT_PUBLIC_*), use fallback
+    console.warn("[Supabase Client] Failed to access env vars:", error)
+  }
 
   // Ensure BOTH variables are present and non-empty to prevent mixed credentials
   // If either is missing, return mock client to avoid creating client with partial config
-  const hasUrl = supabaseUrl && supabaseUrl.trim().length > 0
-  const hasKey = supabaseKey && supabaseKey.trim().length > 0
+  const hasUrl = supabaseUrl && typeof supabaseUrl === 'string' && supabaseUrl.trim().length > 0
+  const hasKey = supabaseKey && typeof supabaseKey === 'string' && supabaseKey.trim().length > 0
 
   if (!hasUrl || !hasKey) {
     const missing = []

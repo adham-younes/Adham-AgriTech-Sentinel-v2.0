@@ -23,8 +23,8 @@ export async function GET(req: Request) {
 
     // Build EOSDA Connect render URL
     const mode = (process.env.EOSDA_API_MODE || '').trim().toLowerCase()
-    const defaultBase = mode === 'connect' ? 'https://api.eosda.com' : (process.env.EOSDA_API_BASE_URL || 'https://api-connect.eos.com')
-    const base = (process.env.EOSDA_API_BASE_URL || defaultBase).replace(/\/+$/, '')
+    const defaultBase = mode === 'connect' ? 'https://api-connect.eos.com' : (process.env.EOSDA_API_BASE_URL || 'https://api-connect.eos.com')
+    const base = (process.env.EOSDA_API_BASE_URL || process.env.EOSDA_API_URL || defaultBase).replace(/\/+$/, '')
 
     const qs: string[] = []
     // TILE_SIZE might not be supported in Render API Z/X/Y requests, usually it's 256x256 or 512x512 standard

@@ -43,26 +43,52 @@ export const eosdaPublicConfig = {
   defaultCloudCoverage: toNumber(getPublicEnv("NEXT_PUBLIC_EOSDA_DEFAULT_CLOUD_COVERAGE"), 20),
 }
 
-export const eosdaServerConfig = {
-  apiKey: getEnv("EOSDA_API_KEY") || "",
-  apiUrl: (
-    getEnv("EOSDA_API_URL", "EOSDA_API_BASE_URL", "NEXT_PUBLIC_EOSDA_API_URL", "NEXT_PUBLIC_EOSDA_API_BASE_URL") ||
-    "https://api-connect.eos.com"
-  ).replace(/\/$/, ""),
-  apiVersion: getEnv("EOSDA_API_VERSION", "NEXT_PUBLIC_EOSDA_API_VERSION") || "v1",
-  accountEmail: getEnv("EOSDA_ACCOUNT_EMAIL") || "",
-  webhookSecret: getEnv("EOSDA_WEBHOOK_SECRET") || "",
-  rateLimit: {
-    perMinute: toNumber(process.env.EOSDA_RATE_LIMIT_PER_MINUTE, 300),
-    perHour: toNumber(process.env.EOSDA_RATE_LIMIT_PER_HOUR, 10000),
-  },
-  cacheTTLSeconds: toNumber(process.env.EOSDA_CACHE_TTL_SECONDS, 3600),
-  request: {
-    timeoutMs: toNumber(process.env.EOSDA_TIMEOUT_MILLISECONDS, 30000),
-    retryAttempts: toNumber(process.env.EOSDA_RETRY_ATTEMPTS, 3),
-    retryDelayMs: toNumber(process.env.EOSDA_RETRY_DELAY_MS, 1000),
-  },
-}
+// Server-only config - should never be accessed from client
+export const eosdaServerConfig = (() => {
+  // Only access process.env on server-side
+  if (typeof window !== 'undefined') {
+    // Return safe defaults for client-side
+    return {
+      apiKey: "",
+      apiUrl: "https://api-connect.eos.com",
+      apiVersion: "v1",
+      accountEmail: "",
+      webhookSecret: "",
+      rateLimit: {
+        perMinute: 300,
+        perHour: 10000,
+      },
+      cacheTTLSeconds: 3600,
+      request: {
+        timeoutMs: 30000,
+        retryAttempts: 3,
+        retryDelayMs: 1000,
+      },
+    }
+  }
+  
+  // Server-side: safe to access process.env
+  return {
+    apiKey: getEnv("EOSDA_API_KEY") || "",
+    apiUrl: (
+      getEnv("EOSDA_API_URL", "EOSDA_API_BASE_URL", "NEXT_PUBLIC_EOSDA_API_URL", "NEXT_PUBLIC_EOSDA_API_BASE_URL") ||
+      "https://api-connect.eos.com"
+    ).replace(/\/$/, ""),
+    apiVersion: getEnv("EOSDA_API_VERSION", "NEXT_PUBLIC_EOSDA_API_VERSION") || "v1",
+    accountEmail: getEnv("EOSDA_ACCOUNT_EMAIL") || "",
+    webhookSecret: getEnv("EOSDA_WEBHOOK_SECRET") || "",
+    rateLimit: {
+      perMinute: toNumber(process.env.EOSDA_RATE_LIMIT_PER_MINUTE, 300),
+      perHour: toNumber(process.env.EOSDA_RATE_LIMIT_PER_HOUR, 10000),
+    },
+    cacheTTLSeconds: toNumber(process.env.EOSDA_CACHE_TTL_SECONDS, 3600),
+    request: {
+      timeoutMs: toNumber(process.env.EOSDA_TIMEOUT_MILLISECONDS, 30000),
+      retryAttempts: toNumber(process.env.EOSDA_RETRY_ATTEMPTS, 3),
+      retryDelayMs: toNumber(process.env.EOSDA_RETRY_DELAY_MS, 1000),
+    },
+  }
+})()
 
 export const eosdaGlobalBounds = {
   center: [eosdaPublicConfig.center.lat, eosdaPublicConfig.center.lng] as [number, number],

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient as createSupabaseServerClient } from "@/lib/supabase/server"
 import { createServiceSupabaseClient } from "@/lib/supabase/service-client"
 import { fetchEOSDANDVI } from "@/lib/services/eosda"
+import { logger } from "@/lib/utils/logger"
 
 interface SoilAnalysisRequest {
   fieldId?: string
@@ -208,7 +209,9 @@ export async function POST(request: Request) {
     try {
       body = await request.json()
     } catch (parseError) {
-      console.error("[Soil Analysis] Failed to parse request body:", parseError)
+      logger.error("[Soil Analysis] Failed to parse request body", parseError, {
+        endpoint: "POST /api/soil-analysis/dynamic"
+      })
       return NextResponse.json(
         { error: "INVALID_REQUEST", message: "Invalid JSON in request body" },
         { status: 400 }
@@ -259,7 +262,10 @@ export async function POST(request: Request) {
         .maybeSingle()
 
       if (fieldError) {
-        console.error("[Soil Analysis] Field query error:", fieldError)
+        logger.error("[Soil Analysis] Field query error", fieldError, {
+          fieldId,
+          endpoint: "POST /api/soil-analysis/dynamic"
+        })
         return NextResponse.json({ error: "FIELD_QUERY_FAILED", message: fieldError.message }, { status: 500 })
       }
 
@@ -296,7 +302,7 @@ export async function POST(request: Request) {
           satelliteData.lastUpdated = ndviData.date || new Date().toISOString()
         }
       } catch (error) {
-        console.warn("[Soil Analysis] Failed to fetch satellite data:", error)
+        logger.warn("[Soil Analysis] Failed to fetch satellite data", error, { fieldId, service: "satellite" })
       }
     }
 
@@ -405,9 +411,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ analysis })
 
   } catch (error) {
-    console.error("[Soil Analysis] Error:", error)
+    logger.error("[Soil Analysis] Error", error, {
+      endpoint: "POST /api/soil-analysis/dynamic",
+      fieldId: body?.fieldId,
+      hasCoordinates: !!(body?.latitude && body?.longitude)
+    })
+    
+    // Return a more helpful error message
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const isNetworkError = /fetch|network|timeout|ENOTFOUND|ECONNREFUSED/i.test(errorMessage)
+    
     return NextResponse.json(
-      { error: "ANALYSIS_FAILED", message: error instanceof Error ? error.message : "Unknown error" },
+      { 
+        error: "ANALYSIS_FAILED", 
+        message: isNetworkError 
+          ? "Unable to connect to satellite data service. Please try again later."
+          : errorMessage
+      },
       { status: 500 }
     )
   }

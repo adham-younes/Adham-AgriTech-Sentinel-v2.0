@@ -76,7 +76,7 @@ export class SatelliteAnalyticsService {
 
     constructor() {
         this.apiKey = process.env.NEXT_PUBLIC_EOSDA_API_KEY || ''
-        this.baseUrl = 'https://api.eosda.com'
+        this.baseUrl = process.env.NEXT_PUBLIC_EOSDA_API_URL || process.env.NEXT_PUBLIC_EOSDA_API_BASE_URL || 'https://api-connect.eos.com'
         this.isLiveDataAvailable = !!this.apiKey
     }
 

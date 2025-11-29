@@ -8,7 +8,23 @@ import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FarmAnalyticsMap, type FarmAnalyticsFeature } from "@/components/maps/farm-analytics-map"
+import { UnifiedMapWithAnalytics, type FieldFeature } from "@/components/maps/unified-map-with-analytics"
+import type { FarmAnalyticsFeature } from "@/components/maps/farm-analytics-map"
+
+// Convert FarmAnalyticsFeature to FieldFeature
+function convertToFieldFeature(field: FarmAnalyticsFeature): FieldFeature {
+  return {
+    id: field.id,
+    name: field.name,
+    crop: field.crop,
+    polygon: field.polygon || [],
+    center: field.center,
+    ndvi: field.ndvi,
+    health: field.health,
+    moisture: field.moisture,
+    areaFeddan: field.areaFeddan,
+  }
+}
 // TEMPORARILY DISABLED - Leaflet initialization issues causing blank page
 // import { AdvancedSatelliteMap } from "@/components/satellite/advanced-satellite-map"
 import { DynamicSoilAnalysis } from "@/components/soil/dynamic-soil-analysis"
@@ -25,7 +41,14 @@ import type { SatelliteAnalysisResponse } from "@/lib/types/satellite"
 const FEDDAN_PER_HECTARE = 2.381
 const FEDDAN_IN_SQUARE_METERS = 4200
 const EARTH_RADIUS_LAT_METERS = 111_320
-const DEFAULT_CENTER: [number, number] = [eosdaPublicConfig.center.lng, eosdaPublicConfig.center.lat]
+// Safe access to eosdaPublicConfig with fallback
+const DEFAULT_CENTER: [number, number] = (() => {
+  try {
+    return [eosdaPublicConfig.center.lng, eosdaPublicConfig.center.lat]
+  } catch {
+    return [30.8025, 26.8206] // Egypt default
+  }
+})()
 
 type SupabaseFieldRow = {
   id: string
@@ -42,6 +65,7 @@ type SupabaseFieldRow = {
   moisture_index?: number | string | null
   yield_potential?: number | string | null
   updated_at?: string | null
+  planting_date?: string | Date | null
   boundary_coordinates?: unknown
   latitude?: number | string | null
   longitude?: number | string | null
@@ -203,6 +227,7 @@ function normaliseField(row: SupabaseFieldRow, snapshot?: FieldMonitoringSnapsho
     yieldPotential,
     health,
     lastUpdated,
+    plantingDate: row.planting_date ?? null,
     center,
     polygon,
   }
@@ -285,7 +310,10 @@ export default function SatellitePage() {
         
         setEosdaConfigured(isOperational && hasApiKey)
       } catch (error) {
-        console.error("[Satellite] EOSDA check failed:", error)
+        // Use logger if available, otherwise silent in production
+        if (process.env.NODE_ENV === 'development') {
+          console.error("[Satellite] EOSDA check failed:", error)
+        }
         // If API key exists, assume it's configured even if health check fails
         const hasApiKey = Boolean(eosdaPublicConfig.apiKey && eosdaPublicConfig.apiKey.trim().length > 0)
         setEosdaConfigured(hasApiKey)
@@ -390,7 +418,7 @@ export default function SatellitePage() {
           const res = await supabase
             .from("fields")
             .select(
-              "id, name, crop_type, area, ndvi_score, last_ndvi, last_moisture, last_temperature, last_reading_at, moisture_index, yield_potential, updated_at, boundary_coordinates, latitude, longitude, farms(latitude, longitude)",
+              "id, name, crop_type, area, ndvi_score, last_ndvi, last_moisture, last_temperature, last_reading_at, moisture_index, yield_potential, updated_at, boundary_coordinates, latitude, longitude, planting_date, farms(latitude, longitude)",
             )
             .in("farm_id", farmIds)
             .limit(200)
@@ -402,11 +430,14 @@ export default function SatellitePage() {
             String(colError?.message ?? ""),
           )
           if (!looksLikeMissingColumn) throw colError
-          console.warn("[Satellite] Falling back to minimal fields selection due to schema mismatch:", colError?.message)
+          // Use logger if available
+          if (process.env.NODE_ENV === 'development') {
+            console.warn("[Satellite] Falling back to minimal fields selection due to schema mismatch:", colError?.message)
+          }
           const res2 = await supabase
             .from("fields")
             .select(
-              "id, name, crop_type, area, updated_at, boundary_coordinates, latitude, longitude, farms(latitude, longitude)",
+              "id, name, crop_type, area, updated_at, boundary_coordinates, latitude, longitude, planting_date, farms(latitude, longitude)",
             )
             .in("farm_id", farmIds)
             .limit(200)
@@ -558,7 +589,10 @@ export default function SatellitePage() {
 
         if (error || !data || cancelled) {
           if (error) {
-            console.warn("[Satellite] Failed to load NDVI history:", error.message)
+            // Use logger if available
+            if (process.env.NODE_ENV === 'development') {
+              console.warn("[Satellite] Failed to load NDVI history:", error.message)
+            }
           }
           if (!cancelled) setNdviHistory([])
           return
@@ -604,7 +638,10 @@ export default function SatellitePage() {
           setDiseaseRisk({ level: riskLevel, score: Number((riskScore * 100).toFixed(0)) })
         }
       } catch (error: any) {
-        console.warn("[Satellite] Unexpected NDVI history error:", error?.message ?? error)
+        // Use logger if available
+        if (process.env.NODE_ENV === 'development') {
+          console.warn("[Satellite] Unexpected NDVI history error:", error?.message ?? error)
+        }
         if (!cancelled) {
           setNdviHistory([])
           setMoistureHistory([])
@@ -700,13 +737,7 @@ export default function SatellitePage() {
                   }
                 </div>
               </Badge>
-              {!satelliteAutomationEnabled && (
-                <p className="text-xs text-amber-400/80">
-                  {language === "ar" 
-                    ? "⚠️ البيانات الحالية تجريبية. قم بضبط EOSDA API لعرض البيانات المباشرة."
-                    : "⚠️ Current data is demo. Configure EOSDA API for live data."}
-                </p>
-              )}
+              {/* Removed Demo Data warning - EOSDA status is shown in badge */}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -798,13 +829,10 @@ export default function SatellitePage() {
           </CardHeader>
           <CardContent className="p-0 sm:p-6">
             <div className="relative min-h-[520px]">
-              <FarmAnalyticsMap
-                fields={fields}
+              <UnifiedMapWithAnalytics
+                fields={fields.map(convertToFieldFeature)}
                 selectedFieldId={selectedFieldId}
                 onFieldSelect={setSelectedFieldId}
-                isLoading={isLoading}
-                error={errorMessage}
-                lang={language}
                 height={520}
               />
             </div>
@@ -812,77 +840,7 @@ export default function SatellitePage() {
         </Card>
 
         <div className="space-y-4">
-          <Card className="glass-card border-emerald-500/20">
-            <CardHeader className="flex flex-col gap-2 border-b border-white/5 pb-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex-1">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-emerald-400" />
-                    {selectedField?.name ?? (language === "ar" ? "تفاصيل الحقل" : "Field Details")}
-                  </CardTitle>
-                  <CardDescription className="text-xs mt-1">
-                    {selectedField?.crop 
-                      ? (language === "ar" ? `نوع المحصول: ${selectedField.crop}` : `Crop: ${selectedField.crop}`)
-                      : (language === "ar" ? "اختر حقل لعرض التفاصيل" : "Select a field to view details")}
-                  </CardDescription>
-                </div>
-                {diseaseRisk && (
-                  <Badge
-                    className={
-                      diseaseRisk.level === "high"
-                        ? "bg-red-500/20 text-red-200 border-red-500/50"
-                        : diseaseRisk.level === "medium"
-                          ? "bg-amber-500/20 text-amber-200 border-amber-500/50"
-                          : "bg-emerald-500/20 text-emerald-200 border-emerald-500/40"
-                    }
-                  >
-                    {language === "ar"
-                      ? `خطر: ${diseaseRisk.level === "high" ? "مرتفع" : diseaseRisk.level === "medium" ? "متوسط" : "منخفض"
-                      } (${diseaseRisk.score}%)`
-                      : `Risk: ${diseaseRisk.level === "high" ? "High" : diseaseRisk.level === "medium" ? "Medium" : "Low"
-                      } (${diseaseRisk.score}%)`}
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-4">
-              {selectedField ? (
-                <>
-                  <div className="grid gap-3 text-sm">
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                      <span className="text-gray-400 flex items-center gap-2">
-                        <Leaf className="h-4 w-4 text-emerald-500" />
-                        NDVI (Health)
-                      </span>
-                      <span className="font-bold text-emerald-400">{ndviLabel}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                      <span className="text-gray-400 flex items-center gap-2">
-                        <Droplets className="h-4 w-4 text-sky-500" />
-                        {t("satellite3d.moisture")}
-                      </span>
-                      <span className="font-bold text-sky-400">{moistureLabel}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                      <span className="text-gray-400 flex items-center gap-2">
-                        <LineChart className="h-4 w-4 text-amber-500" />
-                        {t("satellite3d.yield")}
-                      </span>
-                      <span className="font-bold text-amber-400">{yieldLabel}</span>
-                    </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                      <span className="text-xs text-gray-500">{t("satellite3d.last_updated")}</span>
-                      <span className="text-xs font-mono text-gray-400">
-                        {formattedCaptureDate ?? "—"}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <p className="text-sm text-gray-400 text-center py-4">{t("satellite3d.select_prompt")}</p>
-              )}
-            </CardContent>
-          </Card>
+          {/* التحليلات الآن في Sidebar - تم إزالة الكاردات المكررة */}
 
           <div className="space-y-4">
             <Card className="glass-card border-emerald-500/20">
