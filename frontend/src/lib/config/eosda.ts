@@ -28,8 +28,8 @@ const getPublicEnv = (key: string) => {
 }
 
 export const eosdaPublicConfig = {
-  apiKey: getEnv("NEXT_PUBLIC_EOSDA_API_KEY") || "",
-  apiUrl: (getEnv("NEXT_PUBLIC_EOSDA_API_URL", "NEXT_PUBLIC_EOSDA_API_BASE_URL") || "https://api-connect.eos.com").replace(/\/$/, ""),
+  apiKey: getEnv("NEXT_PUBLIC_EOSDA_API_KEY") || "apk.cefa9921669b0857be282894813d1213ed88c5e8299e29a5e91db105464aa232",
+  apiUrl: (getEnv("NEXT_PUBLIC_EOSDA_API_URL", "NEXT_PUBLIC_EOSDA_API_BASE_URL") || "https://api.eosda.com").replace(/\/$/, ""),
   apiVersion: getEnv("NEXT_PUBLIC_EOSDA_API_VERSION") || "v1",
   center: {
     lat: toNumber(getPublicEnv("NEXT_PUBLIC_EOSDA_CENTER_LAT"), 25.30084), // User's farm location
@@ -66,7 +66,7 @@ export const eosdaServerConfig = (() => {
       },
     }
   }
-  
+
   // Server-side: safe to access process.env
   return {
     apiKey: getEnv("EOSDA_API_KEY") || "",

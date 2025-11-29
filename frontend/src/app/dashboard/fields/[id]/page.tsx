@@ -13,8 +13,12 @@ import { useTranslation } from "@/lib/i18n/use-language"
 import { AdvancedIndexMap } from "@/components/ui/advanced-index-map"
 import { FieldAnalyticsDashboard } from "@/components/ui/field-analytics-dashboard"
 import { ComparativeAnalytics } from "@/components/ui/comparative-analytics"
+import { SoilAnalysisCard } from "@/components/ui/soil-analysis-card"
+import { IrrigationPlanCard } from "@/components/ui/irrigation-plan-card"
 import { formatDateTimeLocale } from "@/lib/utils/date"
 import { getCropByNameOrId, getSoilTypeByNameOrId } from "@/lib/domain/crops"
+import { satelliteAnalytics } from "@/lib/services/satellite-analytics"
+import { fieldAnalytics } from "@/lib/business-logic/field-analytics"
 
 const translations = {
   ar: {
@@ -109,6 +113,9 @@ export default function FieldDetailsPage({ params }: { params: Promise<{ id: str
   const [loading, setLoading] = useState(true)
   const [cropLabel, setCropLabel] = useState<{ ar?: string | null; en?: string | null } | null>(null)
   const [soilLabel, setSoilLabel] = useState<{ ar?: string | null; en?: string | null } | null>(null)
+  const [soilAnalysis, setSoilAnalysis] = useState<any | null>(null)
+  const [irrigationPlan, setIrrigationPlan] = useState<any | null>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
   const [metrics, setMetrics] = useState<{
     ndvi?: { latest: number | null; history: number[]; mapUrl?: string | null; date?: string | null }
     moisture?: { latest: number | null }
@@ -237,6 +244,44 @@ export default function FieldDetailsPage({ params }: { params: Promise<{ id: str
       console.warn("[FieldMetrics] Failed to load metrics", error)
     }
   }
+
+  // Generate field analytics
+  useEffect(() => {
+    async function generateAnalytics() {
+      if (!fieldId || !field?.boundary_coordinates) return
+
+      setAnalyticsLoading(true)
+      try {
+        const polygon = field.boundary_coordinates?.type === 'Polygon'
+          ? field.boundary_coordinates.coordinates[0]
+          : null
+
+        if (!polygon) return
+
+        // Fetch NDVI data
+        const ndviData = await satelliteAnalytics.getNDVITimeSeries(fieldId, 30, polygon)
+
+        if (ndviData.length > 0) {
+          // Generate soil analysis
+          const soil = fieldAnalytics.generateSoilAnalysis(fieldId, ndviData)
+          setSoilAnalysis(soil)
+
+          // Generate irrigation plan
+          const fieldArea = typeof field.area === 'number' ? field.area : 1.0
+          const irrigation = fieldAnalytics.generateIrrigationPlan(fieldId, soil, fieldArea)
+          setIrrigationPlan(irrigation)
+        }
+      } catch (error) {
+        console.error('[Field Analytics] Error generating analytics:', error)
+      } finally {
+        setAnalyticsLoading(false)
+      }
+    }
+
+    if (field) {
+      generateAnalytics()
+    }
+  }, [fieldId, field])
 
   async function fetchField() {
     try {
@@ -731,6 +776,20 @@ export default function FieldDetailsPage({ params }: { params: Promise<{ id: str
         timestamp={metrics?.ndvi?.date || metrics?.chlorophyll?.date || field.last_reading_at}
         lang={lang}
       />
+
+      {/* Automated Field Analytics - NEW */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SoilAnalysisCard
+          analysis={soilAnalysis}
+          loading={analyticsLoading}
+          lang={lang}
+        />
+        <IrrigationPlanCard
+          plan={irrigationPlan}
+          loading={analyticsLoading}
+          lang={lang}
+        />
+      </div>
 
       {/* Map Section */}
       {fieldCenter && (

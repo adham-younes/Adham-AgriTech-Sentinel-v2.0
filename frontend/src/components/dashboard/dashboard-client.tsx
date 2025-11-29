@@ -6,9 +6,6 @@ import { useEffect, useMemo } from "react"
 import { useTranslation } from "@/lib/i18n/use-language"
 import type { SupportedLanguage } from "@/lib/i18n/language-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { WorkgroupChannelCard } from "@/components/dashboard/workgroup-channel-card"
-import { TaskPlannerCard } from "@/components/dashboard/task-planner-card"
-import { demoWorkgroups } from "@/lib/domain/workgroups"
 import {
   MapPin,
   Sprout,
@@ -18,7 +15,6 @@ import {
   AlertTriangle,
   ShieldCheck,
   Bot,
-  BookOpen,
   Satellite,
 } from "lucide-react"
 import type { ReactNode } from "react"
@@ -68,14 +64,6 @@ type StatDefinition = {
   icon: ReactNode
   trend?: string
   positive?: boolean
-}
-
-const KNOWLEDGE_SECTIONS = ["precision", "greenhouse", "growlight", "satellite"] as const
-const KNOWLEDGE_SECTION_BULLETS: Record<(typeof KNOWLEDGE_SECTIONS)[number], number> = {
-  precision: 3,
-  greenhouse: 3,
-  growlight: 3,
-  satellite: 3,
 }
 
 const QUICK_ACTION_DEFS = [
@@ -175,15 +163,6 @@ export function DashboardClient({ fieldsCount, farmsCount, notifications, servic
     label: t(`dashboard_main.quick_actions.items.${action.key}`),
   }))
 
-  const knowledgeSections = KNOWLEDGE_SECTIONS.map((sectionKey) => ({
-    key: sectionKey,
-    title: t(`dashboard_main.knowledge.sections.${sectionKey}.title`),
-    body: t(`dashboard_main.knowledge.sections.${sectionKey}.body`),
-    bullets: Array.from({ length: KNOWLEDGE_SECTION_BULLETS[sectionKey] }).map((_, index) =>
-      t(`dashboard_main.knowledge.sections.${sectionKey}.bullets.${index}`),
-    ),
-  }))
-
   return (
     <div className="space-y-6">
       <div className="glass-card p-6 rounded-2xl shadow-3d">
@@ -214,9 +193,7 @@ export function DashboardClient({ fieldsCount, farmsCount, notifications, servic
         </div>
       )}
 
-      <ServiceHealthCard services={services} preferredLanguage={preferredLanguage} />
-
-      {/* Live Satellite Data Card */}
+      {/* Live Satellite Data Card - Prioritized */}
       <div className="grid gap-6">
         <SatelliteImageryCard className="w-full" />
       </div>
@@ -232,23 +209,8 @@ export function DashboardClient({ fieldsCount, farmsCount, notifications, servic
       </div>
 
       <QuickActions title={t("dashboard_main.quick_actions.title")} actions={quickActions} />
-      <KnowledgeCard title={t("dashboard_main.knowledge.title")} sections={knowledgeSections} preferredLanguage={preferredLanguage} />
 
-      <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-white/80">{t("dashboard_main.workgroups.title")}</h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            {demoWorkgroups.map((workgroup) => (
-              <WorkgroupChannelCard key={workgroup.id} workgroup={workgroup} />
-            ))}
-          </div>
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-white/80 mb-4">{t("dashboard_main.tasks.title")}</h3>
-          <TaskPlannerCard />
-          <TaskPlannerCard />
-        </div>
-      </div>
+      <ServiceHealthCard services={services} preferredLanguage={preferredLanguage} />
     </div>
   )
 }
@@ -466,42 +428,6 @@ function QuickActions({
               <action.icon className="h-5 w-5 text-primary" />
               <span className="text-sm font-semibold text-white">{action.label}</span>
             </Link>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function KnowledgeCard({
-  title,
-  sections,
-  preferredLanguage,
-}: {
-  title: string
-  sections: Array<{ key: string; title: string; body: string; bullets: string[] }>
-  preferredLanguage: SupportedLanguage
-}) {
-  return (
-    <Card className="glass-card border-primary/20 shadow-3d">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-primary" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-4 lg:grid-cols-2">
-          {sections.map((section) => (
-            <div key={section.key} className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-2">
-              <h4 className="text-white font-semibold">{section.title}</h4>
-              <p className="text-sm text-muted-foreground">{section.body}</p>
-              <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
-                {section.bullets.map((bullet, index) => (
-                  <li key={`${section.key}-bullet-${index}`}>{bullet}</li>
-                ))}
-              </ul>
-            </div>
           ))}
         </div>
       </CardContent>

@@ -38,23 +38,12 @@ const navStatusTokens: Record<NavStatus, { en: string; ar: string; className: st
 
 const navigationItems = {
   dashboard: { translationKey: "navigation.dashboard", href: "/dashboard", icon: LayoutDashboard },
-  satellite: { translationKey: "navigation.satellite", href: "/dashboard/satellite", icon: Satellite, status: "live" as NavStatus },
-  ai: { translationKey: "navigation.ai_assistant", href: "/dashboard/ai-assistant", icon: MessageSquare, status: "live" as NavStatus },
   farms: { translationKey: "navigation.farms", href: "/dashboard/farms", icon: Sprout },
   fields: { translationKey: "navigation.fields", href: "/dashboard/fields", icon: MapPin },
-  soil: { translationKey: "navigation.soil_analysis", href: "/dashboard/soil-analysis", icon: Droplets, status: "beta" as NavStatus },
-  cropMonitoring: { translationKey: "navigation.crop_monitoring", href: "/dashboard/crop-monitoring", icon: Sprout },
+  satellite: { translationKey: "navigation.satellite", href: "/dashboard/satellite", icon: Satellite, status: "live" as NavStatus },
+  ai: { translationKey: "navigation.ai_assistant", href: "/dashboard/ai-assistant", icon: MessageSquare, status: "live" as NavStatus },
   weather: { translationKey: "navigation.weather", href: "/dashboard/weather", icon: Cloud },
-  irrigation: { translationKey: "navigation.irrigation", href: "/dashboard/irrigation", icon: Droplets, status: "beta" as NavStatus },
-  agronomy: { translationKey: "navigation.agronomy_insights", href: "/dashboard/agronomy-insights", icon: BrainCircuit },
-  reports: { translationKey: "navigation.reports", href: "/dashboard/reports", icon: FileText },
-  analytics: { translationKey: "navigation.analytics", href: "/dashboard/analytics", icon: BarChart3, status: "beta" as NavStatus },
-  marketplace: { translationKey: "navigation.marketplace", href: "/dashboard/marketplace", icon: ShoppingCart },
-  forum: { translationKey: "navigation.forum", href: "/dashboard/forum", icon: Users },
-  services: { translationKey: "navigation.services", href: "/dashboard/services", icon: Activity },
-  features: { translationKey: "navigation.features", href: "/dashboard/features", icon: Code },
   notifications: { translationKey: "navigation.notifications", href: "/dashboard/notifications", icon: Bell },
-  partners: { translationKey: "navigation.partners", href: "/partners", icon: Handshake },
 }
 
 const navGroups = [
@@ -62,19 +51,18 @@ const navGroups = [
   {
     id: "operations",
     titleKey: "navigation_groups.operations",
-    items: ["farms", "fields", "soil", "cropMonitoring"],
+    items: ["farms", "fields"],
   },
   {
     id: "insights",
     titleKey: "navigation_groups.insights",
-    items: ["weather", "irrigation", "agronomy", "reports", "analytics"],
+    items: ["weather"],
   },
   {
     id: "engagement",
     titleKey: "navigation_groups.engagement",
-    items: ["notifications", "marketplace", "forum", "partners"],
+    items: ["notifications"],
   },
-  { id: "platform", titleKey: "navigation_groups.platform", items: ["services", "features"] },
 ]
 
 export function DashboardSidebar({ user, profile }: SidebarProps) {
