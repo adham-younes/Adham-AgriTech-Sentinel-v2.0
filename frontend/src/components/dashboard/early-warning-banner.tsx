@@ -20,13 +20,29 @@ export function EarlyWarningBanner({ fieldId, onDismiss }: EarlyWarningBannerPro
   useEffect(() => {
     async function fetchWarnings() {
       try {
-        const response = await fetch(`/api/early-warning/check?fieldId=${fieldId}`)
+        setLoading(true)
+        const response = await fetch(`/api/early-warning/check?fieldId=${fieldId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          cache: 'no-store'
+        })
         if (response.ok) {
           const data = await response.json()
           setWarnings(data.warnings || [])
+        } else if (response.status === 401 || response.status === 403) {
+          // User not authenticated or no access - silently fail
+          setWarnings([])
+        } else {
+          // Other errors - log but don't show warnings
+          console.warn("[Early Warning Banner] Failed to fetch warnings", response.status)
+          setWarnings([])
         }
       } catch (error) {
-        console.error("[Early Warning Banner] Error:", error)
+        // Network errors - silently fail
+        console.warn("[Early Warning Banner] Error:", error)
+        setWarnings([])
       } finally {
         setLoading(false)
       }

@@ -345,11 +345,24 @@ function AIAssistantContent() {
   }
 
   const sendChat = async (event?: FormEvent<HTMLFormElement>) => {
-    event?.preventDefault()
+    if (event) {
+      event.preventDefault()
+    }
+    
+    console.log('[AI Assistant] sendChat called', { input: input.trim(), attachments: attachments.length })
 
     const trimmed = input.trim()
     const shouldUseDefaultPrompt = trimmed.length === 0 && attachments.length > 0
-    if (!trimmed && attachments.length === 0) return
+    if (!trimmed && attachments.length === 0) {
+      console.log('[AI Assistant] sendChat: No input and no attachments, returning early')
+      return
+    }
+
+    // Prevent double submission
+    if (isLoading) {
+      console.log('[AI Assistant] sendChat: Already loading, ignoring')
+      return
+    }
 
     const userContent = shouldUseDefaultPrompt
       ? isArabic

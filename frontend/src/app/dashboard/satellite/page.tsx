@@ -834,6 +834,9 @@ export default function SatellitePage() {
                 selectedFieldId={selectedFieldId}
                 onFieldSelect={setSelectedFieldId}
                 height={520}
+                lang={language === "en" ? "en" : "ar"}
+                showLayerControls={true}
+                showNavigationControls={true}
               />
             </div>
           </CardContent>

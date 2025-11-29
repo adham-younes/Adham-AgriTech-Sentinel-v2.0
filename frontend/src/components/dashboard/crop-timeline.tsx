@@ -3,12 +3,13 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sprout, Sun, CloudRain, Tractor, CheckCircle2, Calendar } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n/use-language';
 
 const STAGES = [
-    { id: 'planting', label: 'الزراعة', icon: Sprout, days: 0 },
-    { id: 'vegetative', label: 'النمو الخضري', icon: Sun, days: 30 },
-    { id: 'flowering', label: 'التزهير', icon: CloudRain, days: 60 },
-    { id: 'harvest', label: 'الحصاد', icon: Tractor, days: 90 },
+    { id: 'planting', label: { ar: 'الزراعة', en: 'Planting' }, icon: Sprout, days: 0 },
+    { id: 'vegetative', label: { ar: 'النمو الخضري', en: 'Vegetative Growth' }, icon: Sun, days: 30 },
+    { id: 'flowering', label: { ar: 'التزهير', en: 'Flowering' }, icon: CloudRain, days: 60 },
+    { id: 'harvest', label: { ar: 'الحصاد', en: 'Harvest' }, icon: Tractor, days: 90 },
 ];
 
 interface CropTimelineProps {
@@ -17,7 +18,9 @@ interface CropTimelineProps {
 }
 
 export function CropTimeline({ plantingDate, cropType = 'Wheat' }: CropTimelineProps) {
-    const cropName = cropType || 'المحصول';
+    const { language } = useTranslation();
+    const isArabic = language === 'ar';
+    const cropName = cropType || (isArabic ? 'المحصول' : 'Crop');
 
     // Calculate progress
     let progress = 0;
@@ -49,15 +52,15 @@ export function CropTimeline({ plantingDate, cropType = 'Wheat' }: CropTimelineP
                 <CardTitle className="text-lg flex items-center justify-between">
                     <span className="flex items-center gap-2">
                         <Sprout className="h-5 w-5 text-primary" />
-                        دورة حياة المحصول: {cropName}
+                        {isArabic ? `دورة حياة المحصول: ${cropName}` : `Crop Lifecycle: ${cropName}`}
                     </span>
                     {hasPlantingDate ? (
                         <span className="text-xs font-normal text-muted-foreground bg-white/5 px-2 py-1 rounded-full border border-white/10">
-                            اليوم {daysSincePlanting} من 120
+                            {isArabic ? `اليوم ${daysSincePlanting} من 120` : `Day ${daysSincePlanting} of 120`}
                         </span>
                     ) : (
                         <span className="text-xs font-normal text-muted-foreground bg-white/5 px-2 py-1 rounded-full border border-white/10">
-                            لم يتم تحديد تاريخ الزراعة
+                            {isArabic ? 'لم يتم تحديد تاريخ الزراعة' : 'Planting date not specified'}
                         </span>
                     )}
                 </CardTitle>
@@ -92,7 +95,7 @@ export function CropTimeline({ plantingDate, cropType = 'Wheat' }: CropTimelineP
                                         {isCompleted && !isCurrent ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
                                     </div>
                                     <span className={`text-xs font-medium transition-colors ${isCompleted ? 'text-white' : 'text-muted-foreground'}`}>
-                                        {stage.label}
+                                        {isArabic ? stage.label.ar : stage.label.en}
                                     </span>
                                 </div>
                             );
@@ -105,14 +108,20 @@ export function CropTimeline({ plantingDate, cropType = 'Wheat' }: CropTimelineP
                     <div className="mt-4 bg-primary/5 border border-primary/10 rounded-lg p-3 flex items-start gap-3">
                         <div className="h-1.5 w-1.5 rounded-full bg-primary mt-2 shrink-0 animate-pulse" />
                         <div>
-                            <p className="text-xs font-semibold text-primary mb-0.5">الإجراء القادم المتوقع</p>
-                            <p className="text-xs text-muted-foreground">متابعة حالة النمو والري بانتظام.</p>
+                            <p className="text-xs font-semibold text-primary mb-0.5">
+                                {isArabic ? 'الإجراء القادم المتوقع' : 'Next Expected Action'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                {isArabic ? 'متابعة حالة النمو والري بانتظام.' : 'Continue monitoring growth and irrigation regularly.'}
+                            </p>
                         </div>
                     </div>
                 ) : (
                     <div className="mt-4 bg-white/5 border border-white/10 rounded-lg p-3 flex items-center gap-3">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <p className="text-xs text-muted-foreground">يرجى تحديد تاريخ الزراعة لتفعيل تتبع دورة الحياة.</p>
+                        <p className="text-xs text-muted-foreground">
+                            {isArabic ? 'يرجى تحديد تاريخ الزراعة لتفعيل تتبع دورة الحياة.' : 'Please specify the planting date to activate lifecycle tracking.'}
+                        </p>
                     </div>
                 )}
             </CardContent>

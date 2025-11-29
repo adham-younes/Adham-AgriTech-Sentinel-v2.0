@@ -5,6 +5,7 @@ import { Bot, Sparkles, ArrowRight, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslation } from '@/lib/i18n/use-language';
 
 interface AiAgronomistWidgetProps {
     fieldId?: string;
@@ -13,6 +14,8 @@ interface AiAgronomistWidgetProps {
 }
 
 export function AiAgronomistWidget({ fieldId, cropType, mode = 'floating' }: AiAgronomistWidgetProps) {
+    const { language } = useTranslation();
+    const isArabic = language === 'ar';
     const [isVisible, setIsVisible] = useState(true);
     const [insight, setInsight] = useState<{ title: string; message: string; type: 'alert' | 'tip' | 'insight' } | null>(null);
 
@@ -22,14 +25,16 @@ export function AiAgronomistWidget({ fieldId, cropType, mode = 'floating' }: AiA
             return;
         }
 
-        const crop = cropType || "المحصول";
+        const crop = cropType || (isArabic ? "المحصول" : "Crop");
 
         setInsight({
-            title: `تحليل ${crop}`,
-            message: `جاري مراقبة ${crop} في الحقل المحدد. الذكاء الاصطناعي يحلل بيانات الأقمار الصناعية للكشف عن أي إجهاد نباتي مبكر.`,
+            title: isArabic ? `تحليل ${crop}` : `${crop} Analysis`,
+            message: isArabic 
+                ? `جاري مراقبة ${crop} في الحقل المحدد. الذكاء الاصطناعي يحلل بيانات الأقمار الصناعية للكشف عن أي إجهاد نباتي مبكر.`
+                : `Monitoring ${crop} in the selected field. AI is analyzing satellite data to detect any early plant stress.`,
             type: 'insight'
         });
-    }, [fieldId, cropType]);
+    }, [fieldId, cropType, isArabic]);
 
     if (!isVisible || !insight) return null;
 
@@ -91,7 +96,7 @@ export function AiAgronomistWidget({ fieldId, cropType, mode = 'floating' }: AiA
                                     <div className="pt-3 flex items-center gap-3">
                                         <a href="/dashboard/ai-assistant">
                                             <Button size="sm" variant="default" className="bg-primary hover:bg-primary/90 text-black font-semibold text-xs h-8">
-                                                عرض التفاصيل <ArrowRight className="h-3 w-3 mr-1" />
+                                                {isArabic ? 'عرض التفاصيل' : 'View Details'} <ArrowRight className={`h-3 w-3 ${isArabic ? 'mr-1' : 'ml-1'}`} />
                                             </Button>
                                         </a>
                                     </div>

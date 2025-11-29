@@ -411,6 +411,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ analysis })
 
   } catch (error) {
+    let body: SoilAnalysisRequest | undefined
+    try {
+      body = await request.json().catch(() => undefined)
+    } catch {
+      // Ignore JSON parse errors in catch block
+    }
+    
     logger.error("[Soil Analysis] Error", error, {
       endpoint: "POST /api/soil-analysis/dynamic",
       fieldId: body?.fieldId,

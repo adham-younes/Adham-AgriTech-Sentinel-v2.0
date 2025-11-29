@@ -435,22 +435,44 @@ export function UnifiedMapWithAnalytics({
             type: 'raster',
             tiles: [
               tileUrl, // Primary: EOSDA with colormap
-              'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', // Fallback: ESRI
             ],
             tileSize: 256,
             attribution: 'EOS Data Analytics',
             maxzoom: 18,
             minzoom: 1,
           })
+          
+          // Add fallback source separately for better error handling
+          if (!mapRef.current.getSource('esri-fallback')) {
+            mapRef.current.addSource('esri-fallback', {
+              type: 'raster',
+              tiles: [
+                'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+              ],
+              tileSize: 256,
+              attribution: '© Esri',
+              maxzoom: 19,
+            })
+          }
 
+          // Add layer before fields-outline if it exists, otherwise before esri-imagery
+          // Ensure proper z-index ordering: esri-imagery (base) -> eosda-overlay -> fields-outline
+          const beforeLayer = mapRef.current.getLayer('fields-outline') ? 'fields-outline' : 'esri-imagery'
           mapRef.current.addLayer({
             id: 'eosda-overlay',
             type: 'raster',
             source: 'eosda-overlay',
             paint: {
-              'raster-opacity': layerType === 'true-color' ? 1.0 : 0.85, // Higher opacity for thermal maps
+              'raster-opacity': layerType === 'true-color' ? 1.0 : 0.7, // Optimized opacity for better visibility
             },
-          }, 'fields-outline' || 'esri-imagery')
+            minzoom: 1,
+            maxzoom: 18,
+          }, beforeLayer)
+          
+          // Ensure overlay is above base imagery but below field outlines
+          if (mapRef.current.getLayer('fields-outline')) {
+            mapRef.current.moveLayer('eosda-overlay', 'fields-outline')
+          }
         }
       } catch (err) {
         console.error('[UnifiedMap] Error loading EOSDA layer:', err)
