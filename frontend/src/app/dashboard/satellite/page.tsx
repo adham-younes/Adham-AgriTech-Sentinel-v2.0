@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { UnifiedMapWithAnalytics, type FieldFeature } from "@/components/maps/unified-map-with-analytics"
+import { SatelliteImageryCard } from "@/components/dashboard/satellite-imagery-card"
 import type { FarmAnalyticsFeature } from "@/components/maps/farm-analytics-map"
 
 // Convert FarmAnalyticsFeature to FieldFeature
@@ -289,25 +290,25 @@ export default function SatellitePage() {
   const [diseaseRisk, setDiseaseRisk] = useState<{ level: "low" | "medium" | "high"; score: number } | null>(null)
   // Check if EOSDA is actually configured and working
   const [eosdaConfigured, setEosdaConfigured] = useState(false)
-  
+
   useEffect(() => {
     // Check EOSDA configuration - verify API key exists
     const checkEOSDA = async () => {
       try {
         // First check if API key is configured
         const hasApiKey = Boolean(eosdaPublicConfig.apiKey && eosdaPublicConfig.apiKey.trim().length > 0)
-        
+
         if (!hasApiKey) {
           setEosdaConfigured(false)
           return
         }
-        
+
         // Then verify it's working by checking health endpoint
         const res = await fetch('/api/system/health')
         const data = await res.json()
         const eosdaStatus = data.services?.find((s: any) => s.name === 'Satellite analytics' || s.id === 'eosda')
         const isOperational = eosdaStatus?.status === 'operational'
-        
+
         setEosdaConfigured(isOperational && hasApiKey)
       } catch (error) {
         // Use logger if available, otherwise silent in production
@@ -319,10 +320,10 @@ export default function SatellitePage() {
         setEosdaConfigured(hasApiKey)
       }
     }
-    
+
     checkEOSDA()
   }, [])
-  
+
   const satelliteAutomationEnabled = Boolean(eosdaPublicConfig.apiKey && eosdaPublicConfig.apiKey.trim().length > 0) && eosdaConfigured
   const [satelliteInsight, setSatelliteInsight] = useState<SatelliteAnalysisResponse | null>(null)
   const [satelliteInsightLoading, setSatelliteInsightLoading] = useState(false)
@@ -716,22 +717,21 @@ export default function SatellitePage() {
               </h1>
             </div>
             <p className="text-muted-foreground mb-3 max-w-2xl">
-              {language === "ar" 
+              {language === "ar"
                 ? "مراقبة تفاعلية للحقول مع تحليلات NDVI ورطوبة التربة من بيانات الأقمار الصناعية EOSDA"
                 : "Interactive field monitoring with NDVI and soil moisture analytics from EOSDA satellite data"}
             </p>
             <div className="flex items-center gap-3 flex-wrap">
-              <Badge 
-                variant="outline" 
-                className={`${
-                  satelliteAutomationEnabled 
-                    ? "border-emerald-500/50 text-emerald-400 bg-emerald-500/10" 
-                    : "border-amber-500/50 text-amber-400 bg-amber-500/10"
-                }`}
+              <Badge
+                variant="outline"
+                className={`${satelliteAutomationEnabled
+                  ? "border-emerald-500/50 text-emerald-400 bg-emerald-500/10"
+                  : "border-amber-500/50 text-amber-400 bg-amber-500/10"
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <div className={`h-2 w-2 rounded-full ${satelliteAutomationEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                  {satelliteAutomationEnabled 
+                  {satelliteAutomationEnabled
                     ? (language === "ar" ? "بيانات مباشرة من EOSDA" : "Live EOSDA Data")
                     : (language === "ar" ? "بيانات تجريبية" : "Demo Data")
                   }
@@ -816,7 +816,7 @@ export default function SatellitePage() {
                 {language === "ar" ? "خريطة الحقول التفاعلية" : "Interactive Field Map"}
               </CardTitle>
               <CardDescription className="text-xs mt-1">
-                {language === "ar" 
+                {language === "ar"
                   ? "مراقبة تفاعلية للحقول مع تحليلات NDVI ورطوبة التربة من بيانات EOSDA"
                   : "Interactive field monitoring with NDVI and soil moisture analytics from EOSDA data"}
               </CardDescription>
@@ -829,14 +829,10 @@ export default function SatellitePage() {
           </CardHeader>
           <CardContent className="p-0 sm:p-6">
             <div className="relative min-h-[520px]">
-              <UnifiedMapWithAnalytics
-                fields={fields.map(convertToFieldFeature)}
-                selectedFieldId={selectedFieldId}
-                onFieldSelect={setSelectedFieldId}
-                height={520}
-                lang={language === "en" ? "en" : "ar"}
-                showLayerControls={true}
-                showNavigationControls={true}
+              <SatelliteImageryCard
+                initialFieldId={selectedFieldId || undefined}
+                initialCoordinates={selectedField?.center || undefined}
+                className="h-[600px]"
               />
             </div>
           </CardContent>
@@ -855,7 +851,7 @@ export default function SatellitePage() {
                       {language === "ar" ? "تحليلات الأقمار الصناعية المتقدمة" : "Advanced Satellite Analytics"}
                     </CardTitle>
                     <CardDescription className="text-xs mt-1">
-                      {language === "ar" 
+                      {language === "ar"
                         ? "مدعوم بـ Gemini & EOSDA"
                         : "Powered by Gemini & EOSDA"}
                     </CardDescription>
@@ -1158,7 +1154,7 @@ export default function SatellitePage() {
                   {language === "ar" ? "تحليل التربة الديناميكي" : "Dynamic Soil Analysis"}
                 </CardTitle>
                 <CardDescription>
-                  {language === "ar" 
+                  {language === "ar"
                     ? "تحليل متقدم لخصائص التربة بناءً على بيانات الأقمار الصناعية من EOSDA"
                     : "Advanced soil properties analysis based on EOSDA satellite data"}
                 </CardDescription>
@@ -1180,7 +1176,7 @@ export default function SatellitePage() {
                   {language === "ar" ? "خرائط التطبيق المتغير (VRA)" : "Variable Rate Application Maps"}
                 </CardTitle>
                 <CardDescription>
-                  {language === "ar" 
+                  {language === "ar"
                     ? "خرائط دقيقة لتطبيق الأسمدة والمبيدات بناءً على تحليل الحقل من بيانات EOSDA"
                     : "Precision maps for fertilizer and pesticide application based on EOSDA field analysis"}
                 </CardDescription>
