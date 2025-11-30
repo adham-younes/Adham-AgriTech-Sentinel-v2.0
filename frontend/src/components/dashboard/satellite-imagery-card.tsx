@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { MapPin, Satellite, Layers, ZoomIn, ZoomOut, RefreshCw, Ruler, AlertTriangle, Info, Calendar, SplitSquareHorizontal, Brain, Pencil, Save, X } from 'lucide-react'
+import { MapPin, Satellite, Layers, ZoomIn, ZoomOut, RefreshCw, Ruler, AlertTriangle, Info, Calendar, SplitSquareHorizontal, Brain, Pencil, Save, X, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -117,6 +117,8 @@ export function SatelliteImageryCard({
   const [timelineIndex, setTimelineIndex] = useState<number>(0)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState<string>('')
 
   const supabase = useMemo(() => createClient(), [])
 
@@ -402,6 +404,122 @@ export function SatelliteImageryCard({
     }
   }
 
+  const handleDownloadVisual = async () => {
+    if (!currentScene) {
+      toast.error('يرجى البحث عن حقل أولاً')
+      return
+    }
+
+    setIsDownloading(true)
+    setDownloadProgress('جاري إنشاء المهمة...')
+
+    try {
+      // Create a polygon around the current map center
+      const center = map.current?.getCenter()
+      if (!center) {
+        throw new Error('Unable to determine map center')
+      }
+
+      // Create a ~1km x 1km polygon around center
+      const deltaLat = 0.0045 // ~500m
+      const deltaLng = 0.0045 / Math.cos(center.lat * Math.PI / 180)
+
+      const geometry = {
+        type: 'Polygon' as const,
+        coordinates: [[
+          [center.lng - deltaLng, center.lat - deltaLat],
+          [center.lng + deltaLng, center.lat - deltaLat],
+          [center.lng + deltaLng, center.lat + deltaLat],
+          [center.lng - deltaLng, center.lat + deltaLat],
+          [center.lng - deltaLng, center.lat - deltaLat]
+        ]]
+      }
+
+      // Step 1: Create download task
+      const createResponse = await fetch('/api/eosda/download-visual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          viewId: currentScene.sceneID,
+          bmType: mode === 'analysis' ? 'NDVI' : 'RGB',
+          geometry,
+          pxSize: 10, // 10m resolution
+          format: 'png',
+          colormap: mode === 'analysis' ? 'a9bc6eceeef2a13bb88a7f641dca3aa0' : undefined,
+          levels: mode === 'analysis' ? '-1.0,1.0' : undefined,
+          calibrate: 1,
+          reference: `download_${Date.now()}`
+        })
+      })
+
+      const createResult = await createResponse.json()
+
+      if (!createResult.success) {
+        throw new Error(createResult.error || 'فشل إنشاء مهمة التحميل')
+      }
+
+      const taskId = createResult.taskId
+      setDownloadProgress('جاري معالجة الصورة...')
+
+      // Step 2: Poll for completion
+      let attempts = 0
+      const maxAttempts = 30 // 30 seconds max
+
+      const pollStatus = async (): Promise<void> => {
+        if (attempts >= maxAttempts) {
+          throw new Error('انتهت مهلة التحميل')
+        }
+
+        attempts++
+        const statusResponse = await fetch(`/api/eosda/download-visual?taskId=${taskId}`)
+
+        if (!statusResponse.ok) {
+          throw new Error('فشل التحقق من حالة المهمة')
+        }
+
+        const contentType = statusResponse.headers.get('content-type')
+
+        // Check if we got the image (binary response)
+        if (contentType?.startsWith('image/')) {
+          const blob = await statusResponse.blob()
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `satellite-${mode}-${format(new Date(currentScene.date), 'yyyy-MM-dd')}.png`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          window.URL.revokeObjectURL(url)
+
+          toast.success('تم تحميل الصورة بنجاح!')
+          return
+        }
+
+        // Otherwise parse JSON status
+        const statusResult = await statusResponse.json()
+
+        if (statusResult.status === 'completed') {
+          // Try again to get the image
+          setTimeout(pollStatus, 500)
+        } else if (statusResult.status === 'failed') {
+          throw new Error(statusResult.error || 'فشلت مهمة التحميل')
+        } else {
+          // Still processing, wait and retry
+          setTimeout(pollStatus, 1000)
+        }
+      }
+
+      await pollStatus()
+
+    } catch (err) {
+      console.error('Download failed:', err)
+      toast.error(err instanceof Error ? err.message : 'حدث خطأ أثناء التحميل')
+    } finally {
+      setIsDownloading(false)
+      setDownloadProgress('')
+    }
+  }
+
   return (
     <Card className="glass-card border-primary/20 shadow-3d h-full flex flex-col overflow-hidden">
       <CardHeader className="pb-2 bg-muted/5">
@@ -485,6 +603,20 @@ export function SatelliteImageryCard({
             >
               {isAnalyzing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
               <span className="hidden sm:inline">تحليل AI</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadVisual}
+              disabled={!currentScene || isDownloading}
+              className="gap-1 h-9 border-emerald-500/30"
+              title={downloadProgress || 'تحميل الصورة'}
+            >
+              {isDownloading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              <span className="hidden sm:inline">
+                {isDownloading ? (downloadProgress.includes('...') ? 'معالجة' : 'تحميل') : 'تحميل'}
+              </span>
             </Button>
           </div>
         </div>
