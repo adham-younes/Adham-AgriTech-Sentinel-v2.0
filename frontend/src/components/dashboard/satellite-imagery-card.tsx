@@ -120,6 +120,8 @@ export function SatelliteImageryCard({
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState<string>('')
   const [downloadType, setDownloadType] = useState<'visual' | 'indices' | 'raw'>('visual')
+  const [isInspecting, setIsInspecting] = useState(false)
+  const [inspectValue, setInspectValue] = useState<{ lat: number, lon: number, value: number } | null>(null)
 
   const supabase = useMemo(() => createClient(), [])
 
@@ -187,6 +189,37 @@ export function SatelliteImageryCard({
     map.current.on('draw.delete', updateArea)
     map.current.on('draw.update', updateArea)
 
+    // Point Inspection Click Handler
+    map.current.on('click', async (e) => {
+      // Access the latest isInspecting state using a ref or by checking the cursor style
+      // Since we can't access updated state inside this closure easily without re-binding,
+      // we'll check a global property or rely on the fact that we'll re-bind if we add it to dependencies.
+      // Better approach: Use a mutable ref for isInspecting if we don't want to re-initialize map.
+      // For now, we will dispatch a custom event or check a class on the canvas.
+
+      const canvas = map.current?.getCanvas()
+      if (canvas && canvas.style.cursor === 'crosshair') {
+        const { lng, lat } = e.lngLat
+
+        // Show loading state (optimistic UI)
+        new maplibregl.Popup()
+          .setLngLat([lng, lat])
+          .setHTML('<div class="p-2 text-sm">جاري التحليل...</div>')
+          .addTo(map.current!)
+
+        try {
+          // Get current scene ID
+          // We need to access currentScene from state. This is tricky in useEffect closure.
+          // We will emit a custom event that the component can listen to, or use a ref for currentScene.
+          document.dispatchEvent(new CustomEvent('map-inspect-click', {
+            detail: { lng, lat }
+          }))
+        } catch (err) {
+          console.error(err)
+        }
+      }
+    })
+
     return () => {
       clearTimeout(moveTimeout)
       map.current?.remove()
@@ -219,6 +252,59 @@ export function SatelliteImageryCard({
     // Handle area calculation or saving here
     console.log('Draw update:', e)
   }
+
+  // Handle Map Inspection
+  useEffect(() => {
+    if (!map.current) return
+    const canvas = map.current.getCanvas()
+    canvas.style.cursor = isInspecting ? 'crosshair' : ''
+
+    const handleInspect = async (e: Event) => {
+      const { lng, lat } = (e as CustomEvent).detail
+
+      if (!currentScene) {
+        toast.error('يرجى البحث عن حقل أولاً')
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/eosda/point?lat=${lat}&lon=${lng}&viewId=${currentScene.sceneID}&band=${mode === 'analysis' ? 'NDVI' : 'B04'}`)
+        const result = await response.json()
+
+        if (result.success && result.data) {
+          const value = result.data.index_value
+          setInspectValue({ lat, lon, value })
+
+          // Update popup
+          const popup = new maplibregl.Popup({ closeOnClick: true })
+            .setLngLat([lng, lat])
+            .setHTML(`
+              <div class="p-2 text-sm font-sans text-right" dir="rtl">
+                <div class="font-bold mb-1">نتائج الفحص</div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <span class="text-muted-foreground">القيمة:</span>
+                  <span class="font-mono font-bold">${typeof value === 'number' ? value.toFixed(4) : value}</span>
+                  <span class="text-muted-foreground">المؤشر:</span>
+                  <span>${mode === 'analysis' ? 'NDVI' : 'Red Band'}</span>
+                  <span class="text-muted-foreground">الإحداثيات:</span>
+                  <span class="font-mono" dir="ltr">${lat.toFixed(4)}, ${lng.toFixed(4)}</span>
+                </div>
+              </div>
+            `)
+            .addTo(map.current!)
+        } else {
+          throw new Error(result.error || 'فشل الحصول على البيانات')
+        }
+      } catch (err) {
+        console.error(err)
+        toast.error('فشل فحص النقطة')
+        // Remove loading popup if possible, or it will stay until clicked elsewhere
+      }
+    }
+
+    document.addEventListener('map-inspect-click', handleInspect)
+    return () => document.removeEventListener('map-inspect-click', handleInspect)
+  }, [isInspecting, currentScene, mode])
 
   // Update Map Style (Satellite vs Analysis)
   useEffect(() => {
@@ -661,6 +747,17 @@ export function SatelliteImageryCard({
             >
               {isAnalyzing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
               <span className="hidden sm:inline">تحليل AI</span>
+            </Button>
+
+            <Button
+              variant={isInspecting ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setIsInspecting(!isInspecting)}
+              className="gap-1 h-9"
+              title="فحص نقطة"
+            >
+              <MapPin className="h-4 w-4" />
+              <span className="hidden sm:inline">فحص</span>
             </Button>
 
             {/* Download Type Selector */}

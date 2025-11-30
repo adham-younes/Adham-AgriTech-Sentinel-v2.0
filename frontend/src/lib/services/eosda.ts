@@ -163,7 +163,7 @@ function buildEOSDAUrl(path = ""): string {
     }
     return `${trimmedBase}/${normalizedPath}`
   }
-  
+
   return version ? `${trimmedBase}/${version}` : trimmedBase
 }
 
@@ -186,11 +186,11 @@ async function requestFromEOSDA<T>(path: string, init?: RequestInit & { query?: 
   }
 
   const token = await getEOSDAToken()
-  
+
   // EOSDA API requires X-Api-Key header ONLY (NOT query parameter, NOT Bearer)
   // Documentation: https://doc.eos.com/docs/code-examples/
   // Format: Header name: X-Api-Key, Value: apk.xxxxx
-  
+
   try {
     const response = await fetch(url.toString(), {
       ...fetchInit,
@@ -647,7 +647,7 @@ export async function fetchEOSDANDVI(
 
     const created = await requestFromEOSDA<{ status: string; task_id?: string }>(
       '/api/gdw/api',
-      { method: 'POST', body: JSON.stringify(body), onResponse: options?.onResponse },
+      { method: 'POST', body: JSON.stringify(body) },
     )
 
     if (!created.task_id) throw new Error('NDVI task creation failed')
@@ -1073,7 +1073,7 @@ export function getEOSDATileUrl({
   // Build tile URL: /api/render/{viewId}/{bands}/{z}/{x}/{y}
   // Note: api_key should NOT be in query params - use X-Api-Key header instead
   const tilePath = `/api/render/${encodeURIComponent(viewId)}/${encodeURIComponent(bands)}/${z}/${x}/${y}`
-  
+
   const params = new URLSearchParams()
   // ❌ Removed: params.append("api_key", apiKey) - Use X-Api-Key header instead
   if (colormap) params.append("COLORMAP", colormap)
@@ -1160,7 +1160,6 @@ export async function getEOSDAThermalMap({
     logger.error("EOSDA thermal map error", error, {
       viewId,
       index,
-      date,
       service: "eosda"
     })
     // Fallback to synthetic
@@ -1287,9 +1286,7 @@ export async function fetchEOSDAStatistics({
     }
   } catch (error) {
     logger.error("EOSDA statistics error", error, {
-      viewId,
       index,
-      date,
       service: "eosda"
     })
     const message = error instanceof Error ? error.message : String(error || "")
@@ -1361,9 +1358,8 @@ export async function fetchEOSDAWeatherSnapshots({
     )
   } catch (error) {
     logger.error("EOSDA weather snapshots error", error, {
-      viewId,
-      startDate,
-      endDate,
+      latitude,
+      longitude,
       service: "eosda"
     })
     const message = error instanceof Error ? error.message : String(error || "")
@@ -1416,7 +1412,6 @@ export async function fetchEOSDAWeatherRange({
     return response
   } catch (error: any) {
     logger.error("EOSDA weather range error", error, {
-      viewId,
       startDate,
       endDate,
       service: "eosda"
@@ -1436,3 +1431,111 @@ export async function fetchEOSDAWeatherRange({
 }
 
 export { fetchEOSDAWeatherRange as fetchEOSDAWeather }
+
+// ============================================
+// DOWNLOAD VISUAL API
+// ============================================
+
+export interface DownloadVisualParams {
+  viewId: string
+  bmType: string
+  geometry: {
+    type: 'Polygon'
+    coordinates: number[][][]
+  }
+  pxSize: number
+  format?: 'jpeg' | 'tiff' | 'png'
+  colormap?: string
+  levels?: string
+  calibrate?: 0 | 1
+  reference: string
+}
+
+export interface TaskStatusResponse {
+  success: boolean
+  taskId?: string
+  status?: 'pending' | 'processing' | 'completed' | 'failed'
+  timeout?: number
+  resultUrl?: string
+  error?: string
+}
+
+/**
+ * Initiate a visual download task
+ */
+export async function downloadVisualImage(params: DownloadVisualParams): Promise<TaskStatusResponse> {
+  try {
+    const response = await fetch('/api/eosda/download-visual', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to create download task')
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error creating download task:', error)
+    throw error
+  }
+}
+
+/**
+ * Check status of a download task
+ */
+export async function checkDownloadTaskStatus(taskId: string): Promise<TaskStatusResponse> {
+  try {
+    const response = await fetch(`/api/eosda/download-visual?taskId=${taskId}`, {
+      method: 'GET',
+    })
+
+    // If response is an image (blob), it means download is ready and we are getting the file directly
+    // However, our API route handles this by returning the image stream if completed.
+    // But for the status check, we expect JSON unless we are actually downloading.
+    // The API route logic is: if completed, it proxies the image.
+    // Wait, the API route says:
+    // if (statusData.status === 'completed' && statusData.result_url) { ... return new NextResponse(imageBuffer ... }
+    // So if it's completed, we get the image blob.
+
+    const contentType = response.headers.get('content-type')
+    if (contentType && contentType.includes('application/json')) {
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to check task status')
+      }
+      return await response.json()
+    } else {
+      // It's a file!
+      // We can't return the file in TaskStatusResponse easily if we expect JSON.
+      // But the caller might want to know it's ready.
+      // Actually, the API route design is a bit mixed. It returns JSON for status, but file for completion.
+      // Let's adjust the client to handle this.
+      // If we get a file, we return status: 'completed' and a way to get the file?
+      // Or maybe we should change the API to NOT return the file on status check, but have a separate download param?
+      // The API route: GET /api/eosda/download-visual?taskId=xxx
+      // If completed, it returns the file.
+
+      // So here, if we get a file, we return success.
+      return {
+        success: true,
+        status: 'completed',
+        taskId: taskId
+      }
+    }
+  } catch (error) {
+    console.error('Error checking task status:', error)
+    throw error
+  }
+}
+
+/**
+ * Helper to download the file when ready
+ */
+export function getDownloadUrl(taskId: string): string {
+  return `/api/eosda/download-visual?taskId=${taskId}`
+}
