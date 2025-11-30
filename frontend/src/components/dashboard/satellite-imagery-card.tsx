@@ -119,6 +119,7 @@ export function SatelliteImageryCard({
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState<string>('')
+  const [downloadType, setDownloadType] = useState<'visual' | 'indices' | 'raw'>('visual')
 
   const supabase = useMemo(() => createClient(), [])
 
@@ -435,22 +436,67 @@ export function SatelliteImageryCard({
         ]]
       }
 
-      // Step 1: Create download task
-      const createResponse = await fetch('/api/eosda/download-visual', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          viewId: currentScene.sceneID,
-          bmType: mode === 'analysis' ? 'NDVI' : 'RGB',
-          geometry,
-          pxSize: 10, // 10m resolution
-          format: 'png',
-          colormap: mode === 'analysis' ? 'a9bc6eceeef2a13bb88a7f641dca3aa0' : undefined,
-          levels: mode === 'analysis' ? '-1.0,1.0' : undefined,
-          calibrate: 1,
-          reference: `download_${Date.now()}`
+      let createResponse: Response
+      let fileExtension = 'png'
+      let downloadLabel = 'صورة'
+
+      // Step 1: Create download task based on type
+      if (downloadType === 'visual') {
+        // Visual download (PNG with colormap)
+        createResponse = await fetch('/api/eosda/download-visual', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            viewId: currentScene.sceneID,
+            bmType: mode === 'analysis' ? 'NDVI' : 'RGB',
+            geometry,
+            pxSize: 10,
+            format: 'png',
+            colormap: mode === 'analysis' ? 'a9bc6eceeef2a13bb88a7f641dca3aa0' : undefined,
+            levels: mode === 'analysis' ? '-1.0,1.0' : undefined,
+            calibrate: 1,
+            reference: `download_visual_${Date.now()}`
+          })
         })
-      })
+        fileExtension = 'png'
+        downloadLabel = 'صورة ملونة'
+
+      } else if (downloadType === 'indices') {
+        // Indices download (GeoTIFF from Bandmath)
+        const bmType = mode === 'analysis' ? '(B08-B04)/(B08+B04)' : 'B04,B03,B02'
+        createResponse = await fetch('/api/eosda/download-bandmath', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            viewId: currentScene.sceneID,
+            bmType,
+            geometry,
+            nameAlias: mode === 'analysis' ? 'NDVI' : 'RGB',
+            reference: `download_indices_${Date.now()}`
+          })
+        })
+        fileExtension = 'tif'
+        downloadLabel = 'مؤشرات GeoTIFF'
+
+      } else {
+        // Raw bands download (Analytics/LBE)
+        const bands = mode === 'analysis'
+          ? ['B08', 'B04'] // NIR and Red for NDVI
+          : ['B04', 'B03', 'B02'] // RGB
+        createResponse = await fetch('/api/eosda/download-analytics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            viewId: currentScene.sceneID,
+            bands,
+            geometry,
+            merge: true,
+            reference: `download_raw_${Date.now()}`
+          })
+        })
+        fileExtension = 'tif'
+        downloadLabel = 'بيانات خام'
+      }
 
       const createResult = await createResponse.json()
 
@@ -459,11 +505,11 @@ export function SatelliteImageryCard({
       }
 
       const taskId = createResult.taskId
-      setDownloadProgress('جاري معالجة الصورة...')
+      setDownloadProgress(`جاري معالجة ${downloadLabel}...`)
 
       // Step 2: Poll for completion
       let attempts = 0
-      const maxAttempts = 30 // 30 seconds max
+      const maxAttempts = 60 // 60 seconds max for larger files
 
       const pollStatus = async (): Promise<void> => {
         if (attempts >= maxAttempts) {
@@ -471,7 +517,17 @@ export function SatelliteImageryCard({
         }
 
         attempts++
-        const statusResponse = await fetch(`/api/eosda/download-visual?taskId=${taskId}`)
+
+        let statusUrl = ''
+        if (downloadType === 'visual') {
+          statusUrl = `/api/eosda/download-visual?taskId=${taskId}`
+        } else if (downloadType === 'indices') {
+          statusUrl = `/api/eosda/download-bandmath?taskId=${taskId}`
+        } else {
+          statusUrl = `/api/eosda/download-analytics?taskId=${taskId}`
+        }
+
+        const statusResponse = await fetch(statusUrl)
 
         if (!statusResponse.ok) {
           throw new Error('فشل التحقق من حالة المهمة')
@@ -479,19 +535,21 @@ export function SatelliteImageryCard({
 
         const contentType = statusResponse.headers.get('content-type')
 
-        // Check if we got the image (binary response)
-        if (contentType?.startsWith('image/')) {
+        // Check if we got the file (binary response)
+        if (contentType && (contentType.startsWith('image/') || contentType.includes('tiff') || contentType.includes('zip'))) {
           const blob = await statusResponse.blob()
           const url = window.URL.createObjectURL(blob)
           const a = document.createElement('a')
           a.href = url
-          a.download = `satellite-${mode}-${format(new Date(currentScene.date), 'yyyy-MM-dd')}.png`
+          const dateStr = format(new Date(currentScene.date), 'yyyy-MM-dd')
+          const typeLabel = downloadType === 'visual' ? 'visual' : downloadType === 'indices' ? 'indices' : 'raw'
+          a.download = `satellite-${typeLabel}-${mode}-${dateStr}.${fileExtension}`
           document.body.appendChild(a)
           a.click()
           document.body.removeChild(a)
           window.URL.revokeObjectURL(url)
 
-          toast.success('تم تحميل الصورة بنجاح!')
+          toast.success(`تم تحميل ${downloadLabel} بنجاح!`)
           return
         }
 
@@ -499,13 +557,13 @@ export function SatelliteImageryCard({
         const statusResult = await statusResponse.json()
 
         if (statusResult.status === 'completed') {
-          // Try again to get the image
+          // Try again to get the file
           setTimeout(pollStatus, 500)
         } else if (statusResult.status === 'failed') {
           throw new Error(statusResult.error || 'فشلت مهمة التحميل')
         } else {
           // Still processing, wait and retry
-          setTimeout(pollStatus, 1000)
+          setTimeout(pollStatus, 2000) // Longer interval for large files
         }
       }
 
@@ -604,6 +662,37 @@ export function SatelliteImageryCard({
               {isAnalyzing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
               <span className="hidden sm:inline">تحليل AI</span>
             </Button>
+
+            {/* Download Type Selector */}
+            <div className="flex items-center gap-1 bg-muted/30 p-1 rounded-lg border border-border/50">
+              <Button
+                variant={downloadType === 'visual' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setDownloadType('visual')}
+                className="text-xs h-8 px-2"
+                title="صورة ملونة PNG"
+              >
+                📸
+              </Button>
+              <Button
+                variant={downloadType === 'indices' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setDownloadType('indices')}
+                className="text-xs h-8 px-2"
+                title="مؤشرات GeoTIFF"
+              >
+                📊
+              </Button>
+              <Button
+                variant={downloadType === 'raw' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setDownloadType('raw')}
+                className="text-xs h-8 px-2"
+                title="بيانات خام"
+              >
+                🗂️
+              </Button>
+            </div>
 
             <Button
               variant="outline"
