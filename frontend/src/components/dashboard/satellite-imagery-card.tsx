@@ -150,21 +150,32 @@ export function SatelliteImageryCard({
     })
     map.current.addControl(draw.current as any, 'top-left')
 
+    // Debounced state update to avoid too frequent re-renders
+    let moveTimeout: NodeJS.Timeout
     map.current.on('move', () => {
       if (map.current) {
-        setZoom(map.current.getZoom())
-        const center = map.current.getCenter()
-        setCoordinates([center.lng, center.lat])
+        clearTimeout(moveTimeout)
+        moveTimeout = setTimeout(() => {
+          if (map.current) {
+            setZoom(map.current.getZoom())
+            const center = map.current.getCenter()
+            setCoordinates([center.lng, center.lat])
+          }
+        }, 100) // Update state only after map stopped moving for 100ms
+      }
+    })
 
-        // Sync compare map if active
-        if (compareMap.current && isComparing) {
-          compareMap.current.jumpTo({
-            center: center,
-            zoom: map.current.getZoom(),
-            bearing: map.current.getBearing(),
-            pitch: map.current.getPitch()
-          })
-        }
+    // Sync compare map separately (only when user stops dragging)
+    map.current.on('moveend', () => {
+      if (map.current && compareMap.current && isComparing) {
+        const center = map.current.getCenter()
+        compareMap.current.easeTo({
+          center: center,
+          zoom: map.current.getZoom(),
+          bearing: map.current.getBearing(),
+          pitch: map.current.getPitch(),
+          duration: 200
+        })
       }
     })
 
@@ -174,6 +185,7 @@ export function SatelliteImageryCard({
     map.current.on('draw.update', updateArea)
 
     return () => {
+      clearTimeout(moveTimeout)
       map.current?.remove()
       map.current = null
     }

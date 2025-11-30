@@ -27,7 +27,7 @@ interface ThermalMapViewerProps {
 }
 
 type ThermalIndex = 'ndvi' | 'evi' | 'ndwi' | 'chlorophyll' | 'temperature'
-type ThermalColormap = 'thermal' | 'hot' | 'cool' | 'rdylgn' | 'viridis'
+type ThermalColormap = 'thermal' | 'hot' | 'cool' | 'rdylgn' | 'viridis' | 'blues'
 
 const INDEX_CONFIG: Record<ThermalIndex, { name: { ar: string; en: string }; colormap: ThermalColormap }> = {
   ndvi: {
@@ -65,10 +65,59 @@ export function ThermalMapViewer({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string | null>(null)
+  const [autoViewId, setAutoViewId] = useState<string | null>(null)
+
+  // Function to fetch available scenes if viewId is not provided
+  const fetchAvailableScenes = useCallback(async () => {
+    if (!eosdaPublicConfig.apiKey) {
+      setError(lang === 'ar' ? 'EOSDA API غير مُعد' : 'EOSDA API not configured')
+      return null
+    }
+
+    try {
+      const [west, south, east, north] = bbox
+      const searchParams = new URLSearchParams({
+        bbox: `${west},${south},${east},${north}`,
+        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date().toISOString(),
+        cloudCoverage: '20',
+        limit: '5',
+      })
+
+      const response = await fetch(`/api/eosda/search?${searchParams}`, { cache: 'no-store' })
+
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.scenes && data.scenes.length > 0) {
+        const latestScene = data.scenes[0]
+        const foundViewId = latestScene.viewId || latestScene.sceneID || latestScene.id
+        console.log('[ThermalMapViewer] Found scene:', foundViewId)
+        return foundViewId
+      } else {
+        console.warn('[ThermalMapViewer] No scenes found for this location')
+        return null
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      console.error('[ThermalMapViewer] Scene search error:', errorMessage)
+      setError(
+        lang === 'ar'
+          ? `فشل البحث عن المشاهد: ${errorMessage.slice(0, 30)}`
+          : `Scene search failed: ${errorMessage.slice(0, 30)}`
+      )
+      return null
+    }
+  }, [bbox, lang])
 
   const loadThermalMap = useCallback(async () => {
-    if (!viewId || !eosdaPublicConfig.apiKey) {
-      setError(lang === 'ar' ? 'EOSDA API غير مُعد' : 'EOSDA API not configured')
+    const effectiveViewId = viewId || autoViewId
+
+    if (!effectiveViewId || !eosdaPublicConfig.apiKey) {
+      setError(lang === 'ar' ? 'EOSDA API غير مُعد أو لا توجد مشاهد متاحة' : 'EOSDA API not configured or no scenes available')
       return
     }
 
@@ -78,7 +127,7 @@ export function ThermalMapViewer({
     try {
       const config = INDEX_CONFIG[activeIndex]
       const result = await getEOSDAThermalMap({
-        viewId,
+        viewId: effectiveViewId,
         bbox,
         width: 1024,
         height: 1024,
@@ -100,13 +149,25 @@ export function ThermalMapViewer({
     } finally {
       setLoading(false)
     }
-  }, [viewId, bbox, activeIndex, lang])
+  }, [viewId, autoViewId, bbox, activeIndex, lang])
+
+  // Auto-fetch viewId if not provided
+  useEffect(() => {
+    if (!viewId && !autoViewId) {
+      fetchAvailableScenes().then(id => {
+        if (id) {
+          setAutoViewId(id)
+          console.log('[ThermalMapViewer] Auto-fetched viewId:', id)
+        }
+      })
+    }
+  }, [viewId, autoViewId, fetchAvailableScenes])
 
   useEffect(() => {
-    if (viewId) {
+    if (viewId || autoViewId) {
       loadThermalMap()
     }
-  }, [viewId, activeIndex, loadThermalMap])
+  }, [viewId, autoViewId, activeIndex, loadThermalMap])
 
   const handleDownload = () => {
     if (!imageUrl) return

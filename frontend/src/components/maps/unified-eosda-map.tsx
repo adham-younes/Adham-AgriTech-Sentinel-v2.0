@@ -21,13 +21,14 @@ import { getEOSDATileUrl } from '@/lib/services/eosda'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Layers, ZoomIn, ZoomOut, RotateCcw, Loader2, AlertCircle } from 'lucide-react'
+import { Layers, ZoomIn, ZoomOut, RotateCcw, Loader2, AlertCircle, Moon, Sun, Map as MapIcon } from 'lucide-react'
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export type EOSDAMapLayer = 'true-color' | 'ndvi' | 'ndmi' | 'evi' | 'soil-moisture' | 'chlorophyll'
+export type MapStyle = 'satellite' | 'dark'
 
 export interface UnifiedEOSDAMapProps {
   // Field data
@@ -35,27 +36,27 @@ export interface UnifiedEOSDAMapProps {
   fieldName?: string
   coordinates?: [number, number][] // Polygon coordinates [lng, lat]
   center?: [number, number] // [lng, lat]
-  
+
   // Map configuration
   zoom?: number
   pitch?: number
   bearing?: number
   height?: string | number
-  
+
   // Layer configuration
   defaultLayer?: EOSDAMapLayer
   availableLayers?: EOSDAMapLayer[]
   showLayerControls?: boolean
   showNavigationControls?: boolean
-  
+
   // EOSDA configuration
   eosdaViewId?: string
-  
+
   // Callbacks
   onLayerChange?: (layer: EOSDAMapLayer) => void
   onMapClick?: (lng: number, lat: number) => void
   onError?: (error: Error) => void
-  
+
   // UI
   lang?: 'ar' | 'en'
   className?: string
@@ -130,6 +131,7 @@ export function UnifiedEOSDAMap({
   const mapRef = useRef<maplibregl.Map | null>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [activeLayer, setActiveLayer] = useState<EOSDAMapLayer>(defaultLayer)
+  const [mapStyle, setMapStyle] = useState<MapStyle>('satellite')
   const [layerLoading, setLayerLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentViewId, setCurrentViewId] = useState<string | null>(eosdaViewId || null)
@@ -166,12 +168,34 @@ export function UnifiedEOSDAMap({
               tileSize: 256,
               attribution: '© Esri',
             },
+            'carto-dark': {
+              type: 'raster',
+              tiles: [
+                'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+                'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+                'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+                'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+              ],
+              tileSize: 256,
+              attribution: '© CartoDB',
+            },
           },
           layers: [
+            {
+              id: 'carto-dark',
+              type: 'raster',
+              source: 'carto-dark',
+              layout: {
+                visibility: 'none', // Initially hidden
+              },
+            },
             {
               id: 'esri-imagery',
               type: 'raster',
               source: 'esri-imagery',
+              layout: {
+                visibility: 'visible', // Initially visible
+              },
             },
           ],
         },
@@ -185,7 +209,7 @@ export function UnifiedEOSDAMap({
       mapRef.current.on('load', () => {
         setMapLoaded(true)
         setError(null)
-        
+
         // Add field boundary if coordinates provided
         if (coordinates && coordinates.length > 0) {
           addFieldBoundary()
@@ -375,6 +399,22 @@ export function UnifiedEOSDAMap({
     [loadEOSDALayer, onLayerChange]
   )
 
+  // Handle style change
+  const toggleMapStyle = useCallback(() => {
+    if (!mapRef.current) return
+
+    const newStyle = mapStyle === 'satellite' ? 'dark' : 'satellite'
+    setMapStyle(newStyle)
+
+    if (newStyle === 'dark') {
+      mapRef.current.setLayoutProperty('esri-imagery', 'visibility', 'none')
+      mapRef.current.setLayoutProperty('carto-dark', 'visibility', 'visible')
+    } else {
+      mapRef.current.setLayoutProperty('carto-dark', 'visibility', 'none')
+      mapRef.current.setLayoutProperty('esri-imagery', 'visibility', 'visible')
+    }
+  }, [mapStyle])
+
   // Load layer on mount and when activeLayer changes
   useEffect(() => {
     if (mapLoaded) {
@@ -426,8 +466,8 @@ export function UnifiedEOSDAMap({
       {(!mapLoaded || layerLoading) && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded-lg">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+            <p className="text-sm text-gray-300">
               {lang === 'ar' ? 'جاري تحميل الخريطة...' : 'Loading map...'}
             </p>
           </div>
@@ -437,7 +477,7 @@ export function UnifiedEOSDAMap({
       {/* Error Banner */}
       {error && mapLoaded && (
         <div className="absolute top-4 left-4 right-4 z-20">
-          <Card className="bg-destructive/10 border-destructive/50 p-3">
+          <Card className="bg-destructive/10 border-destructive/50 p-3 backdrop-blur-md">
             <div className="flex items-center gap-2 text-destructive text-sm">
               <AlertCircle className="h-4 w-4" />
               <span>{error}</span>
@@ -446,23 +486,28 @@ export function UnifiedEOSDAMap({
         </div>
       )}
 
-      {/* Layer Controls */}
+      {/* Controls Container - Top Left */}
       {showLayerControls && mapLoaded && (
-        <div className="absolute top-4 left-4 z-20">
-          <Card className="p-2 bg-black/80 backdrop-blur-sm border-white/10">
+        <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
+          {/* Layer Switcher */}
+          <Card className="p-2 bg-black/60 backdrop-blur-xl border-emerald-500/30 shadow-[0_0_15px_rgba(0,0,0,0.3)]">
             <div className="flex flex-col gap-1">
               {availableLayers.map((layer) => {
                 const config = LAYER_CONFIG[layer]
+                const isActive = activeLayer === layer
                 return (
                   <Button
                     key={layer}
-                    variant={activeLayer === layer ? 'default' : 'ghost'}
+                    variant="ghost"
                     size="sm"
                     onClick={() => handleLayerChange(layer)}
                     disabled={layerLoading}
-                    className="justify-start text-xs"
+                    className={`justify-start text-xs transition-all duration-200 ${isActive
+                        ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 hover:text-emerald-300'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                      }`}
                   >
-                    <Layers className="h-3 w-3 mr-2" />
+                    <Layers className={`h-3 w-3 mr-2 ${isActive ? 'text-emerald-400' : 'text-gray-500'}`} />
                     {config.name[lang]}
                   </Button>
                 )
@@ -472,18 +517,51 @@ export function UnifiedEOSDAMap({
         </div>
       )}
 
-      {/* Navigation Controls */}
+      {/* Controls Container - Top Right */}
+      {mapLoaded && (
+        <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
+          {/* Style Switcher */}
+          <Card className="p-1 bg-black/60 backdrop-blur-xl border-emerald-500/30 shadow-[0_0_15px_rgba(0,0,0,0.3)]">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleMapStyle}
+              className="h-8 w-8 p-0 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300"
+              title={lang === 'ar' ? 'تغيير نمط الخريطة' : 'Toggle Map Style'}
+            >
+              {mapStyle === 'satellite' ? <Moon className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
+            </Button>
+          </Card>
+        </div>
+      )}
+
+      {/* Navigation Controls - Bottom Right */}
       {showNavigationControls && mapLoaded && (
         <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-2">
-          <Card className="p-1 bg-black/80 backdrop-blur-sm border-white/10">
+          <Card className="p-1 bg-black/60 backdrop-blur-xl border-emerald-500/30 shadow-[0_0_15px_rgba(0,0,0,0.3)]">
             <div className="flex flex-col gap-1">
-              <Button variant="ghost" size="sm" onClick={handleZoomIn} className="h-8 w-8 p-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleZoomIn}
+                className="h-8 w-8 p-0 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300"
+              >
                 <ZoomIn className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleZoomOut} className="h-8 w-8 p-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleZoomOut}
+                className="h-8 w-8 p-0 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300"
+              >
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleReset} className="h-8 w-8 p-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                className="h-8 w-8 p-0 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300"
+              >
                 <RotateCcw className="h-4 w-4" />
               </Button>
             </div>
@@ -494,7 +572,10 @@ export function UnifiedEOSDAMap({
       {/* Field Info Badge */}
       {fieldName && mapLoaded && (
         <div className="absolute bottom-4 left-4 z-20">
-          <Badge variant="secondary" className="bg-black/80 backdrop-blur-sm">
+          <Badge
+            variant="secondary"
+            className="bg-black/60 backdrop-blur-xl border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(0,0,0,0.3)]"
+          >
             {fieldName}
           </Badge>
         </div>
@@ -502,4 +583,3 @@ export function UnifiedEOSDAMap({
     </div>
   )
 }
-
