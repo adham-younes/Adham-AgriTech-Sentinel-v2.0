@@ -207,6 +207,84 @@ export class AIProviderRegistry {
       provider.isAvailable = true
     })
   }
+
+  public async initializeFromDB() {
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+      if (!supabaseUrl || !serviceRoleKey) {
+        console.warn("[AI Registry] Missing Supabase credentials for DB initialization")
+        return
+      }
+
+      const { createClient } = await import("@supabase/supabase-js")
+      const supabase = createClient(supabaseUrl, serviceRoleKey)
+
+      const { data: keys, error } = await supabase
+        .from("ai_api_keys")
+        .select("*")
+        .eq("is_active", true)
+
+      if (error) {
+        console.warn("[AI Registry] Failed to fetch API keys from DB:", error)
+        return
+      }
+
+      if (keys && keys.length > 0) {
+        const trim = (v?: string) => (typeof v === "string" ? v.trim() : v)
+        const dbProviders: AIProvider[] = []
+
+        for (const key of keys) {
+          if (key.provider_id === "groq") {
+            const groqKey = trim(key.api_key)
+            if (groqKey) {
+              const { createGroq } = await import("@ai-sdk/groq")
+              const groqClient = createGroq({ apiKey: groqKey })
+              const groqModel = trim(key.model_id) || "llama-3.3-70b-versatile"
+              dbProviders.push({
+                id: "groq",
+                name: "Groq (DB)",
+                modelId: groqModel,
+                getModel: () => groqClient(groqModel),
+                isAvailable: true,
+                capabilities: { vision: false },
+              })
+            }
+          } else if (key.provider_id === "google") {
+            const googleKey = trim(key.api_key)
+            if (googleKey) {
+              try {
+                const { createGoogleGenerativeAI } = await import("@ai-sdk/google")
+                const googleClient = createGoogleGenerativeAI({ apiKey: googleKey })
+                const googleModel = trim(key.model_id) || "gemini-2.0-flash"
+                dbProviders.push({
+                  id: "google",
+                  name: "Google Gemini (DB)",
+                  modelId: googleModel,
+                  getModel: () => googleClient(googleModel),
+                  isAvailable: true,
+                  capabilities: { vision: true },
+                })
+              } catch (e) {
+                console.warn("[AI Registry] Failed to init Google from DB key", e)
+              }
+            }
+          }
+        }
+
+        if (dbProviders.length > 0) {
+          // Merge with existing providers, prioritizing DB providers
+          // Or just append them?
+          // Let's prepend them so they are tried first if no order is set
+          this.providers = [...dbProviders, ...this.providers]
+          console.log(`[AI Registry] Added ${dbProviders.length} providers from DB`)
+        }
+      }
+    } catch (error) {
+      console.error("[AI Registry] DB initialization error:", error)
+    }
+  }
 }
 
 export const aiProviderRegistry = new AIProviderRegistry()

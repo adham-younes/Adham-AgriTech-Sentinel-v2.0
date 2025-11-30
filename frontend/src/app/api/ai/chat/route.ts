@@ -618,7 +618,7 @@ async function savePlantAnalysisToDatabase(
   try {
     const supabase = await createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
       logger.warn("[AI Assistant] User not authenticated, skipping database save", { fieldId, service: "plant_analysis" })
       return
@@ -638,7 +638,7 @@ async function savePlantAnalysisToDatabase(
     // Extract detected diseases and pests from matches
     const detectedDiseases = (report.matches || [])
       .filter(match => match.warnings && match.warnings.length > 0)
-      .flatMap(match => 
+      .flatMap(match =>
         match.warnings!.map(warning => ({
           name: warning,
           name_ar: warning, // TODO: Translate
@@ -652,7 +652,7 @@ async function savePlantAnalysisToDatabase(
       .slice(0, 3)
       .map(match => ({
         type: "identification" as const,
-        action: language === "ar" 
+        action: language === "ar"
           ? `تم التعرف على ${match.preferredName}`
           : `Identified as ${match.preferredName}`,
         priority: "medium" as const,
@@ -662,7 +662,7 @@ async function savePlantAnalysisToDatabase(
     // Save each image analysis
     for (const [index, image] of images.entries()) {
       const match = report.matches?.[index]
-      
+
       const analysisData = {
         user_id: user.id,
         field_id: fieldId || null,
@@ -742,7 +742,7 @@ async function loadContext({
                   : `Plant.id findings:\n${report.summary}`,
               )
             }
-            
+
             // Save analysis to database
             try {
               await savePlantAnalysisToDatabase(fieldId, images, report, language)
@@ -794,6 +794,7 @@ function findRelatedArticles(query: string, limit = 3) {
 }
 
 export async function POST(request: Request) {
+  await aiProviderRegistry.initializeFromDB()
   const payload = (await request.json()) as Payload
   const language = payload.language ?? "ar"
   const attachments = payload.images ?? []
@@ -880,19 +881,19 @@ export async function POST(request: Request) {
           maxAttempts,
           endpoint: 'POST /api/ai/chat'
         })
-        
+
         // Log detailed error for debugging
         if (errorMessage.includes("API key") || errorMessage.includes("authentication") || errorMessage.includes("401") || errorMessage.includes("403")) {
           logger.error(`[AI Assistant] Authentication error with ${active.provider.id}`, err, {
             provider: active.provider.id,
             issue: "api_key_authentication",
-            hint: active.provider.id === "google" 
+            hint: active.provider.id === "google"
               ? "Check GOOGLE_AI_API_KEY in Vercel environment variables"
               : active.provider.id === "groq"
-              ? "Check GROQ_API_KEY in Vercel environment variables"
-              : "Check API key configuration"
+                ? "Check GROQ_API_KEY in Vercel environment variables"
+                : "Check API key configuration"
           })
-          
+
           // Mark provider as unavailable if authentication fails
           if (active.provider.id === "google") {
             logger.warn(`[AI Assistant] Google AI provider marked as unavailable due to authentication error`, {
@@ -901,16 +902,16 @@ export async function POST(request: Request) {
             })
           }
         }
-        
+
         aiProviderRegistry.markCurrentProviderUnavailable()
         attempts += 1
-        
+
         if (attempts >= maxAttempts) {
           // All providers failed - return detailed error
           const errorDetails = language === "ar"
             ? `جميع مزودي الذكاء الاصطناعي غير متاحين. آخر خطأ: ${errorMessage.slice(0, 100)}`
             : `All AI providers unavailable. Last error: ${errorMessage.slice(0, 100)}`
-          
+
           return new Response(
             JSON.stringify({
               reply: language === "ar"
@@ -921,7 +922,7 @@ export async function POST(request: Request) {
             { status: 503, headers: { "Content-Type": "application/json" } },
           )
         }
-        
+
         try {
           active = aiProviderRegistry.tryNextModel()
           logger.info(`[AI Assistant] Trying next provider: ${active.provider.id}`, {

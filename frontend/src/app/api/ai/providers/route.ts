@@ -4,6 +4,7 @@ import { aiProviderRegistry } from "@/lib/ai/provider-registry"
 
 export async function GET() {
   try {
+    await aiProviderRegistry.initializeFromDB()
     aiProviderRegistry.refreshProviders()
     const status = aiProviderRegistry.getProviderStatus()
     const available = status.filter((s) => s.available)

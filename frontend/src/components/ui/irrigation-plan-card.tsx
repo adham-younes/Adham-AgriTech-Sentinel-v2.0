@@ -5,137 +5,137 @@
 
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import type { IrrigationPlan } from '@/lib/business-logic/field-analytics'
-import { Droplets, Calendar, Clock, AlertTriangle } from 'lucide-react'
+import { Droplets, Calendar, Clock, AlertTriangle, CheckCircle, Info } from 'lucide-react'
 
-interface Props {
-  plan: IrrigationPlan | null
-  loading?: boolean
-  lang?: 'ar' | 'en'
+interface IrrigationPlanCardProps {
+  plan: any
+  loading: boolean
+  lang: 'ar' | 'en'
 }
 
-export function IrrigationPlanCard({ plan, loading = false, lang = 'ar' }: Props) {
+export function IrrigationPlanCard({ plan, loading, lang }: IrrigationPlanCardProps) {
+  const t = {
+    ar: {
+      title: 'خطة الري الذكية',
+      subtitle: 'توصيات ري دقيقة بناءً على حالة التربة',
+      priority: 'الأولوية',
+      waterVolume: 'كمية المياه',
+      schedule: 'الجدول الزمني',
+      zones: 'المناطق المستهدفة',
+      rationale: 'السبب',
+      high: 'عالية',
+      medium: 'متوسطة',
+      low: 'منخفضة',
+      noData: 'لا توجد خطة ري',
+      analyzing: 'جاري حساب الاحتياجات المائية...',
+      m3: 'م³',
+      hours: 'ساعات',
+      zones_count: 'مناطق',
+    },
+    en: {
+      title: 'Smart Irrigation Plan',
+      subtitle: 'Precise irrigation recommendations based on soil data',
+      priority: 'Priority',
+      waterVolume: 'Water Volume',
+      schedule: 'Schedule',
+      zones: 'Target Zones',
+      rationale: 'Rationale',
+      high: 'High',
+      medium: 'Medium',
+      low: 'Low',
+      noData: 'No irrigation plan',
+      analyzing: 'Calculating water needs...',
+      m3: 'm³',
+      hours: 'hours',
+      zones_count: 'zones',
+    },
+  }
+
   if (loading) {
     return (
-      <Card className="p-6 bg-gradient-to-br from-blue-900/90 via-blue-900/70 to-cyan-900/60 border border-blue-800/70">
-        <div className="animate-pulse h-40 bg-blue-800/30 rounded"></div>
+      <Card className="glass-card border-emerald-400/30 bg-gradient-to-br from-emerald-950/40 via-black/60 to-cyan-950/40 backdrop-blur-xl p-6 h-full flex items-center justify-center min-h-[300px]">
+        <div className="flex flex-col items-center gap-3 text-cyan-400">
+          <Droplets className="h-8 w-8 animate-bounce" />
+          <p className="text-sm font-medium animate-pulse">{t[lang].analyzing}</p>
+        </div>
       </Card>
     )
   }
 
   if (!plan) {
     return (
-      <Card className="p-6 bg-gradient-to-br from-blue-900/90 via-blue-900/70 to-cyan-900/60 border border-blue-800/70">
-        <p className="text-sm text-blue-200/80">
-          {lang === 'ar' ? '⚠️ لا توجد خطة ري' : '⚠️ No irrigation plan'}
-        </p>
+      <Card className="glass-card border-amber-500/30 bg-gradient-to-br from-emerald-950/40 via-black/60 to-cyan-950/40 backdrop-blur-xl p-6 h-full flex items-center justify-center min-h-[300px]">
+        <div className="flex flex-col items-center gap-3 text-amber-400">
+          <AlertTriangle className="h-8 w-8" />
+          <p className="text-sm font-medium">⚠️ {t[lang].noData}</p>
+        </div>
       </Card>
     )
   }
 
-  const getPriorityColor = () => {
-    if (plan.priority === 'urgent') return 'bg-red-500/80'
-    if (plan.priority === 'high') return 'bg-orange-500/80'
-    if (plan.priority === 'medium') return 'bg-yellow-500/80'
-    return 'bg-green-500/80'
-  }
-
-  const getPriorityLabel = () => {
-    if (lang === 'ar') {
-      const labels: Record<string, string> = {
-        urgent: 'عاجل',
-        high: 'عالي',
-        medium: 'متوسط',
-        low: 'منخفض'
-      }
-      return labels[plan.priority] || plan.priority
-    }
-    return plan.priority.charAt(0).toUpperCase() + plan.priority.slice(1)
+  const getPriorityColor = (priority: string) => {
+    if (priority === 'high') return 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+    if (priority === 'medium') return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
+    return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
   }
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-blue-900/90 via-blue-900/70 to-cyan-900/60 border border-blue-800/70">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Droplets className="h-5 w-5 text-blue-400" />
-          <h3 className="text-lg font-semibold text-blue-50">
-            {lang === 'ar' ? 'خطة الري' : 'Irrigation Plan'}
-          </h3>
+    <Card className="glass-card border-cyan-400/30 bg-gradient-to-br from-emerald-950/40 via-black/60 to-cyan-950/40 backdrop-blur-xl p-6 h-full hover:shadow-2xl transition-all duration-300">
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Droplets className="h-5 w-5 text-cyan-400" />
+            <h3 className="text-xl font-bold text-cyan-400">{t[lang].title}</h3>
+          </div>
+          <p className="text-sm text-gray-400">{t[lang].subtitle}</p>
         </div>
-        <Badge className={`${getPriorityColor()} text-white border-none`}>
-          {getPriorityLabel()}
+        <Badge variant="outline" className={`border ${getPriorityColor(plan.irrigation_priority)}`}>
+          {t[lang].priority}: {t[lang][plan.irrigation_priority as keyof typeof t.ar]}
         </Badge>
       </div>
 
-      {!plan.irrigation_recommended ? (
-        <div className="p-4 bg-green-900/20 border border-green-700/50 rounded-lg">
-          <p className="text-sm text-green-200">
-            ✅ {lang === 'ar' ? 'لا حاجة للري حالياً' : 'No irrigation needed currently'}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-black/40 rounded-lg p-3 border border-cyan-500/20 text-center">
+          <div className="text-xs text-cyan-400/70 mb-1">{t[lang].waterVolume}</div>
+          <div className="text-xl font-bold text-white">
+            {plan.total_water_volume_m3} <span className="text-sm font-normal text-gray-400">{t[lang].m3}</span>
+          </div>
+        </div>
+
+        <div className="bg-black/40 rounded-lg p-3 border border-cyan-500/20 text-center">
+          <div className="text-xs text-cyan-400/70 mb-1">{t[lang].schedule}</div>
+          <div className="text-xl font-bold text-white">
+            {plan.schedule.duration_hours} <span className="text-sm font-normal text-gray-400">{t[lang].hours}</span>
+          </div>
+        </div>
+
+        <div className="bg-black/40 rounded-lg p-3 border border-cyan-500/20 text-center">
+          <div className="text-xs text-cyan-400/70 mb-1">{t[lang].zones}</div>
+          <div className="text-xl font-bold text-white">
+            {plan.irrigation_zones.length} <span className="text-sm font-normal text-gray-400">{t[lang].zones_count}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="bg-black/40 rounded-lg p-4 border border-cyan-500/20">
+          <h4 className="text-sm font-semibold text-cyan-400 mb-3 flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            {t[lang].rationale}
+          </h4>
+          <p className="text-sm text-gray-300 leading-relaxed">
+            {typeof plan.rationale === 'string' ? plan.rationale : (plan.rationale as any)[lang]}
           </p>
-          <p className="text-xs text-green-300/70 mt-2">{plan.rationale}</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {plan.priority === 'urgent' && (
-            <div className="flex items-center gap-2 p-3 bg-red-900/20 border border-red-700/50 rounded-lg">
-              <AlertTriangle className="h-4 w-4 text-red-400" />
-              <p className="text-sm text-red-200">
-                {lang === 'ar' ? 'إرواء عاجل مطلوب!' : 'Urgent irrigation required!'}
-              </p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-blue-200/80 mb-1">{lang === 'ar' ? 'حجم المياه' : 'Water Volume'}</p>
-              <p className="text-2xl font-bold text-blue-50">
-                {plan.total_water_volume_m3?.toFixed(0) || '--'} {lang ==='ar' ? 'م³' : 'm³'}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-blue-200/80 mb-1">{lang === 'ar' ? 'المناطق' : 'Zones'}</p>
-              <p className="text-2xl font-bold text-blue-50">{plan.recommended_zones.length}</p>
-            </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <Clock className="h-3 w-3" />
+            <span>
+              {lang === "ar"
+                ? `كل ${plan.schedule.frequency_days} أيام، ${plan.schedule.duration_hours} ساعات`
+                : `Every ${plan.schedule.frequency_days} days, ${plan.schedule.duration_hours} hours`}
+            </span>
           </div>
-
-          {plan.schedule && (
-            <div className="space-y-2 p-3 bg-blue-800/20 border border-blue-700/50 rounded-lg">
-              <div className="flex items-center gap-2 text-sm text-blue-100">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  {lang === 'ar' ? 'البدء:' : 'Start:'} {new Date(plan.schedule.start_date).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-blue-100">
-                <Clock className="h-4 w-4" />
-                <span>
-                  {lang === 'ar' 
-                    ? `كل ${plan.schedule.frequency_days} أيام، ${plan.schedule.duration_hours} ساعات`
-                    : `Every ${plan.schedule.frequency_days} days, ${plan.schedule.duration_hours} hours`}
-                </span>
-              </div>
-            </div>
-          )}
-
-          <div>
-            <p className="text-xs text-blue-200/80 mb-2">{lang === 'ar' ? 'السبب:' : 'Rationale:'}</p>
-            <p className="text-sm text-blue-100">{plan.rationale}</p>
-          </div>
-
-          {plan.recommended_zones.length > 0 && (
-            <div>
-              <p className="text-xs text-blue-200/80 mb-2">{lang === 'ar' ? 'المناطق المستهدفة:' : 'Target Zones:'}</p>
-              <div className="space-y-2">
-                {plan.recommended_zones.slice(0, 3).map((zone, idx) => (
-                  <div key={idx} className="text-xs text-blue-100 pl-3 border-l-2 border-blue-600/50">
-                    {zone.reason} ({zone.water_need_mm}mm)
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
-      )}
+      </div>
     </Card>
   )
 }

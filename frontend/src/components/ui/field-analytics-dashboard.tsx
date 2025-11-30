@@ -88,19 +88,19 @@ export function FieldAnalyticsDashboard({
   return (
     <div className="space-y-6">
       {/* Overall Health Score */}
-      <Card className="p-6 bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200">
+      <Card className="p-6 glass-card border-emerald-500/20 bg-black/40 backdrop-blur-xl">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          <h2 className="text-2xl font-bold text-white mb-2">
             {lang === "ar" ? "نقطة صحة الحقل الإجمالية" : "Overall Field Health Score"}
           </h2>
-          <div className={`text-5xl font-bold ${getHealthColor(healthScore)} mb-2`}>
+          <div className={`text-5xl font-bold ${getHealthColor(healthScore)} mb-2 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]`}>
             {healthScore !== null ? `${Math.round(healthScore)}%` : "--"}
           </div>
           <div className={`text-lg font-medium ${getHealthColor(healthScore)}`}>
             {getHealthStatus(healthScore)}
           </div>
           {timestamp && (
-            <div className="text-sm text-gray-500 mt-2">
+            <div className="text-sm text-gray-400 mt-2">
               {lang === "ar" ? "آخر تحديث:" : "Last updated:"}{" "}
               {new Date(timestamp).toLocaleString(lang === "ar" ? "ar-EG" : "en-US")}
             </div>
@@ -110,80 +110,84 @@ export function FieldAnalyticsDashboard({
 
       {/* Primary Indices */}
       <div>
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">
+        <h3 className="text-xl font-semibold text-emerald-50 mb-4 flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]"></span>
           {lang === "ar" ? "المؤشرات الأساسية" : "Primary Indices"}
         </h3>
         <div className="grid gap-4 lg:grid-cols-3">
           {primaryIndices.map(({ key, label }) => (
-            <AdvancedIndexMap
-              key={key}
-              index={key as any}
-              value={fieldData[key as keyof typeof fieldData]}
-              mapUrl={mapUrls?.[key as keyof typeof mapUrls]}
-              timestamp={timestamp}
-              width={350}
-              height={200}
-              showLegend={true}
-              showStats={true}
-              lang={lang}
-            />
+            <div key={key} className="glass-card border-emerald-500/10 bg-black/20 backdrop-blur-md rounded-xl overflow-hidden">
+              <AdvancedIndexMap
+                index={key as any}
+                value={fieldData[key as keyof typeof fieldData]}
+                mapUrl={mapUrls?.[key as keyof typeof mapUrls]}
+                timestamp={timestamp}
+                width={350}
+                height={200}
+                showLegend={true}
+                showStats={true}
+                lang={lang}
+              />
+            </div>
           ))}
         </div>
       </div>
 
       {/* Advanced Indices */}
       <div>
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">
+        <h3 className="text-xl font-semibold text-emerald-50 mb-4 flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]"></span>
           {lang === "ar" ? "المؤشرات المتقدمة" : "Advanced Indices"}
         </h3>
         <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
           {advancedIndices.map(({ key, label }) => (
-            <AdvancedIndexMap
-              key={key}
-              index={key as any}
-              value={fieldData[key as keyof typeof fieldData]}
-              mapUrl={mapUrls?.[key as keyof typeof mapUrls]}
-              timestamp={timestamp}
-              width={280}
-              height={180}
-              showLegend={true}
-              showStats={false}
-              lang={lang}
-            />
+            <div key={key} className="glass-card border-emerald-500/10 bg-black/20 backdrop-blur-md rounded-xl overflow-hidden">
+              <AdvancedIndexMap
+                index={key as any}
+                value={fieldData[key as keyof typeof fieldData]}
+                mapUrl={mapUrls?.[key as keyof typeof mapUrls]}
+                timestamp={timestamp}
+                width={280}
+                height={180}
+                showLegend={true}
+                showStats={false}
+                lang={lang}
+              />
+            </div>
           ))}
         </div>
       </div>
 
       {/* Quick Summary */}
-      <Card className="p-4 bg-gray-50 border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">
+      <Card className="p-4 glass-card border-emerald-500/20 bg-black/40 backdrop-blur-xl">
+        <h3 className="text-lg font-semibold text-white mb-3">
           {lang === "ar" ? "ملخص سريع" : "Quick Summary"}
         </h3>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {primaryIndices.map(({ key, label }) => {
             const value = fieldData[key as keyof typeof fieldData]
-            const status = key === "ndvi" 
-              ? (value && value > 0.6 ? lang === "ar" ? "ممتاز" : "Excellent" : 
-                 value && value > 0.4 ? lang === "ar" ? "جيد" : "Good" :
-                 value && value > 0.2 ? lang === "ar" ? "متوسط" : "Fair" :
-                 lang === "ar" ? "ضعيف" : "Poor")
+            const status = key === "ndvi"
+              ? (value && value > 0.6 ? lang === "ar" ? "ممتاز" : "Excellent" :
+                value && value > 0.4 ? lang === "ar" ? "جيد" : "Good" :
+                  value && value > 0.2 ? lang === "ar" ? "متوسط" : "Fair" :
+                    lang === "ar" ? "ضعيف" : "Poor")
               : key === "chlorophyll"
-              ? (value && value > 60 ? lang === "ar" ? "عالي" : "High" :
-                 value && value > 40 ? lang === "ar" ? "متوسط" : "Medium" :
-                 lang === "ar" ? "منخفض" : "Low")
-              : key === "moisture"
-              ? (value && value > 60 ? lang === "ar" ? "رطبة" : "Moist" :
-                 value && value > 30 ? lang === "ar" ? "طبيعية" : "Normal" :
-                 lang === "ar" ? "جافة" : "Dry")
-              : lang === "ar" ? "غير متاح" : "N/A"
+                ? (value && value > 60 ? lang === "ar" ? "عالي" : "High" :
+                  value && value > 40 ? lang === "ar" ? "متوسط" : "Medium" :
+                    lang === "ar" ? "منخفض" : "Low")
+                : key === "moisture"
+                  ? (value && value > 60 ? lang === "ar" ? "رطبة" : "Moist" :
+                    value && value > 30 ? lang === "ar" ? "طبيعية" : "Normal" :
+                      lang === "ar" ? "جافة" : "Dry")
+                  : lang === "ar" ? "غير متاح" : "N/A"
 
             return (
-              <div key={key} className="bg-white rounded-lg p-3 border border-gray-200">
-                <div className="text-sm text-gray-500">{label}</div>
-                <div className="text-lg font-semibold text-gray-800">
+              <div key={key} className="bg-white/5 rounded-lg p-3 border border-white/10 hover:bg-white/10 transition-colors">
+                <div className="text-sm text-gray-400">{label}</div>
+                <div className="text-lg font-semibold text-white">
                   {value !== null && value !== undefined ? value.toFixed(2) : "--"}
                 </div>
-                <div className="text-xs text-gray-600">{status}</div>
+                <div className="text-xs text-emerald-400">{status}</div>
               </div>
             )
           })}

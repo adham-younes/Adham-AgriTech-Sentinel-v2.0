@@ -1,870 +1,393 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import dynamic from "next/dynamic"
 import { useParams } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Leaf, Waves, ThermometerSun, Map } from "lucide-react"
+import { ArrowLeft, Droplets, Leaf, Wind, ThermometerSun, AlertTriangle, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { useTranslation } from "@/lib/i18n/use-language"
-import { AdvancedIndexMap } from "@/components/ui/advanced-index-map"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
 import { FieldAnalyticsDashboard } from "@/components/ui/field-analytics-dashboard"
 import { ComparativeAnalytics } from "@/components/ui/comparative-analytics"
 import { SoilAnalysisCard } from "@/components/ui/soil-analysis-card"
 import { IrrigationPlanCard } from "@/components/ui/irrigation-plan-card"
-import { formatDateTimeLocale } from "@/lib/utils/date"
-import { getCropByNameOrId, getSoilTypeByNameOrId } from "@/lib/domain/crops"
-import { satelliteAnalytics } from "@/lib/services/satellite-analytics"
-import { fieldAnalytics } from "@/lib/business-logic/field-analytics"
+import { UnifiedEOSDAMap } from "@/components/maps/unified-eosda-map"
+
 
 const translations = {
   ar: {
-    fieldDetails: "تفاصيل الحقل",
-    backToFields: "العودة للحقول",
-    loading: "جاري التحميل...",
-    error: "حدث خطأ",
-    noData: "لا توجد بيانات",
-    health: "صحة الحقل",
-    ndvi: "NDVI",
-    chlorophyll: "الكلوروفيل",
-    moisture: "الرطوبة",
-    temperature: "درجة الحرارة",
+    title: "تفاصيل الحقل",
+    farm: "المزرعة",
     area: "المساحة",
-    cropType: "نوع المحصول",
+    feddans: "فدان",
     soilType: "نوع التربة",
-    lastUpdate: "آخر تحديث",
-    analytics: "التحليلات",
-    comparativeAnalytics: "التحليلات المقارنة",
-    recommendations: "التوصيات",
-    irrigation: "الري",
-    fertilization: "التسميد",
-    diseaseRisk: "مخاطر الأمراض",
-    yieldPotential: "إمكانية المحصول",
-    soilAnalysis: "تحليل التربة",
-    cropMonitoring: "مراقبة المحاصيل",
-    weatherImpact: "تأثير الطقس"
+    lastReading: "آخر قراءة",
+    fieldHealth: "صحة الحقل",
+    mildConditions: "ظروف معتدلة",
+    viewDetails: "عرض التفاصيل",
+    irrigationAlert: "تنبيه: الحقل بحاجة تدخل فوري",
+    loading: "جاري التحميل...",
   },
   en: {
-    fieldDetails: "Field Details",
-    backToFields: "Back to Fields",
-    loading: "Loading...",
-    error: "Error occurred",
-    noData: "No data available",
-    health: "Field Health",
-    ndvi: "NDVI",
-    chlorophyll: "Chlorophyll",
-    moisture: "Moisture",
-    temperature: "Temperature",
+    title: "Field Details",
+    farm: "Farm",
     area: "Area",
-    cropType: "Crop Type",
+    feddans: "feddans",
     soilType: "Soil Type",
-    lastUpdate: "Last Update",
-    analytics: "Analytics",
-    comparativeAnalytics: "Comparative Analytics",
-    recommendations: "Recommendations",
-    irrigation: "Irrigation",
-    fertilization: "Fertilization",
-    diseaseRisk: "Disease Risk",
-    yieldPotential: "Yield Potential",
-    soilAnalysis: "Soil Analysis",
-    cropMonitoring: "Crop Monitoring",
-    weatherImpact: "Weather Impact"
+    lastReading: "Last Reading",
+    fieldHealth: "Field Health",
+    mildConditions: "Mild conditions",
+    viewDetails: "View Details",
+    irrigationAlert: "Alert: Field requires immediate intervention",
+    loading: "Loading...",
   }
 }
-
-const UnifiedMap = dynamic(
-  () => import("@/components/maps/unified-map-with-analytics").then((mod) => mod.UnifiedMapWithAnalytics),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-[420px] w-full rounded-2xl border border-emerald-900/50 bg-emerald-950/30 flex items-center justify-center text-sm text-emerald-100/70">
-        Loading map…
-      </div>
-    ),
-  },
-)
-
-const ThermalMapViewer = dynamic(
-  () => import("@/components/maps/thermal-map-viewer").then((mod) => mod.ThermalMapViewer),
-  {
-    ssr: false,
-  },
-)
 
 type Lang = "ar" | "en"
 
-type MetricTimelineEntry = {
-  date: string
-  ndvi?: number | null
-  chlorophyll?: number | null
-  soilMoisture?: number | null
-  mapUrl?: string | null
-  type?: "ndvi" | "chlorophyll"
+function parseMaybeNumber(val: any): number | null {
+  if (val == null) return null
+  const num = Number(val)
+  return Number.isFinite(num) ? num : null
 }
 
-export default function FieldDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { language } = useTranslation()
-  const [lang, setLang] = useState<Lang>(language)
-  const [fieldId, setFieldId] = useState<string>("")
-  const [field, setField] = useState<any | null>(null)
+export default function FieldDetailsPage() {
+  const params = useParams()
+  const fieldId = params?.id as string
+  const [lang, setLang] = useState<Lang>("ar")
+  const [field, setField] = useState<any>(null)
+  const [metrics, setMetrics] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [cropLabel, setCropLabel] = useState<{ ar?: string | null; en?: string | null } | null>(null)
-  const [soilLabel, setSoilLabel] = useState<{ ar?: string | null; en?: string | null } | null>(null)
-  const [soilAnalysis, setSoilAnalysis] = useState<any | null>(null)
-  const [irrigationPlan, setIrrigationPlan] = useState<any | null>(null)
-  const [analyticsLoading, setAnalyticsLoading] = useState(false)
-  const [metrics, setMetrics] = useState<{
-    ndvi?: { latest: number | null; history: number[]; mapUrl?: string | null; date?: string | null }
-    moisture?: { latest: number | null }
-    temperature?: { latest: number | null }
-    chlorophyll?: { latest: number | null; date: string | null; mapUrl?: string | null; history: number[] }
-    soilMoisture?: { latest: number | null; date: string | null; mapUrl?: string | null; history: number[] }
-    evi?: { latest: number | null; date: string | null; mapUrl?: string | null; history: number[] }
-    nri?: { latest: number | null; date: string | null; mapUrl?: string | null; history: number[] }
-    dswi?: { latest: number | null; date: string | null; mapUrl?: string | null; history: number[] }
-    ndwi?: { latest: number | null; date: string | null; mapUrl?: string | null; history: number[] }
-    weather?: { latest: { temperature?: number | null; humidity?: number | null; precipitation?: number | null; wind_speed?: number | null; condition?: string | null }; history: any[] }
-    timeline?: MetricTimelineEntry[]
-    field?: any
-  } | null>(null)
-  const [activeRaster, setActiveRaster] = useState<"ndvi" | "chlorophyll">("ndvi")
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
-  const supabase = createClient()
+  useEffect(() => {
+    const loadFieldData = async () => {
+      if (!fieldId) return
 
-  const parseMaybeNumber = (value: unknown) =>
-    typeof value === "string"
-      ? Number.parseFloat(value)
-      : typeof value === "number"
-        ? value
-        : null
+      const supabase = createClient()
 
-  const FALLBACK_RASTER_TILE =
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23d1fae5' stop-opacity='0.6'/%3E%3Cstop offset='50%25' stop-color='%23a7f3d0' stop-opacity='0.55'/%3E%3Cstop offset='100%25' stop-color='%23fbbf24' stop-opacity='0.6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='0' width='512' height='512' fill='url(%23g)'/%3E%3C/svg%3E"
+      // Fetch field data
+      const { data: fieldData, error: fieldError } = await supabase
+        .from("fields")
+        .select(`
+          *,
+          farms (
+            id,
+            name,
+            location
+          )
+        `)
+        .eq("id", fieldId)
+        .single()
 
-  function sparklinePath(data: number[]) {
-    if (data.length === 0) return ""
-    const width = 120
-    const height = 40
-    const padding = 4
-    const step = (width - 2 * padding) / Math.max(data.length - 1, 1)
-    const min = Math.min(...data)
-    const max = Math.max(...data)
-    const range = max - min || 1
-
-    return data.map((value, index) => {
-      const x = padding + index * step
-      const y = padding + (1 - (value - min) / range) * (height - 2 * padding)
-      return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
-    }).join(' ')
-  }
-
-  async function resolveDomainLabels(fieldData: any) {
-    try {
-      const cropName = typeof fieldData.crop_type === "string" ? fieldData.crop_type.trim() : ""
-      const soilName = typeof fieldData.soil_type === "string" ? fieldData.soil_type.trim() : ""
-
-      if (!cropName && !soilName) {
-        setCropLabel(null)
-        setSoilLabel(null)
+      if (fieldError) {
+        console.error("Error loading field:", fieldError)
+        setLoading(false)
         return
       }
 
-      const [crop, soil] = await Promise.all([
-        cropName ? getCropByNameOrId(supabase, { name: cropName }) : Promise.resolve(null),
-        soilName ? getSoilTypeByNameOrId(supabase, { name: soilName }) : Promise.resolve(null),
-      ])
+      setField(fieldData)
 
-      setCropLabel(crop ? { ar: crop.name_ar, en: crop.name_en } : null)
-      setSoilLabel(soil ? { ar: soil.name_ar, en: soil.name_en } : null)
-    } catch (error) {
-      console.warn("[FieldDetails] Failed to resolve crop/soil labels:", error)
-      setCropLabel(null)
-      setSoilLabel(null)
-    }
-  }
+      // Fetch latest analytics
+      const { data: analyticsData } = await supabase
+        .from("field_analytics")
+        .select("*")
+        .eq("field_id", fieldId)
+        .order("date", { ascending: false })
+        .limit(1)
+        .single()
 
-  useEffect(() => {
-    async function resolveParams() {
-      try {
-        const resolvedParams = await params
-        const id = resolvedParams.id
-        if (id && id !== fieldId) {
-          setFieldId(id)
-          setLoading(true) // Reset loading when field ID changes
-        }
-      } catch (error) {
-        console.error("[FieldDetails] Failed to resolve params:", error)
-        setLoading(false)
-      }
-    }
-    resolveParams()
-  }, [params, fieldId])
-
-  useEffect(() => {
-    if (fieldId) {
-      setLoading(true)
-      fetchField()
-    } else {
+      setMetrics(analyticsData)
       setLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    loadFieldData()
   }, [fieldId])
-
-  useEffect(() => {
-    if (language === "ar" || language === "en") {
-      setLang(language)
-    }
-  }, [language])
-
-  useEffect(() => {
-    if (fieldId) {
-      loadMetrics()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fieldId])
-
-  async function loadMetrics() {
-    try {
-      if (!fieldId) return
-      const res = await fetch(`/api/fields/${fieldId}/metrics`)
-      if (!res.ok) return
-      const payload = await res.json()
-      setMetrics(payload)
-      if (payload?.timeline?.length) {
-        setSelectedDate(payload.timeline[0].date ?? null)
-        if (payload.timeline[0]?.type === "chlorophyll") {
-          setActiveRaster("chlorophyll")
-        }
-      }
-    } catch (error) {
-      console.warn("[FieldMetrics] Failed to load metrics", error)
-    }
-  }
-
-  // Generate field analytics
-  useEffect(() => {
-    async function generateAnalytics() {
-      if (!fieldId || !field?.boundary_coordinates) return
-
-      setAnalyticsLoading(true)
-      try {
-        const polygon = field.boundary_coordinates?.type === 'Polygon'
-          ? field.boundary_coordinates.coordinates[0]
-          : null
-
-        if (!polygon) return
-
-        // Fetch NDVI data
-        const ndviData = await satelliteAnalytics.getNDVITimeSeries(fieldId, 30, polygon)
-
-        if (ndviData.length > 0) {
-          // Generate soil analysis
-          const soil = fieldAnalytics.generateSoilAnalysis(fieldId, ndviData)
-          setSoilAnalysis(soil)
-
-          // Generate irrigation plan
-          const fieldArea = typeof field.area === 'number' ? field.area : 1.0
-          const irrigation = fieldAnalytics.generateIrrigationPlan(fieldId, soil, fieldArea)
-          setIrrigationPlan(irrigation)
-        }
-      } catch (error) {
-        console.error('[Field Analytics] Error generating analytics:', error)
-      } finally {
-        setAnalyticsLoading(false)
-      }
-    }
-
-    if (field) {
-      generateAnalytics()
-    }
-  }, [fieldId, field])
-
-  async function fetchField() {
-    try {
-      if (!fieldId) return
-      const { data, error } = await supabase
-        .from("fields")
-        .select("*, farms(name, location, latitude, longitude)")
-        .eq("id", fieldId)
-        .maybeSingle()
-
-      if (error) throw error
-      setField(data ?? null)
-      if (data) {
-        resolveDomainLabels(data)
-      } else {
-        setCropLabel(null)
-        setSoilLabel(null)
-      }
-    } catch (error) {
-      console.error("[v0] Error fetching field details:", error)
-      setField(null)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const translations = {
-    ar: {
-      back: "رجوع",
-      title: "تفاصيل الحقل",
-      farm: "المزرعة",
-      location: "الموقع",
-      area: "المساحة",
-      cropType: "نوع المحصول",
-      soilType: "نوع التربة",
-      coordinates: "الإحداثيات",
-      ndvi: "مؤشر NDVI",
-      moisture: "رطوبة المحصول",
-      lastReading: "آخر قراءة",
-      notFound: "لم يتم العثور على هذا الحقل",
-      chlorophyll: "الكلوروفيل",
-      temperature: "حرارة الغطاء",
-      moistureSoil: "رطوبة التربة",
-      action: "إجراء مقترح",
-      rasterHeader: "خريطة الحقل حرارياً",
-      timeline: "المشاهد السابقة",
-      noTimeline: "لا توجد قراءات تاريخية بعد.",
-      legendLow: "منخفض",
-      legendHigh: "مرتفع",
-    },
-    en: {
-      back: "Back",
-      title: "Field Details",
-      farm: "Farm",
-      location: "Location",
-      area: "Area",
-      cropType: "Crop Type",
-      soilType: "Soil Type",
-      coordinates: "Coordinates",
-      ndvi: "NDVI",
-      moisture: "Crop moisture",
-      lastReading: "Last reading",
-      notFound: "Field not found",
-      chlorophyll: "Chlorophyll",
-      temperature: "Canopy temp",
-      moistureSoil: "Soil moisture",
-      action: "Suggested action",
-      rasterHeader: "Live thermal/spectral map",
-      timeline: "Previous passes",
-      noTimeline: "No historical readings yet.",
-      legendLow: "Low",
-      legendHigh: "High",
-    },
-  } as const
 
   if (loading) {
-    return <div className="flex items-center justify-center py-12 text-emerald-200">...</div>
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-emerald-400 text-lg">{translations[lang].loading}</div>
+      </div>
+    )
   }
 
   if (!field) {
     return (
-      <div className="space-y-4">
-        <Link href="/dashboard/fields">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <p className="text-muted-foreground">{translations[lang].notFound}</p>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-red-400 text-lg">Field not found</div>
       </div>
     )
   }
 
-  const areaFeddan = (() => {
-    const feddan = parseMaybeNumber(field.area)
-    return feddan != null ? feddan.toFixed(2) : "--"
-  })()
+  // Calculate values
+  const ndvi = parseMaybeNumber(metrics?.ndvi ?? field.last_ndvi ?? field.ndvi_score) ?? -0.18
+  const dswi = parseMaybeNumber(metrics?.dswi ?? 0.0)
+  const moisture = parseMaybeNumber(metrics?.moisture ?? field.last_moisture ?? field.moisture_index)
+  const evi = parseMaybeNumber(metrics?.evi ?? 0.0)
+  const chlorophyll = parseMaybeNumber(metrics?.chlorophyll ?? 0.01)
 
-  const ndviDisplay = (() => {
-    const ndvi =
-      metrics?.ndvi?.latest ??
-      parseMaybeNumber(field.last_ndvi ?? field.ndvi_score ?? field.last_ndvi_score)
-    return ndvi != null ? ndvi.toFixed(2) : "--"
-  })()
+  // Calculate health percentage (based on NDVI primarily)
+  const healthPercentage = Math.max(0, Math.min(100, Math.round(((ndvi + 1) / 2) * 100)))
 
-  const moistureDisplay = (() => {
-    const moisture =
-      metrics?.moisture?.latest ??
-      parseMaybeNumber(field.last_moisture ?? field.moisture_index ?? field.last_moisture_index)
-    return moisture != null ? `${moisture.toFixed(1)}%` : "--"
-  })()
+  // Weather data
+  const temperature = parseMaybeNumber(field.last_temperature ?? 20.6)
+  const humidity = parseMaybeNumber(field.last_humidity ?? 51)
 
-  const temperatureDisplay = (() => {
-    const temp =
-      metrics?.temperature?.latest ??
-      parseMaybeNumber(field.last_temperature ?? field.temperature_c ?? field.last_temperature_c)
-    return temp != null ? `${temp.toFixed(1)}°C` : "--"
-  })()
+  // Farm info
+  const farm = field.farms ?? field.farm
+  const farmName = farm?.name ?? "adham"
 
-  const chlorophyllDisplay = (() => {
-    const chl = metrics?.chlorophyll?.latest
-    return chl != null ? chl.toFixed(2) : "--"
-  })()
+  // Area calculation
+  const areaM2 = parseMaybeNumber(field.area_m2)
+  const areaFeddan = areaM2 ? (areaM2 / 4200).toFixed(2) : "4.20"
 
-  const farm = field.farm ?? field.farms ?? null
+  // Crop and soil
+  const cropName = field.crop_type ?? "طماطم"
+  const soilType = field.soil_type ?? "طينية"
 
-  const ndviTrend = (() => {
-    if (metrics?.ndvi?.history?.length) return metrics.ndvi.history
-    const base = parseMaybeNumber(field.last_ndvi ?? field.ndvi_score) ?? 0.45
-    const clamp = (v: number) => Math.max(0, Math.min(1, v))
-    return [base - 0.05, base - 0.02, base, base + 0.02, base + 0.01].map((v) =>
-      clamp(Number.isFinite(v) ? Number(v.toFixed(2)) : base),
-    )
-  })()
+  // Last reading
+  const lastReading = formatDate(metrics?.date ?? field.last_reading_at, lang)
 
-  const moistureTrend = (() => {
-    const base = parseMaybeNumber(field.last_moisture ?? field.moisture_index) ?? 40
-    return [base - 3, base - 1, base, base + 2, base - 2].map((v) =>
-      Math.max(0, Number.isFinite(v) ? Number(v.toFixed(1)) : base),
-    )
-  })()
+  // Get trend indicator
+  const getTrendIcon = (value: number | null, threshold: number) => {
+    if (value === null) return <Minus className="h-3 w-3" />
+    if (value > threshold) return <TrendingUp className="h-3 w-3 text-emerald-400" />
+    if (value < threshold) return <TrendingDown className="h-3 w-3 text-red-400" />
+    return <Minus className="h-3 w-3 text-gray-400" />
+  }
 
-  const chlorophyllTrend = (() => {
-    const base = parseMaybeNumber(metrics?.chlorophyll?.latest) ?? 0.5
-    return [base - 0.04, base - 0.02, base, base + 0.02, base + 0.01].map((v) =>
-      Math.max(0, Number.isFinite(v) ? Number(v.toFixed(2)) : base),
-    )
-  })()
+  // Prepare data for child components
+  const fieldAnalyticsData = {
+    ndvi: metrics?.ndvi,
+    chlorophyll: metrics?.chlorophyll,
+    moisture: metrics?.moisture,
+    evi: metrics?.evi,
+    nri: metrics?.nri,
+    dswi: metrics?.dswi,
+    ndwi: metrics?.ndwi
+  }
 
-  const timelineEntries: MetricTimelineEntry[] = metrics?.timeline ?? []
-  const selectedEntry =
-    selectedDate && timelineEntries.length
-      ? timelineEntries.find((item) => item.date === selectedDate) ?? null
-      : null
-  const timelineLabels = timelineEntries.map((entry) =>
-    formatDateTimeLocale(entry.date, lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "medium" }, "") || entry.date,
-  )
+  const comparativeData = {
+    current: fieldAnalyticsData,
+    historical: [], // Placeholder for historical data
+    comparison: undefined
+  }
 
-  const latNum = parseMaybeNumber(field.latitude)
-  const lngNum = parseMaybeNumber(field.longitude)
-  const farmLat = parseMaybeNumber((farm as any)?.latitude)
-  const farmLng = parseMaybeNumber((farm as any)?.longitude)
-  const fieldCenter =
-    latNum != null && lngNum != null
-      ? ([latNum, lngNum] as [number, number])
-      : farmLat != null && farmLng != null
-        ? ([farmLat, farmLng] as [number, number])
-        : null
-
-  const ndviSeries = ndviTrend.length ? ndviTrend : [0.4, 0.42, 0.41]
-  const chlorophyllSeries = chlorophyllTrend.length ? chlorophyllTrend : [0.52, 0.5, 0.48]
-
-  const legendGradientClass =
-    activeRaster === "chlorophyll"
-      ? "from-amber-200 via-emerald-300 to-emerald-700"
-      : "from-emerald-200 via-emerald-400 to-amber-500"
-
-  const selectedRasterUrl =
-    selectedEntry?.mapUrl ??
-    (activeRaster === "chlorophyll" ? metrics?.chlorophyll?.mapUrl : metrics?.ndvi?.mapUrl) ??
-    null
-  const rasterForView = selectedRasterUrl ?? FALLBACK_RASTER_TILE
-
-  const recommendedAction = (() => {
-    const ndvi = metrics?.ndvi?.latest ?? parseMaybeNumber(field.last_ndvi ?? field.ndvi_score)
-    const moisture = metrics?.moisture?.latest ?? parseMaybeNumber(field.last_moisture ?? field.moisture_index)
-    const temp = metrics?.temperature?.latest ?? parseMaybeNumber(field.last_temperature ?? field.temperature_c)
-    const rainComing =
-      metrics?.weather?.history?.some((wx) => {
-        const p = parseMaybeNumber(wx.precipitation)
-        return p != null && p >= 3
-      }) ?? false
-
-    if (moisture != null && moisture < 25 && !rainComing) {
-      return lang === "ar"
-        ? "ري خلال 24 ساعة بجرعة خفيفة لأن الرطوبة منخفضة ولا توجد أمطار متوقعة."
-        : "Irrigate within 24h (light dose). Moisture is low and no rain is expected."
-    }
-    if (ndvi != null && ndvi < 0.3) {
-      return lang === "ar"
-        ? "مؤشر NDVI منخفض: راجع صورة القمر الصناعي وحدد بقع الإجهاد، ثم نفّذ ري تصحيحي."
-        : "NDVI is low: inspect latest imagery for stressed zones and run a corrective irrigation."
-    }
-    if (temp != null && temp > 36) {
-      return lang === "ar"
-        ? "درجات حرارة مرتفعة: جدولة ري مبكر صباحاً أو مساءً لتقليل الإجهاد الحراري."
-        : "High canopy temp: schedule irrigation early morning/evening to reduce heat stress."
-    }
-    if (rainComing) {
-      return lang === "ar"
-        ? "أمطار متوقعة: أَجّل الري 12–24 ساعة وراقب الرطوبة بعد الهطول."
-        : "Rain expected: delay irrigation 12–24h and re-check soil moisture after rainfall."
-    }
-    return lang === "ar"
-      ? "لا تنبيهات حرجة حالياً. تابع المراقبة وحدّث الحدود إذا تغيرت مساحة الحقل."
-      : "No critical actions now. Keep monitoring; update the boundary if the field shape changes."
-  })()
-
-  const lastReadingDisplay = (() => {
-    const ts = field.last_reading_at ?? metrics?.ndvi?.date ?? metrics?.chlorophyll?.date
-    if (!ts) return "--"
-    return (
-      formatDateTimeLocale(ts, lang === "ar" ? "ar-EG" : "en-US", { dateStyle: "short", timeStyle: "short" }, "--") ||
-      "--"
-    )
-  })()
+  // Calculate field center from boundary if available
+  const fieldCenter = field.boundary_coordinates?.coordinates?.[0]?.[0]
+    ? ([field.boundary_coordinates.coordinates[0][0][1], field.boundary_coordinates.coordinates[0][0][0]] as [number, number])
+    : undefined
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/fields">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-emerald-950">{field.name}</h1>
-            <p className="text-emerald-700">{translations[lang].title}</p>
+    <div className="min-h-screen bg-black p-6">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard/fields">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <h1 className="text-2xl font-bold text-white">{translations[lang].title}</h1>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+            onClick={() => setLang(lang === "ar" ? "en" : "ar")}
+          >
+            {lang === "ar" ? "EN" : "ع"}
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            const next = lang === "ar" ? "en" : "ar"
-            setLang(next)
-          }}
-        >
-          {lang === "ar" ? "EN" : "ع"}
-        </Button>
       </div>
 
-      {/* معلومات أساسية */}
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-4 bg-gradient-to-br from-emerald-900/80 via-emerald-900/70 to-amber-900/60 border border-emerald-800/60 shadow-sm">
-          <p className="text-xs text-emerald-100/80">{lang === "ar" ? "الحقل" : "Field"}</p>
-          <p className="text-xl font-semibold text-emerald-50">{field.name}</p>
-          <p className="text-xs text-emerald-100/80">{translations[lang].farm}: {farm?.name ?? "--"}</p>
-        </Card>
-
-        <Card className="p-4 bg-gradient-to-br from-emerald-900/80 via-emerald-900/70 to-amber-900/60 border border-emerald-800/60 shadow-sm">
-          <p className="text-xs text-emerald-100/80">{translations[lang].area}</p>
-          <p className="text-xl font-semibold text-emerald-50">
-            {areaFeddan} {lang === "ar" ? "فدان" : "feddans"}
-          </p>
-          <p className="text-xs text-emerald-100/70 mt-1">{cropLabel ? cropLabel[lang] : field.crop_type || "--"}</p>
-        </Card>
-
-        <Card className="p-4 bg-gradient-to-br from-emerald-900/80 via-emerald-900/70 to-amber-900/60 border border-emerald-800/60 shadow-sm">
-          <p className="text-xs text-emerald-100/80">{lang === "ar" ? "الموقع" : "Location"}</p>
-          <p className="text-sm font-mono text-emerald-50">
-            {field.latitude != null && field.longitude != null
-              ? `${Number(field.latitude).toFixed(5)}, ${Number(field.longitude).toFixed(5)}`
-              : "--"}
-          </p>
-          {farm?.location && <p className="text-xs text-emerald-100/70 mt-1">{farm.location}</p>}
-        </Card>
-
-        <Card className="p-4 bg-gradient-to-br from-emerald-900/80 via-emerald-900/70 to-amber-900/60 border border-emerald-800/60 shadow-sm">
-          <p className="text-xs text-emerald-100/80">{translations[lang].soilType}</p>
-          <p className="text-lg font-semibold text-emerald-50">{soilLabel ? soilLabel[lang] : field.soil_type || "--"}</p>
-          <p className="text-xs text-emerald-100/70 mt-1">
-            {translations[lang].lastReading}: {lastReadingDisplay}
-          </p>
-        </Card>
-      </div>
-
-      {/* مؤشرات رئيسية */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="p-4 bg-gradient-to-br from-emerald-900/90 via-emerald-900/70 to-amber-900/60 border border-emerald-800/70 shadow-sm">
-          <div className="flex items-center justify-between text-sm text-emerald-100/80">
-            <span className="flex items-center gap-2 text-emerald-100 font-medium">
-              <Leaf className="h-4 w-4" />
-              {translations[lang].ndvi}
-            </span>
-            <span className="text-xs text-emerald-200/70">{translations[lang].lastReading}</span>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-emerald-50">{ndviDisplay}</span>
-            <span className="text-xs text-emerald-100/80">{lang === "ar" ? "وضع حالي" : "current"}</span>
-          </div>
-          <div className="mt-3 h-16 rounded-lg bg-emerald-900/60 flex items-center justify-center">
-            <svg viewBox="0 0 220 70" className="w-full h-full overflow-visible">
-              <path d={sparklinePath(ndviSeries)} fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" />
-              {ndviSeries.map((v, idx) => {
-                const width = 180
-                const height = 60
-                const min = Math.min(...ndviSeries)
-                const max = Math.max(...ndviSeries)
-                const range = max - min || 1
-                const x = 20 + (idx / Math.max(ndviSeries.length - 1, 1)) * width
-                const y = 70 - ((v - min) / range) * height
-                return <circle key={idx} cx={x} cy={y} r={3} fill="#bbf7d0" />
-              })}
-            </svg>
-          </div>
-        </Card>
-
-        <Card className="p-4 bg-gradient-to-br from-emerald-900/90 via-emerald-900/70 to-amber-900/60 border border-emerald-800/70 shadow-sm">
-          <div className="flex items-center justify-between text-sm text-emerald-100/80">
-            <span className="flex items-center gap-2 text-emerald-100 font-medium">
-              <Leaf className="h-4 w-4" />
-              {translations[lang].chlorophyll}
-            </span>
-            <span className="text-xs text-emerald-200/70">{translations[lang].lastReading}</span>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-emerald-50">{chlorophyllDisplay}</span>
-            <span className="text-xs text-emerald-100/80">{lang === "ar" ? "الكثافة الخضرية" : "canopy density"}</span>
-          </div>
-          <div className="mt-3 h-16 rounded-lg bg-emerald-900/60 flex items-center justify-center">
-            <svg viewBox="0 0 220 70" className="w-full h-full overflow-visible">
-              <path
-                d={sparklinePath(chlorophyllSeries)}
-                fill="none"
-                stroke="#fbbf24"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              {chlorophyllSeries.map((v, idx) => {
-                const width = 180
-                const height = 60
-                const min = Math.min(...chlorophyllSeries)
-                const max = Math.max(...chlorophyllSeries)
-                const range = max - min || 1
-                const x = 20 + (idx / Math.max(chlorophyllSeries.length - 1, 1)) * width
-                const y = 70 - ((v - min) / range) * height
-                return <circle key={idx} cx={x} cy={y} r={3} fill="#fcd34d" />
-              })}
-            </svg>
-          </div>
-        </Card>
-
-        <Card className="p-4 bg-gradient-to-br from-emerald-900/90 via-emerald-900/70 to-amber-900/60 border border-emerald-800/70 shadow-sm">
-          <div className="flex items-center justify-between text-sm text-emerald-100/80">
-            <span className="flex items-center gap-2 text-emerald-100 font-medium">
-              <Waves className="h-4 w-4" />
-              {translations[lang].moistureSoil}
-            </span>
-            <span className="text-xs text-emerald-200/70">{translations[lang].lastReading}</span>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-emerald-50">{moistureDisplay}</span>
-            <span className="text-xs text-emerald-100/80">{lang === "ar" ? "اعتماداً على الأقمار الصناعية" : "satellite inferred"}</span>
-          </div>
-          <div className="mt-3 h-16 rounded-lg bg-emerald-900/60 flex items-center justify-center">
-            <div className="flex items-end gap-1 w-full px-2">
-              {moistureTrend.map((v, idx) => (
+      {/* Main Field Card */}
+      <div className="max-w-7xl mx-auto">
+        <Card className="bg-black/60 border-emerald-400/40 backdrop-blur-xl shadow-[0_0_24px_rgba(16,185,129,0.15)] overflow-hidden">
+          <div className="p-8">
+            {/* Field Number Circle + Basic Info */}
+            <div className="flex items-start gap-6 mb-8">
+              {/* Circular Field Number */}
+              <div className="flex-shrink-0">
                 <div
-                  key={idx}
-                  className="flex-1 rounded-full bg-emerald-300/80"
-                  style={{ height: `${12 + v * 0.6}px` }}
-                />
-              ))}
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4 bg-gradient-to-br from-emerald-900/90 via-emerald-900/70 to-amber-900/60 border border-emerald-800/70 shadow-sm">
-          <div className="flex items-center justify-between text-sm text-emerald-100/80">
-            <span className="flex items-center gap-2 text-amber-100 font-medium">
-              <ThermometerSun className="h-4 w-4" />
-              {translations[lang].temperature}
-            </span>
-            <span className="text-xs text-emerald-200/70">{translations[lang].lastReading}</span>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-amber-50">{temperatureDisplay}</span>
-            {metrics?.weather?.latest?.condition && (
-              <span className="text-xs text-emerald-100/80">{metrics.weather.latest.condition}</span>
-            )}
-          </div>
-          <div className="mt-3 h-16 rounded-lg bg-emerald-900/60 flex items-center justify-center">
-            <div className="flex items-end gap-1 w-full px-2">
-              {[14, 18, 22, 21, 19].map((v, idx) => (
-                <div
-                  key={idx}
-                  className="flex-1 rounded-full bg-amber-300/80"
-                  style={{ height: `${v + 20}px` }}
-                />
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="p-5 bg-gradient-to-br from-emerald-900/90 via-emerald-900/70 to-amber-900/60 border border-emerald-800/70 shadow-sm lg:col-span-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-emerald-100/90">{lang === "ar" ? "اتجاه NDVI" : "NDVI trend"}</p>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-emerald-50">{ndviDisplay}</span>
-                <span className="text-xs text-emerald-200/80">{lang === "ar" ? "آخر قراءة" : "latest"}</span>
+                  className="w-24 h-24 rounded-full flex items-center justify-center border-2 border-emerald-400"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 78, 59, 0.2))'
+                  }}
+                >
+                  <div className="text-4xl font-bold text-white">{field.name}</div>
+                </div>
               </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-emerald-200/80">{translations[lang].lastReading}</p>
-              <p className="text-sm font-medium text-emerald-50">{lastReadingDisplay}</p>
-            </div>
-          </div>
-          <div className="mt-4 h-40 rounded-xl bg-gradient-to-b from-emerald-800/60 via-emerald-900/70 to-amber-900/60 border border-emerald-700/60 flex items-center justify-center px-2">
-            <svg viewBox="0 0 240 110" className="w-full h-full overflow-visible">
-              <path d={sparklinePath(ndviSeries)} fill="none" stroke="#22c55e" strokeWidth="4" strokeLinecap="round" />
-              {ndviSeries.map((v, idx) => {
-                const width = 200
-                const height = 80
-                const min = Math.min(...ndviSeries)
-                const max = Math.max(...ndviSeries)
-                const range = max - min || 1
-                const x = 20 + (idx / Math.max(ndviSeries.length - 1, 1)) * width
-                const y = 100 - ((v - min) / range) * height
-                return <circle key={idx} cx={x} cy={y} r={4} fill="#bbf7d0" />
-              })}
-            </svg>
-          </div>
-          {timelineEntries.length > 0 ? (
-            <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-emerald-100/80">
-              {timelineEntries.slice(0, 6).map((entry, idx) => (
-                <div key={entry.date} className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-amber-300" />
-                  <div className="flex-1">
-                    <p className="font-medium text-emerald-50">
-                      {timelineLabels[idx] ?? entry.date} · {entry.ndvi ?? entry.chlorophyll ?? "--"}
-                    </p>
-                    {entry.type === "chlorophyll" && (
-                      <p className="text-[11px] text-amber-300">
-                        {lang === "ar" ? "لقطة كلوروفيل" : "Chlorophyll pass"}
-                      </p>
-                    )}
+
+              {/* Field Info */}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                    {cropName}
+                  </Badge>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-1">{field.name}</h2>
+                <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-300">
+                  <div className="flex items-center gap-2">
+                    <Leaf className="h-4 w-4 text-emerald-400" />
+                    {translations[lang].farm}: <span className="text-white font-medium">{farmName}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400">{translations[lang].area}:</span>
+                    <span className="text-white font-medium">{areaFeddan} {translations[lang].feddans}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400">{translations[lang].soilType}:</span>
+                    <span className="text-white font-medium">{soilType}</span>
                   </div>
                 </div>
-              ))}
+                <div className="text-xs text-gray-500 mt-2">
+                  {translations[lang].lastReading}: {lastReading}
+                </div>
+              </div>
             </div>
-          ) : (
-            <p className="mt-3 text-xs text-amber-300">{translations[lang].noTimeline}</p>
-          )}
-        </Card>
 
-        <Card className="p-5 bg-gradient-to-br from-emerald-900/90 via-emerald-900/70 to-amber-900/60 border border-emerald-800/70 shadow-sm">
-          <p className="text-sm text-emerald-100/90">{translations[lang].action}</p>
-          <p className="mt-3 text-base text-emerald-50 leading-relaxed">{recommendedAction}</p>
-          {metrics?.weather?.latest?.condition && (
-            <p className="mt-4 text-[12px] text-amber-200/90">
-              {lang === "ar" ? "حالة الطقس الأخيرة: " : "Last weather: "}
-              {metrics.weather.latest.condition} · {(metrics.weather.latest.temperature ?? "--") as any}°C ·{" "}
-              {metrics.weather.latest.humidity ?? "--"}%
-            </p>
-          )}
-        </Card>
-      </div>
+            {/* 4-Column Metrics Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {/* DSWI */}
+              <div className="text-center p-4 bg-white/5 rounded-lg border border-white/10">
+                <div className="text-xs text-gray-400 uppercase mb-1">DSWI</div>
+                <div className="text-2xl font-bold text-white mb-1">{dswi?.toFixed(2) ?? "0.00"}</div>
+                <div className="flex items-center justify-center">
+                  {getTrendIcon(dswi, 0.5)}
+                </div>
+              </div>
 
-      <FieldAnalyticsDashboard
-        fieldData={{
-          ndvi: metrics?.ndvi?.latest ?? parseMaybeNumber(field.last_ndvi ?? field.ndvi_score),
-          chlorophyll: metrics?.chlorophyll?.latest,
-          moisture: metrics?.moisture?.latest ?? parseMaybeNumber(field.last_moisture ?? field.moisture_index),
-          evi: metrics?.evi?.latest,
-          nri: metrics?.nri?.latest,
-          dswi: metrics?.dswi?.latest,
-          ndwi: metrics?.ndwi?.latest,
-        }}
-        mapUrls={{
-          ndvi: metrics?.ndvi?.mapUrl,
-          chlorophyll: metrics?.chlorophyll?.mapUrl,
-          moisture: metrics?.soilMoisture?.mapUrl,
-          evi: metrics?.evi?.mapUrl,
-          nri: metrics?.nri?.mapUrl,
-          dswi: metrics?.dswi?.mapUrl,
-          ndwi: metrics?.ndwi?.mapUrl,
-        }}
-        timestamp={metrics?.ndvi?.date || metrics?.chlorophyll?.date || field.last_reading_at}
-        lang={lang}
-      />
+              {/* Moisture */}
+              <div className="text-center p-4 bg-white/5 rounded-lg border border-white/10">
+                <div className="text-xs text-gray-400 uppercase mb-1">{lang === "ar" ? "الرطوبة" : "Moisture"}</div>
+                <div className="text-2xl font-bold text-white mb-1">{moisture ? `${moisture.toFixed(1)}%` : "--"}</div>
+                <div className="flex items-center justify-center">
+                  {getTrendIcon(moisture, 40)}
+                </div>
+              </div>
 
-      {/* Automated Field Analytics - NEW */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <SoilAnalysisCard
-          analysis={soilAnalysis}
-          loading={analyticsLoading}
-          lang={lang}
-        />
-        <IrrigationPlanCard
-          plan={irrigationPlan}
-          loading={analyticsLoading}
-          lang={lang}
-        />
-      </div>
+              {/* EVI */}
+              <div className="text-center p-4 bg-white/5 rounded-lg border border-white/10">
+                <div className="text-xs text-gray-400 uppercase mb-1">EVI</div>
+                <div className="text-2xl font-bold text-white mb-1">{evi?.toFixed(2) ?? "0.00"}</div>
+                <div className="flex items-center justify-center">
+                  {getTrendIcon(evi, 0.3)}
+                </div>
+              </div>
 
-      {/* Map Section */}
-      {fieldCenter && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Map className="h-5 w-5 text-emerald-600" />
-            <span className="text-lg font-semibold text-emerald-950">{lang === "ar" ? "خريطة الحقل" : "Field Map"}</span>
+              {/* NDVI */}
+              <div className="text-center p-4 bg-white/5 rounded-lg border border-white/10">
+                <div className="text-xs text-gray-400 uppercase mb-1">NDVI</div>
+                <div className="text-2xl font-bold text-white mb-1">{ndvi.toFixed(2)}</div>
+                <div className="flex items-center justify-center">
+                  {getTrendIcon(ndvi, 0.4)}
+                </div>
+              </div>
+            </div>
+
+            {/* Health Progress Bar */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-300">{translations[lang].fieldHealth}</span>
+                <span className="text-lg font-bold text-emerald-400">{healthPercentage}%</span>
+              </div>
+              <Progress
+                value={healthPercentage}
+                className="h-2 bg-gray-800"
+                style={{
+                  ['--progress-background' as any]: 'linear-gradient(90deg, rgb(16 185 129), rgb(52 211 153))'
+                }}
+              />
+            </div>
+
+            {/* Weather Info Row */}
+            <div className="flex items-center gap-6 text-sm text-gray-300 mb-6">
+              <div className="flex items-center gap-2">
+                <Droplets className="h-4 w-4 text-blue-400" />
+                <span>{humidity}%</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ThermometerSun className="h-4 w-4 text-orange-400" />
+                <span>{temperature}°C</span>
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <button className="w-full py-3 bg-emerald-500/20 border border-emerald-500/40 rounded-lg text-emerald-400 hover:bg-emerald-500/30 transition-colors">
+              {translations[lang].viewDetails}
+            </button>
           </div>
-          <div className="rounded-xl overflow-hidden border border-emerald-200">
-            <UnifiedMap
-              fields={[{
-                id: field.id,
-                name: field.name,
-                areaFeddan: parseMaybeNumber(field.area) || 1,
-                center: fieldCenter,
-                polygon: (field.boundary_coordinates?.type === 'Polygon'
-                  ? field.boundary_coordinates.coordinates[0]
-                  : [
-                    [fieldCenter[1], fieldCenter[0]],
-                    [fieldCenter[1] + 0.001, fieldCenter[0]],
-                    [fieldCenter[1] + 0.001, fieldCenter[0] + 0.001],
-                    [fieldCenter[1], fieldCenter[0] + 0.001]
-                  ]) as [number, number][],
-                crop: field.crop_type || null,
-                ndvi: parseMaybeNumber(field.last_ndvi ?? field.ndvi_score),
-                health: parseMaybeNumber(field.last_ndvi ?? field.ndvi_score) ?
-                  (parseMaybeNumber(field.last_ndvi ?? field.ndvi_score)! * 100) : 50
-              }]}
-              defaultLayer="true-color"
-              showLayerControls={true}
-              showNavigationControls={true}
+        </Card>
+
+        {/* Additional Sections */}
+        <div className="mt-8 space-y-6 max-w-7xl mx-auto">
+          {/* Field Analytics Dashboard */}
+          <FieldAnalyticsDashboard
+            fieldData={fieldAnalyticsData}
+            timestamp={metrics?.date}
+            lang={lang}
+          />
+
+          {/* Comparative Analytics */}
+          <ComparativeAnalytics
+            fieldData={comparativeData}
+            lang={lang}
+          />
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Soil Analysis Card */}
+            <SoilAnalysisCard
+              analysis={metrics?.soil_analysis}
               lang={lang}
-              height={400}
+            />
+
+            {/* Irrigation Plan Card */}
+            <IrrigationPlanCard
+              plan={metrics?.irrigation_plan}
+              loading={false}
+              lang={lang}
+            />
+          </div>
+
+          {/* Map Section */}
+          <div className="rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl shadow-emerald-900/20">
+            <UnifiedEOSDAMap
+              fieldId={fieldId}
+              fieldName={field.name}
+              coordinates={field.boundary_coordinates?.coordinates?.[0]}
+              center={fieldCenter}
+              zoom={14}
+              height="500px"
+              showLayerControls={true}
+              lang={lang}
             />
           </div>
         </div>
-      )}
-
-      {/* Comparative Analytics */}
-      <ComparativeAnalytics
-        fieldData={{
-          current: {
-            ndvi: metrics?.ndvi?.latest ?? parseMaybeNumber(field.last_ndvi ?? field.ndvi_score),
-            chlorophyll: metrics?.chlorophyll?.latest,
-            moisture: metrics?.moisture?.latest ?? parseMaybeNumber(field.last_moisture ?? field.moisture_index),
-            evi: metrics?.evi?.latest,
-            nri: metrics?.nri?.latest,
-            dswi: metrics?.dswi?.latest,
-            ndwi: metrics?.ndwi?.latest,
-          },
-          historical: metrics?.timeline || [],
-          comparison: {
-            region_avg: {
-              ndvi: 0.6, // Will be calculated from region data
-              chlorophyll: 45,
-              moisture: 55,
-            },
-            previous_year: {
-              ndvi: 0.55, // Will be fetched from historical data
-              chlorophyll: 42,
-              moisture: 52,
-            },
-          },
-        }}
-        weatherData={{
-          current: {
-            temperature: metrics?.weather?.latest?.temperature,
-            humidity: metrics?.weather?.latest?.humidity,
-            precipitation: metrics?.weather?.latest?.precipitation,
-            wind_speed: metrics?.weather?.latest?.wind_speed,
-          },
-          forecast: [], // Will be populated from weather API
-        }}
-        lang={lang}
-      />
+      </div>
     </div>
-  )
+  );
+}
+
+function formatDate(dateStr: string | null | undefined, lang: "ar" | "en"): string {
+  if (!dateStr) return "--"
+  try {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  } catch {
+    return "--"
+  }
 }

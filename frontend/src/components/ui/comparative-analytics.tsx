@@ -5,29 +5,29 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  LineChart, 
-  Line, 
-  AreaChart, 
-  Area, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
   ReferenceLine
 } from "recharts"
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle, 
-  CheckCircle, 
-  Info, 
-  Droplets, 
-  Sun, 
+import {
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  Droplets,
+  Sun,
   Wind,
   Calendar,
   MapPin,
@@ -174,11 +174,11 @@ export function ComparativeAnalytics({
 
   const getTrendDirection = (current: number | null | undefined, historical: number[]) => {
     if (!current || historical.length < 2) return "stable"
-    
+
     const recent = historical.slice(-3)
     const avg = recent.reduce((sum, v) => sum + v, 0) / recent.length
     const diff = current - avg
-    
+
     if (diff > 0.05) return "improving"
     if (diff < -0.05) return "declining"
     return "stable"
@@ -196,9 +196,9 @@ export function ComparativeAnalytics({
 
   // Prepare chart data
   const chartData = fieldData.historical.map((entry, index) => ({
-    date: new Date(entry.date).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", { 
-      month: "short", 
-      day: "numeric" 
+    date: new Date(entry.date).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
+      month: "short",
+      day: "numeric"
     }),
     ndvi: entry.ndvi,
     chlorophyll: entry.chlorophyll,
@@ -212,13 +212,13 @@ export function ComparativeAnalytics({
   // Generate insights
   const generateInsights = () => {
     const insights = []
-    
+
     if (fieldData.current.ndvi && fieldData.current.ndvi > 0.7) {
       insights.push({
         type: "success",
         icon: CheckCircle,
-        message: lang === "ar" 
-          ? "NDVI مرتفع يدل على صحة النبات الممتازة" 
+        message: lang === "ar"
+          ? "NDVI مرتفع يدل على صحة النبات الممتازة"
           : "High NDVI indicates excellent plant health"
       })
     }
@@ -227,8 +227,8 @@ export function ComparativeAnalytics({
       insights.push({
         type: "warning",
         icon: AlertTriangle,
-        message: lang === "ar" 
-          ? "رطوبة التربة منخفضة - قد تحتاج إلى ري" 
+        message: lang === "ar"
+          ? "رطوبة التربة منخفضة - قد تحتاج إلى ري"
           : "Low soil moisture - irrigation may be needed"
       })
     }
@@ -237,8 +237,8 @@ export function ComparativeAnalytics({
       insights.push({
         type: "warning",
         icon: Sun,
-        message: lang === "ar" 
-          ? "درجات حرارة مرتفعة - راقب الإجهاد الحراري" 
+        message: lang === "ar"
+          ? "درجات حرارة مرتفعة - راقب الإجهاد الحراري"
           : "High temperatures - monitor for heat stress"
       })
     }
@@ -251,23 +251,23 @@ export function ComparativeAnalytics({
   return (
     <div className="space-y-6">
       {/* Header with Health Score */}
-      <Card className="p-6 bg-gradient-to-r from-blue-50 to-emerald-50 border-blue-200">
+      <Card className="p-6 glass-card border-emerald-500/20 bg-black/40 backdrop-blur-xl">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            <h2 className="text-2xl font-bold text-white mb-2">
               {translations.title}
             </h2>
-            <p className="text-gray-600">
-              {lang === "ar" 
-                ? "تحليل شامل لأداء الحقل ومقارناته" 
+            <p className="text-gray-400">
+              {lang === "ar"
+                ? "تحليل شامل لأداء الحقل ومقارناته"
                 : "Comprehensive field performance analysis and comparisons"}
             </p>
           </div>
           <div className="text-center">
-            <div className={`text-4xl font-bold ${performance.color} mb-1`}>
+            <div className={`text-4xl font-bold ${performance.color} mb-1 drop-shadow-[0_0_8px_currentColor]`}>
               {Math.round(healthScore)}%
             </div>
-            <Badge className={`${performance.bg} ${performance.color} border-0`}>
+            <Badge className={`${performance.bg} ${performance.color} border-0 bg-opacity-10`}>
               {translations[performance.level as keyof typeof translations]}
             </Badge>
           </div>
@@ -275,20 +275,20 @@ export function ComparativeAnalytics({
       </Card>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">{translations.overview}</TabsTrigger>
-          <TabsTrigger value="trends">{translations.trends}</TabsTrigger>
-          <TabsTrigger value="comparison">{translations.comparison}</TabsTrigger>
-          <TabsTrigger value="recommendations">{translations.recommendations}</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 bg-black/40 border border-emerald-500/20">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 text-gray-400">{translations.overview}</TabsTrigger>
+          <TabsTrigger value="trends" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 text-gray-400">{translations.trends}</TabsTrigger>
+          <TabsTrigger value="comparison" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 text-gray-400">{translations.comparison}</TabsTrigger>
+          <TabsTrigger value="recommendations" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400 text-gray-400">{translations.recommendations}</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4">
+        <TabsContent value="overview" className="space-y-4 mt-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="p-4">
+            <Card className="p-4 glass-card border-emerald-500/10 bg-black/20 backdrop-blur-md">
               <div className="flex items-center gap-2 mb-2">
-                <Activity className="h-5 w-5 text-emerald-600" />
-                <span className="text-sm font-medium text-gray-700">{translations.healthScore}</span>
+                <Activity className="h-5 w-5 text-emerald-400" />
+                <span className="text-sm font-medium text-gray-300">{translations.healthScore}</span>
               </div>
               <div className={`text-2xl font-bold ${performance.color}`}>
                 {Math.round(healthScore)}%
@@ -298,12 +298,12 @@ export function ComparativeAnalytics({
               </div>
             </Card>
 
-            <Card className="p-4">
+            <Card className="p-4 glass-card border-emerald-500/10 bg-black/20 backdrop-blur-md">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                <span className="text-sm font-medium text-gray-700">{translations.ndvi}</span>
+                <TrendingUp className="h-5 w-5 text-blue-400" />
+                <span className="text-sm font-medium text-gray-300">{translations.ndvi}</span>
               </div>
-              <div className="text-2xl font-bold text-gray-800">
+              <div className="text-2xl font-bold text-white">
                 {fieldData.current.ndvi?.toFixed(2) ?? "--"}
               </div>
               <div className="text-xs text-gray-500 mt-1">
@@ -311,27 +311,27 @@ export function ComparativeAnalytics({
               </div>
             </Card>
 
-            <Card className="p-4">
+            <Card className="p-4 glass-card border-emerald-500/10 bg-black/20 backdrop-blur-md">
               <div className="flex items-center gap-2 mb-2">
-                <Droplets className="h-5 w-5 text-cyan-600" />
-                <span className="text-sm font-medium text-gray-700">{translations.moisture}</span>
+                <Droplets className="h-5 w-5 text-cyan-400" />
+                <span className="text-sm font-medium text-gray-300">{translations.moisture}</span>
               </div>
-              <div className="text-2xl font-bold text-gray-800">
+              <div className="text-2xl font-bold text-white">
                 {fieldData.current.moisture?.toFixed(1) ?? "--"}%
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                {fieldData.current.moisture && fieldData.current.moisture < 30 
+                {fieldData.current.moisture && fieldData.current.moisture < 30
                   ? lang === "ar" ? "منخفضة" : "Low"
                   : lang === "ar" ? "مناسبة" : "Adequate"}
               </div>
             </Card>
 
-            <Card className="p-4">
+            <Card className="p-4 glass-card border-emerald-500/10 bg-black/20 backdrop-blur-md">
               <div className="flex items-center gap-2 mb-2">
-                <Sun className="h-5 w-5 text-orange-600" />
-                <span className="text-sm font-medium text-gray-700">{translations.temperature}</span>
+                <Sun className="h-5 w-5 text-amber-400" />
+                <span className="text-sm font-medium text-gray-300">{translations.temperature}</span>
               </div>
-              <div className="text-2xl font-bold text-gray-800">
+              <div className="text-2xl font-bold text-white">
                 {weatherData?.current.temperature?.toFixed(1) ?? "--"}°C
               </div>
               <div className="text-xs text-gray-500 mt-1">
@@ -341,20 +341,18 @@ export function ComparativeAnalytics({
           </div>
 
           {/* Insights */}
-          <Card className="p-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
-              <Info className="h-5 w-5" />
+          <Card className="p-4 glass-card border-emerald-500/20 bg-black/40 backdrop-blur-xl">
+            <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+              <Info className="h-5 w-5 text-emerald-400" />
               {translations.insights}
             </h3>
             <div className="space-y-2">
               {insights.map((insight, index) => (
-                <Alert key={index} className={`border-l-4 ${
-                  insight.type === "success" ? "border-l-emerald-500 bg-emerald-50" : "border-l-amber-500 bg-amber-50"
-                }`}>
-                  <insight.icon className={`h-4 w-4 ${
-                    insight.type === "success" ? "text-emerald-600" : "text-amber-600"
-                  }`} />
-                  <AlertDescription className="text-sm">
+                <Alert key={index} className={`border-l-4 border-0 bg-white/5 ${insight.type === "success" ? "border-l-emerald-500" : "border-l-amber-500"
+                  }`}>
+                  <insight.icon className={`h-4 w-4 ${insight.type === "success" ? "text-emerald-400" : "text-amber-400"
+                    }`} />
+                  <AlertDescription className="text-sm text-gray-300">
                     {insight.message}
                   </AlertDescription>
                 </Alert>
@@ -364,43 +362,49 @@ export function ComparativeAnalytics({
         </TabsContent>
 
         {/* Trends Tab */}
-        <TabsContent value="trends" className="space-y-4">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        <TabsContent value="trends" className="space-y-4 mt-4">
+          <Card className="p-6 glass-card border-emerald-500/20 bg-black/40 backdrop-blur-xl">
+            <h3 className="text-lg font-semibold text-white mb-4">
               {lang === "ar" ? "اتجاهات المؤشرات الزمنية" : "Index Trends Over Time"}
             </h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="ndvi" stroke="#10b981" strokeWidth={2} />
-                  <Line type="monotone" dataKey="chlorophyll" stroke="#f59e0b" strokeWidth={2} />
-                  <Line type="monotone" dataKey="moisture" stroke="#3b82f6" strokeWidth={2} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                  <XAxis dataKey="date" stroke="#9ca3af" />
+                  <YAxis stroke="#9ca3af" />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '8px', color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend wrapperStyle={{ color: '#fff' }} />
+                  <Line type="monotone" dataKey="ndvi" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981' }} />
+                  <Line type="monotone" dataKey="chlorophyll" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b' }} />
+                  <Line type="monotone" dataKey="moisture" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6' }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          <Card className="p-6 glass-card border-emerald-500/20 bg-black/40 backdrop-blur-xl">
+            <h3 className="text-lg font-semibold text-white mb-4">
               {lang === "ar" ? "المؤشرات المتقدمة" : "Advanced Indices"}
             </h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Area type="monotone" dataKey="evi" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
-                  <Area type="monotone" dataKey="nri" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.6} />
-                  <Area type="monotone" dataKey="dswi" stackId="1" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.6} />
-                  <Area type="monotone" dataKey="ndwi" stackId="1" stroke="#84cc16" fill="#84cc16" fillOpacity={0.6} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                  <XAxis dataKey="date" stroke="#9ca3af" />
+                  <YAxis stroke="#9ca3af" />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '8px', color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend wrapperStyle={{ color: '#fff' }} />
+                  <Area type="monotone" dataKey="evi" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.4} />
+                  <Area type="monotone" dataKey="nri" stackId="1" stroke="#ef4444" fill="#ef4444" fillOpacity={0.4} />
+                  <Area type="monotone" dataKey="dswi" stackId="1" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.4} />
+                  <Area type="monotone" dataKey="ndwi" stackId="1" stroke="#84cc16" fill="#84cc16" fillOpacity={0.4} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -408,10 +412,10 @@ export function ComparativeAnalytics({
         </TabsContent>
 
         {/* Comparison Tab */}
-        <TabsContent value="comparison" className="space-y-4">
+        <TabsContent value="comparison" className="space-y-4 mt-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            <Card className="p-6 glass-card border-emerald-500/20 bg-black/40 backdrop-blur-xl">
+              <h3 className="text-lg font-semibold text-white mb-4">
                 {translations.vsRegion}
               </h3>
               <div className="space-y-4">
@@ -421,15 +425,15 @@ export function ComparativeAnalytics({
                   { key: "moisture", label: translations.moisture, current: fieldData.current.moisture, avg: fieldData.comparison?.region_avg.moisture }
                 ].map(({ key, label, current, avg }) => (
                   <div key={key} className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm text-gray-300">
                       <span>{label}</span>
                       <span>
                         {current?.toFixed(2) ?? "--"} vs {avg?.toFixed(2) ?? "--"}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-emerald-500 h-2 rounded-full" 
+                    <div className="w-full bg-white/10 rounded-full h-2">
+                      <div
+                        className="bg-emerald-500 h-2 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"
                         style={{ width: `${current && avg ? (current / Math.max(current, avg)) * 100 : 0}%` }}
                       />
                     </div>
@@ -438,8 +442,8 @@ export function ComparativeAnalytics({
               </div>
             </Card>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            <Card className="p-6 glass-card border-emerald-500/20 bg-black/40 backdrop-blur-xl">
+              <h3 className="text-lg font-semibold text-white mb-4">
                 {translations.vsLastYear}
               </h3>
               <div className="space-y-4">
@@ -451,15 +455,15 @@ export function ComparativeAnalytics({
                   const change = current && prev ? ((current - prev) / prev) * 100 : 0
                   return (
                     <div key={key} className="space-y-2">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-sm text-gray-300">
                         <span>{label}</span>
-                        <span className={change >= 0 ? "text-green-600" : "text-red-600"}>
+                        <span className={change >= 0 ? "text-emerald-400" : "text-red-400"}>
                           {change >= 0 ? "+" : ""}{change.toFixed(1)}%
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full ${change >= 0 ? "bg-green-500" : "bg-red-500"}`}
+                      <div className="w-full bg-white/10 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${change >= 0 ? "bg-emerald-500" : "bg-red-500"} shadow-[0_0_8px_currentColor]`}
                           style={{ width: `${Math.min(Math.abs(change), 100)}%` }}
                         />
                       </div>
@@ -472,34 +476,34 @@ export function ComparativeAnalytics({
         </TabsContent>
 
         {/* Recommendations Tab */}
-        <TabsContent value="recommendations" className="space-y-4">
+        <TabsContent value="recommendations" className="space-y-4 mt-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Droplets className="h-5 w-5 text-blue-600" />
+            <Card className="p-6 glass-card border-emerald-500/20 bg-black/40 backdrop-blur-xl">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Droplets className="h-5 w-5 text-blue-400" />
                 {translations.irrigationNeeds}
               </h3>
               <div className="space-y-3">
-                <Alert className="border-blue-200 bg-blue-50">
-                  <Droplets className="h-4 w-4 text-blue-600" />
-                  <AlertDescription>
+                <Alert className="border-blue-500/30 bg-blue-500/10 border-0">
+                  <Droplets className="h-4 w-4 text-blue-400" />
+                  <AlertDescription className="text-blue-100">
                     {fieldData.current.moisture && fieldData.current.moisture < 30
-                      ? lang === "ar" 
+                      ? lang === "ar"
                         ? "الري الفوري مطلوب. رطوبة التربة منخفضة جداً."
                         : "Immediate irrigation required. Soil moisture is very low."
                       : fieldData.current.moisture && fieldData.current.moisture < 50
-                      ? lang === "ar"
-                        ? "ري خفيف موصى به خلال 24-48 ساعة."
-                        : "Light irrigation recommended within 24-48 hours."
-                      : lang === "ar"
-                        ? "مستويات الرطوبة كافية. لا حاجة للري حالياً."
-                        : "Moisture levels are adequate. No irrigation needed currently."
+                        ? lang === "ar"
+                          ? "ري خفيف موصى به خلال 24-48 ساعة."
+                          : "Light irrigation recommended within 24-48 hours."
+                        : lang === "ar"
+                          ? "مستويات الرطوبة كافية. لا حاجة للري حالياً."
+                          : "Moisture levels are adequate. No irrigation needed currently."
                     }
                   </AlertDescription>
                 </Alert>
-                
+
                 {weatherData?.forecast && weatherData.forecast.slice(0, 3).map((day, index) => (
-                  <div key={index} className="flex justify-between text-sm p-2 bg-gray-50 rounded">
+                  <div key={index} className="flex justify-between text-sm p-2 bg-white/5 rounded text-gray-300">
                     <span>{new Date(day.date).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", { weekday: "short" })}</span>
                     <span>{day.temperature?.toFixed(1)}°C, {day.precipitation?.toFixed(1) || 0}mm</span>
                   </div>
@@ -507,40 +511,40 @@ export function ComparativeAnalytics({
               </div>
             </Card>
 
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
+            <Card className="p-6 glass-card border-emerald-500/20 bg-black/40 backdrop-blur-xl">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-400" />
                 {translations.diseaseRisk}
               </h3>
               <div className="space-y-3">
-                <Alert className="border-amber-200 bg-amber-50">
-                  <AlertTriangle className="h-4 w-4 text-amber-600" />
-                  <AlertDescription>
+                <Alert className="border-amber-500/30 bg-amber-500/10 border-0">
+                  <AlertTriangle className="h-4 w-4 text-amber-400" />
+                  <AlertDescription className="text-amber-100">
                     {fieldData.current.ndvi && fieldData.current.ndvi < 0.3
                       ? lang === "ar"
                         ? "مخاطر عالية للأمراض الفطرية بسبب النمو الضعيف."
                         : "High risk of fungal diseases due to poor growth."
                       : fieldData.current.moisture && fieldData.current.moisture > 70
-                      ? lang === "ar"
-                        ? "الرطوبة العالية تزيد من مخاطر الأمراض."
-                        : "High moisture increases disease risk."
-                      : lang === "ar"
-                        ? "مخاطر الأمراض معتدلة. استمر في المراقبة."
-                        : "Moderate disease risk. Continue monitoring."
+                        ? lang === "ar"
+                          ? "الرطوبة العالية تزيد من مخاطر الأمراض."
+                          : "High moisture increases disease risk."
+                        : lang === "ar"
+                          ? "مخاطر الأمراض معتدلة. استمر في المراقبة."
+                          : "Moderate disease risk. Continue monitoring."
                     }
                   </AlertDescription>
                 </Alert>
 
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-sm text-gray-300">
                   <div className="flex justify-between">
                     <span>{lang === "ar" ? "الرطوبة" : "Humidity"}</span>
-                    <span className={weatherData?.current.humidity && weatherData.current.humidity > 70 ? "text-red-600" : "text-green-600"}>
+                    <span className={weatherData?.current.humidity && weatherData.current.humidity > 70 ? "text-red-400" : "text-emerald-400"}>
                       {weatherData?.current.humidity ?? "--"}%
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>{lang === "ar" ? "درجة الحرارة" : "Temperature"}</span>
-                    <span className={weatherData?.current.temperature && weatherData.current.temperature > 30 ? "text-amber-600" : "text-green-600"}>
+                    <span className={weatherData?.current.temperature && weatherData.current.temperature > 30 ? "text-amber-400" : "text-emerald-400"}>
                       {weatherData?.current.temperature?.toFixed(1) ?? "--"}°C
                     </span>
                   </div>
