@@ -830,6 +830,29 @@ export async function POST(request: Request) {
     const timeout = setTimeout(() => controller.abort(), 60_000) // 60s per provider
     try {
       const messagesWithContext = buildConversation(provider.provider.capabilities.vision)
+
+      // Special handling for Vertex AI (Enterprise)
+      if (provider.provider.id === 'vertex') {
+        const { generateWithVertex } = require('@/lib/ai/vertex-ai');
+
+        // Convert messages to a single prompt string for Vertex AI (simplified)
+        // In a full implementation, we would map roles properly
+        const systemMsg = messagesWithContext.find(m => m.role === 'system')?.content || '';
+        const userMsgs = messagesWithContext.filter(m => m.role !== 'system')
+          .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}`)
+          .join('\n');
+
+        const fullPrompt = `${systemMsg}\n\n${userMsgs}\nAssistant:`;
+
+        const text = await generateWithVertex(fullPrompt, {
+          temperature: 0.7,
+          maxTokens: 1000
+        });
+
+        return { text };
+      }
+
+      // Standard AI SDK handling for other providers
       const result = await generateText({
         model: provider.model,
         messages: messagesWithContext,

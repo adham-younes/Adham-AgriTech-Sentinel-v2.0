@@ -44,7 +44,43 @@ export class AIProviderRegistry {
 
     const trim = (v?: string) => (typeof v === "string" ? v.trim() : v)
 
-    // Priority 1: Groq (Primary)
+    // Priority 1: Vertex AI (Enterprise)
+    const vertexLocation = trim(process.env.VERTEX_AI_LOCATION);
+    const vertexProject = trim(process.env.GOOGLE_CLOUD_PROJECT);
+
+    if (vertexLocation && vertexProject) {
+      try {
+        // Dynamic import to avoid build issues if package is missing
+        const { getVertexAIClient, GEMINI_MODEL } = require('./vertex-ai');
+        const vertexClient = getVertexAIClient();
+
+        // Create a compatible model interface wrapper
+        // Since we're using the official Google Cloud SDK, we wrap it to match AI SDK interface
+        const vertexModelWrapper = (modelId: string) => {
+          return {
+            // This is a simplified wrapper. For full AI SDK compatibility, 
+            // we might need @ai-sdk/google-vertex if available or custom implementation.
+            // For now, we'll use the direct generation method in the chat route.
+            provider: 'vertex',
+            modelId: modelId
+          } as any;
+        };
+
+        providers.push({
+          id: "vertex",
+          name: "Google Vertex AI (Enterprise)",
+          modelId: GEMINI_MODEL,
+          getModel: () => vertexModelWrapper(GEMINI_MODEL),
+          isAvailable: true,
+          capabilities: { vision: true },
+        });
+        console.log("[AI Registry] Vertex AI initialized successfully");
+      } catch (error) {
+        console.warn("[AI Registry] Failed to initialize Vertex AI:", error);
+      }
+    }
+
+    // Priority 2: Groq
     if (trim(process.env.GROQ_API_KEY)) {
       const groqKey = trim(process.env.GROQ_API_KEY) as string
       const groqClient = createGroq({ apiKey: groqKey })
@@ -59,15 +95,15 @@ export class AIProviderRegistry {
       })
     }
 
-    // Priority 2: Google Gemini (Fallback)
+    // Priority 3: Google Gemini (Standard API Fallback)
     const googleKey = trim(process.env.GOOGLE_AI_API_KEY)
-    if (googleKey && googleKey.length > 10) { // Basic validation: API key should be longer than 10 chars
+    if (googleKey && googleKey.length > 10) {
       try {
         const googleClient = createGoogleGenerativeAI({ apiKey: googleKey })
         const googleModel = trim(process.env.GOOGLE_AI_MODEL) || "gemini-2.0-flash"
         providers.push({
           id: "google",
-          name: "Google Gemini",
+          name: "Google Gemini (Standard)",
           modelId: googleModel,
           getModel: () => googleClient(googleModel),
           isAvailable: true,
@@ -75,7 +111,6 @@ export class AIProviderRegistry {
         })
       } catch (error) {
         console.warn("[AI Registry] Failed to initialize Google AI client:", error)
-        // Skip Google AI if initialization fails
       }
     }
 
