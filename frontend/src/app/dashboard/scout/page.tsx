@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Sprout, AlertTriangle, CheckCircle, Info } from 'lucide-react';
-import { useTranslation } from '@/lib/i18n/language-context';
+import { useTranslation } from '@/lib/i18n/use-language';
 
 interface AnalysisResult {
     diagnosis: string;
