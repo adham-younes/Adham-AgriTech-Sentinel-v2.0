@@ -87,7 +87,7 @@ export async function createVegetationMap({
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${EOSDA_API_KEY}`
+                "x-api-key": EOSDA_API_KEY
             },
             body: JSON.stringify(requestBody)
         })
@@ -126,7 +126,7 @@ export async function getVegetationMapStatus(
             `${EOSDA_API_URL}/zoning/maps/${fieldId}/${zmapId}`,
             {
                 headers: {
-                    "Authorization": `Bearer ${EOSDA_API_KEY}`
+                    "x-api-key": EOSDA_API_KEY
                 }
             }
         )
