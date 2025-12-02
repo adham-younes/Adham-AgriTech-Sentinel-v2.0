@@ -156,25 +156,19 @@ export function ProfessionalFieldCard({
 
   const t = translations[lang]
 
-  // Generate synthetic data for demo purposes
-  const generateSyntheticMetric = (baseValue?: number | null, variance = 0.1) => {
-    if (baseValue !== null && baseValue !== undefined && !isNaN(baseValue)) {
-      return baseValue
-    }
-    return Math.random() * variance + (0.5 - variance / 2) // Random value around 0.5
-  }
-
+  // Use ONLY real data - no synthetic generation
+  // If data is unavailable, display will show "--" or hide the metric
   const displayMetrics = {
-    ndvi: metrics?.ndvi?.latest ?? generateSyntheticMetric(field.last_ndvi ?? field.ndvi_score, 0.8),
-    evi: metrics?.evi?.latest ?? generateSyntheticMetric(null, 0.6),
-    moisture: metrics?.moisture?.latest ?? generateSyntheticMetric(field.last_moisture ?? field.moisture_index, 0.4),
-    dswi: metrics?.dswi?.latest ?? generateSyntheticMetric(null, 0.3),
-    nri: metrics?.nri?.latest ?? generateSyntheticMetric(null, 0.5),
-    ndwi: metrics?.ndwi?.latest ?? generateSyntheticMetric(null, 0.4),
-    chlorophyll: metrics?.chlorophyll?.latest ?? generateSyntheticMetric(null, 0.7)
+    ndvi: metrics?.ndvi?.latest ?? field.last_ndvi ?? field.ndvi_score ?? null,
+    evi: metrics?.evi?.latest ?? null,
+    moisture: metrics?.moisture?.latest ?? field.last_moisture ?? field.moisture_index ?? null,
+    dswi: metrics?.dswi?.latest ?? null,
+    nri: metrics?.nri?.latest ?? null,
+    ndwi: metrics?.ndwi?.latest ?? null,
+    chlorophyll: metrics?.chlorophyll?.latest ?? null
   }
 
-  // Calculate comprehensive health score
+  // Calculate comprehensive health score from REAL data only
   const calculateHealthScore = () => {
     const indices = [
       displayMetrics.ndvi,
@@ -186,7 +180,8 @@ export function ProfessionalFieldCard({
       displayMetrics.ndwi
     ].filter(v => v !== null && v !== undefined && !isNaN(v)) as number[]
 
-    if (indices.length === 0) return Math.random() * 25 + 10 // Random score between 10-35 for demo
+    // If no real data available, return null instead of synthetic score
+    if (indices.length === 0) return null
 
     // Weight different indices appropriately
     const weights = {
@@ -217,7 +212,12 @@ export function ProfessionalFieldCard({
   }
 
   const healthScore = calculateHealthScore()
-  const healthStatus = getHealthStatus(healthScore)
+  const healthStatus = healthScore !== null ? getHealthStatus(healthScore) : {
+    status: "poor",
+    color: "bg-gray-600/20",
+    textColor: "text-gray-400",
+    borderColor: "border-gray-600/30"
+  }
 
   const getAlertCount = () => {
     const moisture = metrics?.moisture?.latest ?? field.last_moisture ?? field.moisture_index
@@ -332,34 +332,31 @@ export function ProfessionalFieldCard({
 
           {/* Health Score - Matching Smart Monitoring Style */}
           <div className="text-center ml-4 flex-shrink-0">
-            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-2 ${
-              healthStatus.status === "poor" 
-                ? "bg-amber-500/15 border-amber-500/30" 
-                : healthStatus.status === "fair"
+            <div className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-2 ${healthStatus.status === "poor"
+              ? "bg-amber-500/15 border-amber-500/30"
+              : healthStatus.status === "fair"
                 ? "bg-yellow-500/20 border-yellow-500/40"
                 : healthStatus.status === "good"
-                ? "bg-emerald-500/20 border-emerald-500/40"
-                : "bg-emerald-500/30 border-emerald-400/50"
-            }`}>
-              <span className={`text-2xl font-bold ${
-                healthStatus.status === "poor" 
-                  ? "text-amber-200" 
-                  : healthStatus.status === "fair"
-                  ? "text-yellow-300"
-                  : "text-emerald-300"
+                  ? "bg-emerald-500/20 border-emerald-500/40"
+                  : "bg-emerald-500/30 border-emerald-400/50"
               }`}>
-                {Math.round(healthScore)}
+              <span className={`text-2xl font-bold ${healthStatus.status === "poor"
+                  ? "text-amber-200"
+                  : healthStatus.status === "fair"
+                    ? "text-yellow-300"
+                    : "text-emerald-300"
+                }`}>
+                {healthScore !== null ? Math.round(healthScore) : "--"}
               </span>
             </div>
-            <div className={`text-xs font-semibold mt-2 px-2 py-0.5 rounded-full ${
-              healthStatus.status === "poor" 
-                ? "text-amber-200 bg-amber-500/15 border border-amber-500/25" 
-                : healthStatus.status === "fair"
+            <div className={`text-xs font-semibold mt-2 px-2 py-0.5 rounded-full ${healthStatus.status === "poor"
+              ? "text-amber-200 bg-amber-500/15 border border-amber-500/25"
+              : healthStatus.status === "fair"
                 ? "text-yellow-300 bg-yellow-500/20 border border-yellow-500/30"
                 : healthStatus.status === "good"
-                ? "text-emerald-300 bg-emerald-500/20 border border-emerald-500/30"
-                : "text-emerald-200 bg-emerald-500/30 border border-emerald-400/40"
-            }`}>
+                  ? "text-emerald-300 bg-emerald-500/20 border border-emerald-500/30"
+                  : "text-emerald-200 bg-emerald-500/30 border border-emerald-400/40"
+              }`}>
               {t[healthStatus.status as keyof typeof t]}
             </div>
           </div>
@@ -392,22 +389,20 @@ export function ProfessionalFieldCard({
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-semibold text-emerald-400">{t.fieldHealth}</span>
-            <span className={`text-sm font-bold ${
-              healthScore >= 70 ? "text-emerald-400" : 
-              healthScore >= 50 ? "text-yellow-400" : 
-              "text-emerald-300"
-            }`}>
-              {Math.round(healthScore)}%
+            <span className={`text-sm font-bold ${(healthScore ?? 0) >= 70 ? "text-emerald-400" :
+                (healthScore ?? 0) >= 50 ? "text-yellow-400" :
+                  "text-gray-400"
+              }`}>
+              {healthScore !== null ? `${Math.round(healthScore)}%` : lang === "ar" ? "لا توجد بيانات" : "No Data"}
             </span>
           </div>
           <div className="relative h-2 bg-black/40 rounded-full overflow-hidden border border-emerald-500/20">
-            <div 
-              className={`h-full rounded-full transition-all duration-500 ${
-                healthScore >= 70 ? "bg-gradient-to-r from-emerald-500 to-emerald-400" : 
-                healthScore >= 50 ? "bg-gradient-to-r from-yellow-500 to-yellow-400" : 
-                "bg-gradient-to-r from-emerald-500/80 to-emerald-400/80"
-              }`}
-              style={{ width: `${Math.min(100, Math.max(0, healthScore))}%` }}
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${(healthScore ?? 0) >= 70 ? "bg-gradient-to-r from-emerald-500 to-emerald-400" :
+                  (healthScore ?? 0) >= 50 ? "bg-gradient-to-r from-yellow-500 to-yellow-400" :
+                    "bg-gradient-to-r from-gray-500/50 to-gray-400/50"
+                }`}
+              style={{ width: `${healthScore !== null ? Math.min(100, Math.max(0, healthScore)) : 0}%` }}
             />
           </div>
         </div>

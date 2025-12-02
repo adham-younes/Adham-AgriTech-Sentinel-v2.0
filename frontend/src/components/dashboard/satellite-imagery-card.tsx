@@ -100,7 +100,7 @@ export function SatelliteImageryCard({
     initialCoordinates || [eosdaPublicConfig.center.lng, eosdaPublicConfig.center.lat]
   )
   const [zoom, setZoom] = useState(MAP_CONFIG.defaultZoom)
-  const [mode, setMode] = useState<'satellite' | 'analysis'>('satellite')
+  const [mode, setMode] = useState<'satellite' | 'analysis' | 'zoning'>('satellite')
   const [currentScene, setCurrentScene] = useState<any | null>(null)
   const [compareScene, setCompareScene] = useState<any | null>(null)
   const [availableScenes, setAvailableScenes] = useState<any[]>([])
@@ -122,6 +122,8 @@ export function SatelliteImageryCard({
   const [downloadType, setDownloadType] = useState<'visual' | 'indices' | 'raw'>('visual')
   const [isInspecting, setIsInspecting] = useState(false)
   const [inspectValue, setInspectValue] = useState<{ lat: number, lon: number, value: number } | null>(null)
+  const [clusteringParams, setClusteringParams] = useState({ n_clusters: 5, method: 'kmeans' })
+  const [clusteringResult, setClusteringResult] = useState<any>(null)
 
   const supabase = useMemo(() => createClient(), [])
 
@@ -664,6 +666,79 @@ export function SatelliteImageryCard({
     }
   }
 
+  const handleClustering = async () => {
+    if (!currentScene) {
+      toast.error('يرجى اختيار صورة أولاً')
+      return
+    }
+    setIsAnalyzing(true)
+    try {
+      const center = map.current?.getCenter()
+      if (!center) throw new Error('Map center not found')
+
+      const deltaLat = 0.0045
+      const deltaLng = 0.0045 / Math.cos(center.lat * Math.PI / 180)
+      const geometry = {
+        type: 'Polygon',
+        coordinates: [[
+          [center.lng - deltaLng, center.lat - deltaLat],
+          [center.lng + deltaLng, center.lat - deltaLat],
+          [center.lng + deltaLng, center.lat + deltaLat],
+          [center.lng - deltaLng, center.lat + deltaLat],
+          [center.lng - deltaLng, center.lat - deltaLat]
+        ]]
+      }
+
+      const res = await fetch('/api/eosda/clustering', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          view_id: currentScene.sceneID,
+          geometry,
+          params: {
+            n_clusters: clusteringParams.n_clusters,
+            method: clusteringParams.method
+          }
+        })
+      })
+
+      if (!res.ok) throw new Error('Clustering failed')
+      const data = await res.json()
+      setClusteringResult(data)
+
+      if (data.view_id && map.current) {
+        const tileUrl = `https://api.eosda.com/v1/render/${data.view_id}/{z}/{x}/{y}?api_key=${eosdaPublicConfig.apiKey}`
+
+        if (map.current.getSource('clustering-source')) {
+          if (map.current.getLayer('clustering-layer')) map.current.removeLayer('clustering-layer')
+          map.current.removeSource('clustering-source')
+        }
+
+        map.current.addSource('clustering-source', {
+          type: 'raster',
+          tiles: [tileUrl],
+          tileSize: 256
+        })
+
+        map.current.addLayer({
+          id: 'clustering-layer',
+          type: 'raster',
+          source: 'clustering-source',
+          paint: { 'raster-opacity': 0.7 }
+        })
+        toast.success('تم تطبيق التصنيف بنجاح')
+      } else {
+        toast.success('تم إنشاء مهمة التصنيف')
+      }
+
+    } catch (err) {
+      console.error(err)
+      toast.error('فشل إنشاء التصنيف')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
   return (
     <Card className="glass-card border-primary/20 shadow-3d h-full flex flex-col overflow-hidden">
       <CardHeader className="pb-2 bg-muted/5">
@@ -716,6 +791,14 @@ export function SatelliteImageryCard({
               >
                 NDVI
               </Button>
+              <Button
+                variant={mode === 'zoning' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setMode('zoning')}
+                className="text-xs h-8"
+              >
+                تصنيف
+              </Button>
             </div>
 
             <Button
@@ -748,6 +831,22 @@ export function SatelliteImageryCard({
               {isAnalyzing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
               <span className="hidden sm:inline">تحليل AI</span>
             </Button>
+
+            {mode === 'zoning' && (
+              <div className="flex items-center gap-2 bg-background/50 p-1 rounded-lg border border-border/50 ml-2">
+                <span className="text-xs px-1">مناطق:</span>
+                <select
+                  className="bg-transparent text-xs border rounded px-1 h-7"
+                  value={clusteringParams.n_clusters}
+                  onChange={(e) => setClusteringParams({ ...clusteringParams, n_clusters: Number(e.target.value) })}
+                >
+                  {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+                <Button size="sm" variant="outline" onClick={handleClustering} disabled={isAnalyzing} className="h-7 px-2 text-xs">
+                  {isAnalyzing ? <Loader2 className="h-3 w-3 animate-spin" /> : 'تطبيق'}
+                </Button>
+              </div>
+            )}
 
             <Button
               variant={isInspecting ? "secondary" : "outline"}

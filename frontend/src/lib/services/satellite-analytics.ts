@@ -5,6 +5,7 @@
  */
 
 import { eosdaPublicConfig } from '@/lib/config/eosda'
+import { getSatelliteStatistics } from '@/lib/services/eosda'
 
 // Types
 export interface NDVIDataPoint {
@@ -100,13 +101,14 @@ export class SatelliteAnalyticsService {
 
     /**
      * Fetch NDVI time series for a field
+     * Now uses optimized getSatelliteStatistics with multi-index support
      */
     async getNDVITimeSeries(
         fieldId: string,
         days: number = 90,
         polygon?: [number, number][]
     ): Promise<NDVIDataPoint[]> {
-        if (!this.isLiveDataAvailable || !polygon) {
+        if (!this.isLiveDataAvailable || !polygon || polygon.length === 0) {
             console.warn('EOSDA API key missing or polygon not provided. Cannot fetch live data.')
             return []
         }
@@ -116,89 +118,39 @@ export class SatelliteAnalyticsService {
         startDate.setDate(startDate.getDate() - days)
 
         try {
-            // 1. Search for available scenes first
-            const searchPayload = {
-                "search": {
-                    "satellite": ["sentinel2"],
-                    "date": {
-                        "from": startDate.toISOString().split('T')[0],
-                        "to": endDate.toISOString().split('T')[0]
-                    },
-                    "shape": {
-                        "type": "Polygon",
-                        "coordinates": [polygon]
-                    },
-                    "cloudCoverage": {
-                        "from": 0,
-                        "to": 30  // Only scenes with <30% cloud coverage
-                    }
-                },
-                "limit": 20,
-                "fields": ["sceneID", "date", "cloudCoverage", "satellite"]
-            };
+            // Calculate center point from polygon
+            const lats = polygon.map(p => p[1])
+            const lngs = polygon.map(p => p[0])
+            const center = {
+                latitude: (Math.min(...lats) + Math.max(...lats)) / 2,
+                longitude: (Math.min(...lngs) + Math.max(...lngs)) / 2
+            }
 
-            const searchResponse = await fetch(`${this.baseUrl}/iw/search`, {
-                method: 'POST',
-                headers: this.getHeaders(),
-                body: JSON.stringify(searchPayload)
+            // Use optimized getSatelliteStatistics (GDW API with multi-index)
+            const stats = await getSatelliteStatistics({
+                center,
+                startDate: startDate.toISOString().split('T')[0],
+                endDate: endDate.toISOString().split('T')[0]
             })
 
-            if (!searchResponse.ok) {
-                throw new Error(`EOSDA Search API Error: ${searchResponse.statusText}`)
-            }
-
-            const searchData: any = await searchResponse.json()
-            const scenes = searchData.results || []
-
-            if (scenes.length === 0) {
-                console.warn('No scenes found for the specified date range')
-                return []
-            }
-
-            // 2. Fetch NDVI statistics for each scene
+            // Extract NDVI data point
             const ndviDataPoints: NDVIDataPoint[] = []
 
-            for (const scene of scenes) {
-                try {
-                    const statsPayload = {
-                        "sceneID": scene.sceneID,
-                        "shape": {
-                            "type": "Polygon",
-                            "coordinates": [polygon]
-                        },
-                        "indexes": ["NDVI"]
-                    }
+            if (stats.indices?.NDVI && typeof stats.indices.NDVI.mean === 'number') {
+                ndviDataPoints.push({
+                    date: stats.date || new Date().toISOString(),
+                    value: parseFloat(stats.indices.NDVI.mean.toFixed(3)),
+                    cloud_coverage: 0, // Cloud masking is applied in getSatelliteStatistics
+                    sceneID: stats.id || undefined
+                })
 
-                    const statsResponse = await fetch(`${this.baseUrl}/iw/statistics`, {
-                        method: 'POST',
-                        headers: this.getHeaders(),
-                        body: JSON.stringify(statsPayload)
-                    })
-
-                    if (statsResponse.ok) {
-                        const statsData: any = await statsResponse.json()
-                        const ndviStats = statsData.statistics?.NDVI
-
-                        if (ndviStats && typeof ndviStats.mean === 'number') {
-                            ndviDataPoints.push({
-                                date: scene.date,
-                                value: parseFloat(ndviStats.mean.toFixed(3)),
-                                cloud_coverage: scene.cloudCoverage,
-                                sceneID: scene.sceneID // ✅ Include sceneID for tile rendering
-                            })
-                            console.log(`✅ Real NDVI for ${scene.date}: ${ndviStats.mean.toFixed(3)}, sceneID: ${scene.sceneID}`)
-                        }
-                    }
-                } catch (statsError) {
-                    console.warn(`Failed to fetch stats for scene ${scene.sceneID}:`, statsError)
-                    // Continue to next scene instead of failing entirely
-                }
+                console.log(`✅ NDVI from optimized API: ${stats.indices.NDVI.mean.toFixed(3)}, Synthetic: ${stats.isSynthetic}`)
             }
 
-            return ndviDataPoints.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            return ndviDataPoints
 
         } catch (error) {
-            console.error('Error fetching real EOSDA NDVI data:', error)
+            console.error('Error fetching NDVI data via getSatelliteStatistics:', error)
             return []
         }
     }

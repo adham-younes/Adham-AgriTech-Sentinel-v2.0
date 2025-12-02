@@ -5,48 +5,95 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 // Create a mock client that matches the SupabaseClient interface
 // This is used when environment variables are missing during build
 function createMockClient(): SupabaseClient {
-  const mock: any = {
+  // Create a chainable mock that properly supports .from(), .select(), .insert(), etc.
+  const createChainableMock = (): any => {
+    const chain: any = {
+      // Database query methods
+      select: () => chain,
+      insert: () => chain,
+      update: () => chain,
+      delete: () => chain,
+      upsert: () => chain,
+
+      // Filter methods
+      eq: () => chain,
+      neq: () => chain,
+      gt: () => chain,
+      gte: () => chain,
+      lt: () => chain,
+      lte: () => chain,
+      like: () => chain,
+      ilike: () => chain,
+      is: () => chain,
+      in: () => chain,
+      contains: () => chain,
+      containedBy: () => chain,
+      rangeGt: () => chain,
+      rangeGte: () => chain,
+      rangeLt: () => chain,
+      rangeLte: () => chain,
+      rangeAdjacent: () => chain,
+      overlaps: () => chain,
+      textSearch: () => chain,
+      match: () => chain,
+      not: () => chain,
+      or: () => chain,
+      filter: () => chain,
+
+      // Modifier methods
+      order: () => chain,
+      limit: () => chain,
+      range: () => chain,
+      abortSignal: () => chain,
+      returns: () => chain,
+
+      // Result methods
+      single: async () => ({ data: null, error: { message: "Mock client: No data available" }, count: 0 }),
+      maybeSingle: async () => ({ data: null, error: null, count: 0 }),
+
+      // Make the chain awaitable (Promise-like)
+      then: async (resolve: any, reject?: any) => {
+        const result = { data: null, error: null, count: 0 }
+        return resolve ? await Promise.resolve(result).then(resolve, reject) : result
+      },
+      catch: async (reject: any) => reject ? await Promise.reject(null).catch(reject) : null,
+      finally: async (onFinally: any) => onFinally ? await Promise.resolve().finally(onFinally) : null,
+    }
+
+    return chain
+  }
+
+  const mock = {
+    // Auth methods
     auth: {
       getUser: async () => ({ data: { user: null }, error: null }),
       getSession: async () => ({ data: { session: null }, error: null }),
-      signInWithPassword: async () => ({ data: { user: null, session: null }, error: { message: "Mock client: Auth disabled" } }),
+      signInWithPassword: async () => ({
+        data: { user: null, session: null },
+        error: { message: "Mock client: Supabase auth not configured" }
+      }),
       signOut: async () => ({ error: null }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
+      onAuthStateChange: () => ({
+        data: { subscription: { unsubscribe: () => { } } }
+      }),
+    },
+
+    // Database methods
+    from: (table: string) => createChainableMock(),
+    rpc: (fn: string, params?: any) => createChainableMock(),
+
+    // Storage methods
+    storage: {
+      from: (bucket: string) => ({
+        upload: async () => ({ data: null, error: { message: "Mock client: Storage not configured" } }),
+        download: async () => ({ data: null, error: { message: "Mock client: Storage not configured" } }),
+        getPublicUrl: () => ({ data: { publicUrl: "" } }),
+        remove: async () => ({ data: null, error: null }),
+      })
     },
   }
 
-  // Use a Proxy to handle all other DB operations (from, select, insert, etc.)
-  // effectively swallowing all calls and returning empty data/errors as appropriate
-  const dbHandler = {
-    get: (target: any, prop: string) => {
-      if (prop in target) return target[prop]
-
-      // Return a function that returns the proxy itself (chaining)
-      // or a promise resolving to empty data for final execution
-      return (...args: any[]) => {
-        // If it looks like a promise (then/catch), resolve it
-        if (prop === 'then') {
-          return Promise.resolve({ data: [], error: null, count: 0 }).then(args[0], args[1])
-        }
-        return new Proxy({}, dbHandler)
-      }
-    }
-  }
-
-  // Special handling for 'then' to make the proxy awaitable immediately if needed
-  // But usually the client itself isn't awaited, the result of methods are.
-  // We'll wrap the main mock in the proxy.
-  return new Proxy(mock, {
-    get: (target, prop) => {
-      if (prop in target) return target[prop]
-      // For any other property (like 'from', 'rpc'), return a chainable mock function
-      return () => new Proxy({
-        // The chainable mock needs to be awaitable to return data
-        then: (resolve: any) => resolve({ data: [], error: null, count: 0 }),
-        // And also chainable
-      }, dbHandler)
-    }
-  }) as unknown as SupabaseClient
+  return mock as unknown as SupabaseClient
 }
 
 export async function createClient(): Promise<SupabaseClient> {

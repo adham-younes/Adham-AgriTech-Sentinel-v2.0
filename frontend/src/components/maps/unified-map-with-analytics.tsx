@@ -20,7 +20,8 @@ import { eosdaPublicConfig } from '@/lib/config/eosda'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Layers, ZoomIn, ZoomOut, RotateCcw, Loader2, AlertCircle, X, ChevronRight, ChevronLeft } from 'lucide-react'
+import { Loader2, AlertCircle, Layers, ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { ColorLegend } from './color-legend'
 import { AnalyticsSidebar } from './analytics-sidebar'
 
 // ============================================================================
@@ -46,17 +47,17 @@ export interface UnifiedMapWithAnalyticsProps {
   fields?: FieldFeature[]
   selectedFieldId?: string | null
   onFieldSelect?: (fieldId: string) => void
-  
+
   // Map configuration
   center?: [number, number] // [lng, lat]
   zoom?: number
   height?: string | number
-  
+
   // Layer configuration
   defaultLayer?: MapLayer
   showLayerControls?: boolean
   showNavigationControls?: boolean
-  
+
   // UI
   lang?: 'ar' | 'en'
   className?: string
@@ -186,6 +187,7 @@ export function UnifiedMapWithAnalytics({
         container: mapContainerRef.current,
         style: {
           version: 8,
+          glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
           sources: {
             'esri-imagery': {
               type: 'raster',
@@ -214,7 +216,7 @@ export function UnifiedMapWithAnalytics({
       mapRef.current.on('load', () => {
         setMapLoaded(true)
         setError(null)
-        
+
         // Add fields if provided
         if (fields.length > 0) {
           addFieldsToMap()
@@ -404,7 +406,6 @@ export function UnifiedMapWithAnalytics({
           throw new Error(`Unsupported layer: ${layerType}`)
         }
 
-        // Get colormap based on layer type for thermal maps
         const colormapMap: Record<MapLayer, string> = {
           'true-color': '',
           'ndvi': 'rdylgn', // Red-Yellow-Green for NDVI
@@ -415,9 +416,13 @@ export function UnifiedMapWithAnalytics({
         }
         const colormap = colormapMap[layerType]
 
+        // Import colormap configuration
+        const { getColormapParams } = await import('@/lib/config/eosda-colormaps')
+        const colormapParams = getColormapParams(layerType)
+
         // Use proxy endpoint for tiles with colormap for thermal visualization
-        const tileUrl = colormap
-          ? `/api/eosda/tiles/{z}/{x}/{y}?layer=${layerConfig.eosdaLayer}&colormap=${colormap}`
+        const tileUrl = colormapParams
+          ? `/api/eosda/tiles/{z}/{x}/{y}?layer=${layerConfig.eosdaLayer}&${colormapParams}`
           : `/api/eosda/tiles/{z}/{x}/{y}?layer=${layerConfig.eosdaLayer}`
 
         if (mapRef.current) {
@@ -441,7 +446,7 @@ export function UnifiedMapWithAnalytics({
             maxzoom: 18,
             minzoom: 1,
           })
-          
+
           // Add fallback source separately for better error handling
           if (!mapRef.current.getSource('esri-fallback')) {
             mapRef.current.addSource('esri-fallback', {
@@ -463,12 +468,12 @@ export function UnifiedMapWithAnalytics({
             type: 'raster',
             source: 'eosda-overlay',
             paint: {
-              'raster-opacity': layerType === 'true-color' ? 1.0 : 0.7, // Optimized opacity for better visibility
+              'raster-opacity': 0.7, // Optimized opacity for better visibility
             },
             minzoom: 1,
             maxzoom: 18,
           }, beforeLayer)
-          
+
           // Ensure overlay is above base imagery but below field outlines
           if (mapRef.current.getLayer('fields-outline')) {
             mapRef.current.moveLayer('eosda-overlay', 'fields-outline')
@@ -609,6 +614,13 @@ export function UnifiedMapWithAnalytics({
               })}
             </div>
           </Card>
+        </div>
+      )}
+
+      {/* Color Legend - Show for non-true-color layers */}
+      {mapLoaded && activeLayer !== 'true-color' && (
+        <div className="absolute bottom-4 left-4 z-20">
+          <ColorLegend layer={activeLayer} />
         </div>
       )}
 

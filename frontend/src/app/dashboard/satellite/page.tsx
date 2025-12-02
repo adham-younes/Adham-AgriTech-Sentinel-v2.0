@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { UnifiedMapWithAnalytics, type FieldFeature } from "@/components/maps/unified-map-with-analytics"
 import { SatelliteImageryCard } from "@/components/dashboard/satellite-imagery-card"
+import { ErrorBoundary } from "@/components/ui/error-boundary"
 import type { FarmAnalyticsFeature } from "@/components/maps/farm-analytics-map"
 
 // Convert FarmAnalyticsFeature to FieldFeature
@@ -267,7 +268,7 @@ function Sparkline({ points, language }: { points: NdviHistoryPoint[]; language:
         <span>{new Date(points[0].date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { month: "short", day: "numeric" })}</span>
         <span>{new Date(points[points.length - 1].date).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { month: "short", day: "numeric" })}</span>
       </div>
-    </div>
+    </div >
   )
 }
 
@@ -275,6 +276,8 @@ function formatCaptureDate(value: string, languageCode: string): string {
   const locale = languageCode === "ar" ? "ar-EG" : "en-US"
   return formatDateTimeLocale(value, locale, { dateStyle: "medium", timeStyle: "short" }, "")
 }
+
+
 
 export default function SatellitePage() {
   const { t, language } = useTranslation()
@@ -290,6 +293,7 @@ export default function SatellitePage() {
   const [diseaseRisk, setDiseaseRisk] = useState<{ level: "low" | "medium" | "high"; score: number } | null>(null)
   // Check if EOSDA is actually configured and working
   const [eosdaConfigured, setEosdaConfigured] = useState(false)
+  const [isDownloadDialogOpen, setIsDownloadDialogOpen] = useState(false)
 
   useEffect(() => {
     // Check EOSDA configuration - verify API key exists
@@ -703,496 +707,345 @@ export default function SatellitePage() {
       })),
     [ndviHistory],
   )
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="glass-card p-6 rounded-2xl border border-emerald-500/20">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <Activity className="h-8 w-8 text-emerald-400" />
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-primary bg-clip-text text-transparent">
-                {language === "ar" ? "ذكاء المزارع ثلاثي الأبعاد" : "3D Farm Intelligence"}
-              </h1>
+
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">
+          {language === "ar" ? "تحليل الأقمار الصناعية" : "Satellite Analysis"}
+        </h1>
+        <p className="text-muted-foreground mb-3 max-w-2xl">
+          {language === "ar"
+            ? "مراقبة تفاعلية للحقول مع تحليلات NDVI ورطوبة التربة من بيانات الأقمار الصناعية EOSDA"
+            : "Interactive field monitoring with NDVI and soil moisture analytics from EOSDA satellite data"}
+        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Badge
+            variant="outline"
+            className={`${satelliteAutomationEnabled
+              ? "border-emerald-500/50 text-emerald-400 bg-emerald-500/10"
+              : "border-amber-500/50 text-amber-400 bg-amber-500/10"
+              }`}
+          >
+            <div className="flex items-center gap-2">
+              <div className={`h-2 w-2 rounded-full ${satelliteAutomationEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+              {satelliteAutomationEnabled
+                ? (language === "ar" ? "بيانات مباشرة من EOSDA" : "Live EOSDA Data")
+                : (language === "ar" ? "بيانات تجريبية" : "Demo Data")
+              }
             </div>
-            <p className="text-muted-foreground mb-3 max-w-2xl">
-              {language === "ar"
-                ? "مراقبة تفاعلية للحقول مع تحليلات NDVI ورطوبة التربة من بيانات الأقمار الصناعية EOSDA"
-                : "Interactive field monitoring with NDVI and soil moisture analytics from EOSDA satellite data"}
-            </p>
-            <div className="flex items-center gap-3 flex-wrap">
-              <Badge
-                variant="outline"
-                className={`${satelliteAutomationEnabled
-                  ? "border-emerald-500/50 text-emerald-400 bg-emerald-500/10"
-                  : "border-amber-500/50 text-amber-400 bg-amber-500/10"
-                  }`}
-              >
-                <div className="flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${satelliteAutomationEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-                  {satelliteAutomationEnabled
-                    ? (language === "ar" ? "بيانات مباشرة من EOSDA" : "Live EOSDA Data")
-                    : (language === "ar" ? "بيانات تجريبية" : "Demo Data")
-                  }
-                </div>
-              </Badge>
-              {/* Removed Demo Data warning - EOSDA status is shown in badge */}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground bg-black/20 px-3 py-1.5 rounded-full border border-white/5">
-              <span>{language === "ar" ? "المزوّد:" : "Provider:"}</span>
-              <select
-                className="bg-transparent border-none text-emerald-400 font-medium focus:ring-0 cursor-pointer"
-                value={provider}
-                onChange={(e) => setProvider(e.target.value as any)}
-              >
-                <option value="sentinel">{language === "ar" ? "سنتينل هب" : "Sentinel Hub"}</option>
-                <option value="eosda">EOSDA (Pro)</option>
-                <option value="auto">Auto Select</option>
-              </select>
-            </div>
-            <Button
-              variant="outline"
-              className="glass-card border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 flex items-center gap-2"
-              disabled={isLoading}
-            >
-              <Download className="h-4 w-4" />
-              <span>{t("satellite3d.actions.export")}</span>
-            </Button>
-          </div>
+          </Badge>
+          {/* Removed Demo Data warning - EOSDA status is shown in badge */}
         </div>
       </div>
+      <div className="flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground bg-black/20 px-3 py-1.5 rounded-full border border-white/5">
+          <span>{language === "ar" ? "المزوّد:" : "Provider:"}</span>
+          <select
+            className="bg-transparent border-none text-emerald-400 font-medium focus:ring-0 cursor-pointer"
+            value={provider}
+            onChange={(e) => setProvider(e.target.value as any)}
+          >
+            <option value="sentinel">{language === "ar" ? "سنتينل هب" : "Sentinel Hub"}</option>
+            <option value="eosda">EOSDA (Pro)</option>
+            <option value="auto">Auto Select</option>
+          </select>
+        </div>
+        <Button
+          variant="outline"
+          className="glass-card border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 flex items-center gap-2"
+          disabled={isLoading || !selectedFieldId}
+          onClick={() => setIsDownloadDialogOpen(true)}
+        >
+          <Download className="h-4 w-4" />
+          <span>{t("satellite3d.actions.export")}</span>
+        </Button>
+      </div>
 
-      {requiresLogin && (
-        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-          يجب تسجيل الدخول لعرض الحقول الخاصة بك. <a href="/auth/login" className="underline hover:text-amber-300">تسجيل الدخول</a>
-        </div>
-      )}
-      {errorMessage && (
-        <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100 flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-red-500" />
-          {errorMessage}
-        </div>
-      )}
+
+
+      {
+        requiresLogin && (
+          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+            يجب تسجيل الدخول لعرض الحقول الخاصة بك. <a href="/auth/login" className="underline hover:text-amber-300">تسجيل الدخول</a>
+          </div>
+        )
+      }
+      {
+        errorMessage && (
+          <div className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100 flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-red-500" />
+            {errorMessage}
+          </div>
+        )
+      }
 
       {/* Empty state for new users */}
-      {!isLoading && !errorMessage && !requiresLogin && fields.length === 0 && (
-        <div className="glass-card p-8 text-center">
-          <div className="mx-auto w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4">
-            <Leaf className="h-8 w-8 text-emerald-400" />
-          </div>
-          <h3 className="text-xl font-bold text-white mb-2">
-            {language === "ar" ? "ابدأ رحلتك الزراعية" : "Start Your Farming Journey"}
-          </h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            {language === "ar"
-              ? "لا توجد حقول بعد. أضف مزرعة وحقلاً لعرض التحليلات، أو زر ثورة الزراعة الرقمية لتعلّم كيفية رسم الحدود."
-              : "No fields yet. Add a farm and field to view the analytics, or visit the Digital Agriculture Revolution to learn how to map boundaries."}
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link href="/dashboard/farms">
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                {language === "ar" ? "إدارة المزارع" : "Manage Farms"}
-              </Button>
-            </Link>
-            <Link href="/dashboard/fields/new">
-              <Button variant="outline" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
-                {language === "ar" ? "إضافة حقل" : "Add Field"}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
-        <Card className="glass-card border-emerald-500/20">
-          <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-white/5 pb-4">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Eye className="h-5 w-5 text-emerald-400" />
-                {language === "ar" ? "خريطة الحقول التفاعلية" : "Interactive Field Map"}
-              </CardTitle>
-              <CardDescription className="text-xs mt-1">
-                {language === "ar"
-                  ? "مراقبة تفاعلية للحقول مع تحليلات NDVI ورطوبة التربة من بيانات EOSDA"
-                  : "Interactive field monitoring with NDVI and soil moisture analytics from EOSDA data"}
-              </CardDescription>
+      {
+        !isLoading && !errorMessage && !requiresLogin && fields.length === 0 && (
+          <div className="glass-card p-8 text-center">
+            <div className="mx-auto w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4">
+              <Leaf className="h-8 w-8 text-emerald-400" />
             </div>
-            {selectedField && (
-              <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-3 py-1">
-                {selectedField.name}
-              </Badge>
-            )}
-          </CardHeader>
-          <CardContent className="p-0 sm:p-6">
-            <div className="relative min-h-[520px]">
-              <SatelliteImageryCard
-                initialFieldId={selectedFieldId || undefined}
-                initialCoordinates={selectedField?.center || undefined}
-                className="h-[600px]"
+            <h3 className="text-xl font-bold text-white mb-2">
+              {language === "ar" ? "ابدأ رحلتك الزراعية" : "Start Your Farming Journey"}
+            </h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              {language === "ar"
+                ? "لا توجد حقول بعد. أضف مزرعة وحقلاً لعرض التحليلات، أو زر ثورة الزراعة الرقمية لتعلّم كيفية رسم الحدود."
+                : "No fields yet. Add a farm and field to view the analytics, or visit the Digital Agriculture Revolution to learn how to map boundaries."}
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/dashboard/farms">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                  {language === "ar" ? "إدارة المزارع" : "Manage Farms"}
+                </Button>
+              </Link>
+              <Link href="/dashboard/fields/new">
+                <Button variant="outline" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
+                  {language === "ar" ? "إضافة حقل" : "Add Field"}
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Main Content */}
+      {
+        fields.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column: Map & Controls */}
+            <div className="lg:col-span-2 space-y-6">
+              <UnifiedMapWithAnalytics
+                fields={fields}
+                selectedFieldId={selectedFieldId}
+                onFieldSelect={setSelectedFieldId}
+                provider={provider}
+                satelliteInsight={satelliteInsight}
+                isLoading={satelliteInsightLoading}
               />
-            </div>
-          </CardContent>
-        </Card>
 
-        <div className="space-y-4">
-          {/* التحليلات الآن في Sidebar - تم إزالة الكاردات المكررة */}
-
-          <div className="space-y-4">
-            <Card className="glass-card border-emerald-500/20">
-              <CardHeader className="flex flex-col gap-2 border-b border-white/5 pb-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Info className="h-4 w-4 text-cyan-400" />
-                      {language === "ar" ? "تحليلات الأقمار الصناعية المتقدمة" : "Advanced Satellite Analytics"}
+              {/* Historical Charts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="glass-card border-emerald-500/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <LineChart className="h-4 w-4 text-emerald-400" />
+                      {language === "ar" ? "تطور الغطاء النباتي (NDVI)" : "Vegetation Index (NDVI)"}
                     </CardTitle>
-                    <CardDescription className="text-xs mt-1">
-                      {language === "ar"
-                        ? "مدعوم بـ Gemini & EOSDA"
-                        : "Powered by Gemini & EOSDA"}
-                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[100px] w-full">
+                      <Sparkline points={ndviHistory} language={language} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="glass-card border-emerald-500/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Droplets className="h-4 w-4 text-blue-400" />
+                      {language === "ar" ? "مؤشر الرطوبة (NDWI)" : "Moisture Index (NDWI)"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-[100px] w-full">
+                      <Sparkline points={moistureHistory} language={language} />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Right Column: Analytics & Insights */}
+            <div className="space-y-6">
+              {/* Field Selector */}
+              <Card className="glass-card border-emerald-500/20">
+                <CardHeader>
+                  <CardTitle className="text-lg text-emerald-400">
+                    {language === "ar" ? "تحليل الحقل" : "Field Analysis"}
+                  </CardTitle>
+                  <CardDescription>
+                    {selectedField?.name || (language === "ar" ? "اختر حقلاً" : "Select a field")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                      <div className="text-xs text-muted-foreground mb-1">NDVI</div>
+                      <div className="text-2xl font-bold text-emerald-400">{ndviLabel}</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                      <div className="text-xs text-muted-foreground mb-1">
+                        {language === "ar" ? "الرطوبة" : "Moisture"}
+                      </div>
+                      <div className="text-2xl font-bold text-blue-400">{moistureLabel}</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                      <div className="text-xs text-muted-foreground mb-1">
+                        {language === "ar" ? "الإنتاجية" : "Yield"}
+                      </div>
+                      <div className="text-2xl font-bold text-amber-400">{yieldLabel}</div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                      <div className="text-xs text-muted-foreground mb-1">
+                        {language === "ar" ? "المساحة" : "Area"}
+                      </div>
+                      <div className="text-2xl font-bold text-purple-400">
+                        {summary.totalArea} <span className="text-xs font-normal">{language === "ar" ? "فدان" : "Feddan"}</span>
+                      </div>
+                    </div>
                   </div>
-                  {diseaseRisk && (
-                    <Badge
-                      className={
-                        diseaseRisk.level === "high"
-                          ? "bg-red-500/20 text-red-100 border-red-500/50"
-                          : diseaseRisk.level === "medium"
-                            ? "bg-amber-500/20 text-amber-100 border-amber-500/50"
-                            : "bg-emerald-500/20 text-emerald-100 border-emerald-500/40"
-                      }
-                    >
+
+                  {formattedCaptureDate && (
+                    <div className="text-xs text-center text-muted-foreground pt-2 border-t border-white/5">
+                      {language === "ar" ? "آخر تحديث:" : "Last updated:"} {formattedCaptureDate}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Satellite Imagery Card */}
+              <SatelliteImageryCard
+                fieldId={selectedFieldId || ""}
+                date={selectedField?.lastUpdated || new Date().toISOString()}
+                cloudCoverage={0} // TODO: Get from API
+                imageUrl={satelliteInsight?.satellite?.imageUrl || "/placeholder-satellite.jpg"}
+                stats={{
+                  ndvi: selectedField?.ndvi || 0,
+                  moisture: selectedField?.moisture || 0,
+                  temperature: 25 // Placeholder
+                }}
+              />
+
+              {/* Disease Risk Alert */}
+              {diseaseRisk && (
+                <Card className={`glass-card border-${diseaseRisk.level === 'high' ? 'red' : diseaseRisk.level === 'medium' ? 'amber' : 'emerald'}-500/30`}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className={`text-lg flex items-center gap-2 text-${diseaseRisk.level === 'high' ? 'red' : diseaseRisk.level === 'medium' ? 'amber' : 'emerald'}-400`}>
+                      <AlertCircle className="h-5 w-5" />
+                      {language === "ar" ? "مخاطر الأمراض" : "Disease Risk"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">
+                        {language === "ar" ? "مستوى الخطر الحالي" : "Current Risk Level"}
+                      </span>
+                      <Badge variant={diseaseRisk.level === 'high' ? 'destructive' : 'outline'} className={diseaseRisk.level === 'medium' ? 'text-amber-400 border-amber-500/50' : ''}>
+                        {diseaseRisk.level.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div className="h-2 w-full bg-black/20 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full bg-${diseaseRisk.level === 'high' ? 'red' : diseaseRisk.level === 'medium' ? 'amber' : 'emerald'}-500 transition-all duration-500`}
+                        style={{ width: `${diseaseRisk.score}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-3">
                       {language === "ar"
-                        ? `مؤشر إنذار مبكر: ${diseaseRisk.level === "high" ? "مرتفع" : diseaseRisk.level === "medium" ? "متوسط" : "منخفض"
-                        } (${diseaseRisk.score}٪)`
-                        : `Early‑warning index: ${diseaseRisk.level === "high" ? "High" : diseaseRisk.level === "medium" ? "Medium" : "Low"
-                        } (${diseaseRisk.score}%)`}
-                    </Badge>
+                        ? "يعتمد التقييم على تحليل NDVI والرطوبة والظروف الجوية."
+                        : "Assessment based on NDVI, moisture, and weather conditions."}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Satellite Snapshot UI */}
+            {
+              satelliteAutomationEnabled && (
+                <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-emerald-100">
+                      {language === "ar" ? "قراءة الأقمار الصناعية المباشرة" : "Satellite snapshot"}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 border-emerald-500/40 bg-transparent text-xs text-emerald-100"
+                      disabled={satelliteInsightLoading || !selectedFieldId}
+                      onClick={() => selectedFieldId && setSnapshotRefreshToken((token) => token + 1)}
+                    >
+                      {satelliteInsightLoading ? (
+                        <span className="flex items-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          {language === "ar" ? "تحميل..." : "Loading..."}
+                        </span>
+                      ) : (
+                        language === "ar" ? "تحديث" : "Refresh"
+                      )}
+                    </Button>
+                  </div>
+                  {satelliteInsightError && (
+                    <p className="text-xs text-amber-200">{satelliteInsightError}</p>
+                  )}
+                  {!satelliteInsightError && !satelliteInsight && (
+                    <p className="text-xs text-emerald-100/80">
+                      {satelliteInsightLoading
+                        ? language === "ar"
+                          ? "جاري تحميل قراءة القمر الصناعي..."
+                          : "Fetching satellite snapshot..."
+                        : language === "ar"
+                          ? "لم يتم استلام القراءة بعد"
+                          : "No satellite reading yet."}
+                    </p>
+                  )}
+                  {satelliteInsight && (
+                    <div className="space-y-3">
+                      <div className="grid gap-3 text-sm sm:grid-cols-3">
+                        <div>
+                          <p className="text-emerald-200/80 text-xs">NDVI</p>
+                          <p className="text-lg font-semibold text-white">
+                            {typeof satelliteInsight.satellite?.ndviValue === "number"
+                              ? satelliteInsight.satellite.ndviValue.toFixed(2)
+                              : typeof satelliteInsight.satellite?.ndviMean === "number"
+                                ? satelliteInsight.satellite.ndviMean.toFixed(2)
+                                : "—"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-emerald-200/80 text-xs">
+                            {language === "ar" ? "رطوبة" : "Moisture"}
+                          </p>
+                          <p className="text-lg font-semibold text-white">
+                            {typeof satelliteInsight.satellite?.soilMoisture?.value === "number"
+                              ? `${Math.round(satelliteInsight.satellite.soilMoisture.value)}%`
+                              : "—"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-emerald-200/80 text-xs">
+                            {language === "ar" ? "كلوروفيل" : "Chlorophyll"}
+                          </p>
+                          <p className="text-lg font-semibold text-white">
+                            {typeof satelliteInsight.satellite?.chlorophyll?.value === "number"
+                              ? satelliteInsight.satellite.chlorophyll.value.toFixed(2)
+                              : "—"}
+                          </p>
+                        </div>
+                      </div>
+                      {typeof satelliteInsight.analysis?.confidence === "number" && (
+                        <p className="text-xs text-emerald-100">
+                          {language === "ar" ? "الثقة" : "Confidence"}: {Math.round(satelliteInsight.analysis.confidence * 100)}%
+                        </p>
+                      )}
+                      {satelliteInsight.analysis?.summary && (
+                        <p className="text-xs text-emerald-100/80">
+                          {satelliteInsight.analysis.summary}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedField ? (
-                  <>
-                    <div className="grid gap-3 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400">NDVI</span>
-                        <span className="font-semibold text-emerald-300">{ndviLabel}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400">{t("satellite3d.moisture")}</span>
-                        <span className="font-semibold text-sky-300">{moistureLabel}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400">{t("satellite3d.yield")}</span>
-                        <span className="font-semibold text-yellow-300">{yieldLabel}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-400">{t("satellite3d.last_updated")}</span>
-                        <span className="font-medium text-gray-200">
-                          {formattedCaptureDate ?? "—"}
-                        </span>
-                      </div>
-                    </div>
-                    {satelliteAutomationEnabled && (
-                      <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs font-semibold text-emerald-100">
-                            {language === "ar" ? "قراءة الأقمار الصناعية المباشرة" : "Satellite snapshot"}
-                          </p>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 border-emerald-500/40 bg-transparent text-xs text-emerald-100"
-                            disabled={satelliteInsightLoading || !selectedFieldId}
-                            onClick={() => selectedFieldId && setSnapshotRefreshToken((token) => token + 1)}
-                          >
-                            {satelliteInsightLoading ? (
-                              <span className="flex items-center gap-1">
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                                {language === "ar" ? "تحميل..." : "Loading..."}
-                              </span>
-                            ) : (
-                              language === "ar" ? "تحديث" : "Refresh"
-                            )}
-                          </Button>
-                        </div>
-                        {satelliteInsightError && (
-                          <p className="text-xs text-amber-200">{satelliteInsightError}</p>
-                        )}
-                        {!satelliteInsightError && !satelliteInsight && (
-                          <p className="text-xs text-emerald-100/80">
-                            {satelliteInsightLoading
-                              ? language === "ar"
-                                ? "جاري تحميل قراءة القمر الصناعي..."
-                                : "Fetching satellite snapshot..."
-                              : language === "ar"
-                                ? "لم يتم استلام القراءة بعد"
-                                : "No satellite reading yet."}
-                          </p>
-                        )}
-                        {satelliteInsight && (
-                          <div className="space-y-3">
-                            <div className="grid gap-3 text-sm sm:grid-cols-3">
-                              <div>
-                                <p className="text-emerald-200/80 text-xs">NDVI</p>
-                                <p className="text-lg font-semibold text-white">
-                                  {typeof satelliteInsight.satellite?.ndviValue === "number"
-                                    ? satelliteInsight.satellite.ndviValue.toFixed(2)
-                                    : typeof satelliteInsight.satellite?.ndviMean === "number"
-                                      ? satelliteInsight.satellite.ndviMean.toFixed(2)
-                                      : "—"}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-emerald-200/80 text-xs">
-                                  {language === "ar" ? "رطوبة" : "Moisture"}
-                                </p>
-                                <p className="text-lg font-semibold text-white">
-                                  {typeof satelliteInsight.satellite?.soilMoisture?.value === "number"
-                                    ? `${Math.round(satelliteInsight.satellite.soilMoisture.value)}%`
-                                    : "—"}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-emerald-200/80 text-xs">
-                                  {language === "ar" ? "كلوروفيل" : "Chlorophyll"}
-                                </p>
-                                <p className="text-lg font-semibold text-white">
-                                  {typeof satelliteInsight.satellite?.chlorophyll?.value === "number"
-                                    ? satelliteInsight.satellite.chlorophyll.value.toFixed(2)
-                                    : "—"}
-                                </p>
-                              </div>
-                            </div>
-                            {typeof satelliteInsight.analysis?.confidence === "number" && (
-                              <p className="text-xs text-emerald-100">
-                                {language === "ar" ? "الثقة" : "Confidence"}: {Math.round(satelliteInsight.analysis.confidence * 100)}%
-                              </p>
-                            )}
-                            {satelliteInsight.analysis?.summary && (
-                              <p className="text-xs text-emerald-100/80">
-                                {satelliteInsight.analysis.summary}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <div className="mt-3 space-y-3">
-                      <div>
-                        <p className="text-xs text-emerald-200">
-                          {language === "ar"
-                            ? "منحنى NDVI لآخر القراءات"
-                            : "Recent NDVI trend"}
-                        </p>
-                        <Sparkline points={ndviHistory} language={language} />
-                      </div>
-                      <div>
-                        <p className="text-xs text-emerald-200">
-                          {language === "ar"
-                            ? "منحنى مؤشر الكلوروفيل (مشتق من NDVI)"
-                            : "Chlorophyll index trend (derived from NDVI)"}
-                        </p>
-                        <Sparkline points={chlorophyllHistory} language={language} />
-                      </div>
-                      <div>
-                        <p className="text-xs text-emerald-200">
-                          {language === "ar"
-                            ? "منحنى رطوبة التربة (من NDWI)"
-                            : "Soil moisture trend (from NDWI)"}
-                        </p>
-                        <Sparkline points={moistureHistory} language={language} />
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-400">{t("satellite3d.select_prompt")}</p>
-                )}
-                {selectedField && selectedField.ndvi == null && (
-                  <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-                    {t("satellite3d.ndvi_missing")}
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <Link
-                    href={`/dashboard/ai-assistant?field=${encodeURIComponent(selectedField?.id ?? "")}`}
-                    className="flex-1"
-                  >
-                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 flex items-center justify-center gap-2">
-                      <Eye className="h-4 w-4" />
-                      <span>{t("satellite3d.actions.ndvi")}</span>
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="outline"
-                    className="flex-1 glass-card border-white/10 flex items-center justify-center gap-2"
-                    disabled={!selectedField}
-                  >
-                    <Activity className="h-4 w-4" />
-                    <span>{t("satellite3d.actions.issues")}</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid gap-3">
-              <Card className="glass-card">
-                <CardContent className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-3">
-                    <Leaf className="h-6 w-6 text-emerald-300" />
-                    <span className="text-sm text-gray-300">{t("satellite3d.summary.fields")}</span>
-                  </div>
-                  <span className="text-lg font-semibold text-white">{summary.totalFields}</span>
-                </CardContent>
-              </Card>
-              <Card className="glass-card">
-                <CardContent className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-3">
-                    <LineChart className="h-6 w-6 text-emerald-300" />
-                    <span className="text-sm text-gray-300">{t("satellite3d.summary.health")}</span>
-                  </div>
-                  <span className="text-lg font-semibold text-white">{summary.averageHealth}%</span>
-                </CardContent>
-              </Card>
-              <Card className="glass-card">
-                <CardContent className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-3">
-                    <Droplets className="h-6 w-6 text-emerald-300" />
-                    <span className="text-sm text-gray-300">{t("satellite3d.summary.area")}</span>
-                  </div>
-                  <span className="text-lg font-semibold text-white">
-                    {summary.totalArea} {language === "ar" ? "فدان" : "feddans"}
-                  </span>
-                </CardContent>
-              </Card>
-            </div>
+              )
+            }
           </div>
-        </div>
-
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle>{t("satellite3d.quick_actions")}</CardTitle>
-            <CardDescription>{t("satellite.crop_monitoring")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Button
-                variant="outline"
-                className="h-24 glass-card border-white/10 flex flex-col items-center justify-center gap-2"
-                disabled={!selectedField}
-              >
-                <Activity className="h-5 w-5" />
-                <span className="text-sm text-gray-200">{t("satellite3d.actions.ndvi")}</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-24 glass-card border-white/10 flex flex-col items-center justify-center gap-2"
-                disabled={!selectedField}
-              >
-                <LineChart className="h-5 w-5" />
-                <span className="text-sm text-gray-200">{t("satellite3d.actions.growth")}</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-24 glass-card border-white/10 flex flex-col items-center justify-center gap-2"
-                disabled={!selectedField}
-              >
-                <Droplets className="h-5 w-5" />
-                <span className="text-sm text-gray-200">{t("satellite3d.actions.issues")}</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-24 glass-card border-white/10 flex flex-col items-center justify-center gap-2"
-                disabled={isLoading}
-              >
-                <Download className="h-5 w-5" />
-                <span className="text-sm text-gray-200">{t("satellite3d.actions.export")}</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Advanced Satellite Map - TEMPORARILY DISABLED */}
-        {/* Component has Leaflet initialization issues causing TypeError and blank page */}
-        {/* The FarmAnalyticsMap above (line 717) provides the core satellite visualization */}
-        {/*
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="text-emerald-300">
-              {language === "ar" ? "خرائط الأقمار الصناعية المتقدمة" : "Advanced Satellite Maps"}
-            </CardTitle>
-            <CardDescription>
-              {language === "ar" ? "بيانات الأقمار الصناعية المباشرة مع مؤشرات متعددة" : "Live satellite data with multiple indices"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AdvancedSatelliteMap
-              latitude={selectedField?.center[0] || null}
-              longitude={selectedField?.center[1] || null}
-              lang={language}
-              allowProviderSwitch={true}
-              allowLayerSwitch={true}
-              fieldName={selectedField?.name || undefined}
-              height="500px"
-            />
-          </CardContent>
-        </Card>
-        */}
-
-        {/* Advanced Analytics Sections */}
-        {selectedField && (
-          <div className="space-y-6">
-            <Card className="glass-card border-emerald-500/20">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Droplets className="h-5 w-5 text-sky-400" />
-                  {language === "ar" ? "تحليل التربة الديناميكي" : "Dynamic Soil Analysis"}
-                </CardTitle>
-                <CardDescription>
-                  {language === "ar"
-                    ? "تحليل متقدم لخصائص التربة بناءً على بيانات الأقمار الصناعية من EOSDA"
-                    : "Advanced soil properties analysis based on EOSDA satellite data"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DynamicSoilAnalysis
-                  fieldId={selectedField.id}
-                  latitude={selectedField.center?.[1] || selectedField.center?.[0] || undefined}
-                  longitude={selectedField.center?.[0] || selectedField.center?.[1] || undefined}
-                  fieldName={selectedField.name || undefined}
-                />
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card border-emerald-500/20">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <LineChart className="h-5 w-5 text-purple-400" />
-                  {language === "ar" ? "خرائط التطبيق المتغير (VRA)" : "Variable Rate Application Maps"}
-                </CardTitle>
-                <CardDescription>
-                  {language === "ar"
-                    ? "خرائط دقيقة لتطبيق الأسمدة والمبيدات بناءً على تحليل الحقل من بيانات EOSDA"
-                    : "Precision maps for fertilizer and pesticide application based on EOSDA field analysis"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AdvancedVRAMaps
-                  fieldId={selectedField.id}
-                  latitude={selectedField.center[0] || undefined}
-                  longitude={selectedField.center[1] || undefined}
-                  fieldName={selectedField.name || undefined}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </div>
+        )
+      }
     </div>
   )
 }
+

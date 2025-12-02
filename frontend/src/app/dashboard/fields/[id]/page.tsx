@@ -320,10 +320,21 @@ export default function FieldDetailsPage() {
               </div>
             </div>
 
-            {/* Action Button */}
-            <button className="w-full py-3 bg-emerald-500/20 border border-emerald-500/40 rounded-lg text-emerald-400 hover:bg-emerald-500/30 transition-colors">
-              {translations[lang].viewDetails}
-            </button>
+            {/* Action Buttons */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Link href={`/dashboard/fields/${fieldId}/productivity`}>
+                <Button className="w-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30">
+                  <Leaf className="mr-2 h-4 w-4" />
+                  {lang === "ar" ? "خرائط الإنتاجية (Zoning)" : "Productivity Maps"}
+                </Button>
+              </Link>
+              <Link href={`/dashboard/fields/${fieldId}/change-detection`}>
+                <Button className="w-full bg-blue-500/20 border border-blue-500/40 text-blue-400 hover:bg-blue-500/30">
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  {lang === "ar" ? "كشف التغييرات (Change Detection)" : "Change Detection"}
+                </Button>
+              </Link>
+            </div>
           </div>
         </Card>
 

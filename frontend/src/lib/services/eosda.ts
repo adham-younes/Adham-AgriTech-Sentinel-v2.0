@@ -4,6 +4,7 @@
 
 import { eosdaPublicConfig, eosdaServerConfig } from "../config/eosda"
 import { logger } from "../utils/logger"
+import { eosdaRateLimiter } from "./eosda-rate-limiter"
 
 export interface EOSDASatelliteImageRequest {
   center: { latitude: number; longitude: number }
@@ -46,6 +47,30 @@ export interface EOSDANDVIResponse {
   }
   date: string
   source?: string
+  isSynthetic?: boolean
+}
+
+export interface EOSDAStatisticsResponse {
+  id?: string
+  url: string
+  indices: {
+    [key: string]: {
+      mean: number
+      min: number
+      max: number
+      p10?: number
+      p90?: number
+    }
+  }
+  bounds?: {
+    north: number
+    south: number
+    east: number
+    west: number
+  }
+  date: string
+  source?: string
+  isSynthetic?: boolean
 }
 
 export interface EOSDAIndexSample {
@@ -433,16 +458,17 @@ function createSyntheticRenderResponse({
   }
 }
 
-function createSyntheticStatisticsResponse(index: string): EOSDAStatisticsResponse {
-  const mean = Number((0.4 + Math.random() * 0.3).toFixed(3))
+function createSyntheticIndexResponse(index: string): EOSDAIndexSample {
   return {
     index,
-    mean,
-    min: Number(clampNumber(mean - 0.2, 0.05, 0.9).toFixed(3)),
-    max: Number(clampNumber(mean + 0.2, 0.1, 0.95).toFixed(3)),
-    stdDev: Number((0.05 + Math.random() * 0.02).toFixed(3)),
-    histogram: Array.from({ length: 5 }).map((_, bucket) => ({ bucket, value: Math.round(Math.random() * 10) })),
-    capturedAt: new Date().toISOString(),
+    value: 0.5 + Math.random() * 0.3,
+    statistics: {
+      mean: 0.5,
+      min: 0.2,
+      max: 0.9
+    },
+    date: new Date().toISOString(),
+    mapUrl: null
   }
 }
 
@@ -621,27 +647,70 @@ export async function fetchEOSDANDVI(
   },
   options?: { onResponse?: (meta: EOSDAResponseMeta) => void },
 ): Promise<EOSDANDVIResponse> {
-  try {
-    const config = getEOSDAConfig()
-    if (!config.isValid) {
-      return createSyntheticNDVIResponse({ center, startDate, endDate })
-    }
-    const { mode } = config
+  // Forward to new getSatelliteStatistics and map response
+  const stats = await getSatelliteStatistics({
+    center,
+    startDate: startDate?.toISOString().slice(0, 10),
+    endDate: endDate?.toISOString().slice(0, 10)
+  })
 
+  return {
+    id: stats.id,
+    url: stats.url,
+    ndvi_value: stats.indices['NDVI']?.mean || 0,
+    statistics: {
+      mean: stats.indices['NDVI']?.mean,
+      min: stats.indices['NDVI']?.min,
+      max: stats.indices['NDVI']?.max
+    },
+    bounds: stats.bounds,
+    date: stats.date,
+    source: stats.source,
+    isSynthetic: stats.isSynthetic
+  }
+}
+
+/**
+ * Get Multi-Index Statistics (NDVI, NDWI, EVI) for a field
+ * Uses EOSDA Statistics API with Cloud Masking
+ */
+export async function getSatelliteStatistics({
+  center,
+  startDate,
+  endDate,
+}: EOSDASatelliteImageRequest): Promise<EOSDAStatisticsResponse> {
+  if (EOSDA_FORCED_DISABLED) {
+    logger.info("EOSDA is disabled via env, returning synthetic statistics")
+    return createSyntheticStatisticsResponse({ center, startDate, endDate })
+  }
+
+  // Check Rate Limit
+  if (!eosdaRateLimiter.checkLimit('statistics')) {
+    logger.warn("Rate limit exceeded for statistics, returning synthetic data")
+    return createSyntheticStatisticsResponse({ center, startDate, endDate, isRateLimited: true })
+  }
+
+  try {
     // Use GDW API for statistics (Task-based workflow)
     // Documentation: https://doc.eos.com/docs/statistics/#task-creation
 
     const geom = makeTinyPolygonAround(center.latitude, center.longitude)
+
+    // Request multiple indices with cloud masking
     const body = {
       type: 'mt_stats',
       params: {
-        bm_type: ['NDVI'],
-        date_start: startDate ? startDate.toISOString().slice(0, 10) : undefined,
-        date_end: endDate ? endDate.toISOString().slice(0, 10) : undefined,
+        bm_type: ['NDVI', 'NDWI', 'EVI'], // Multi-index request
+        date_start: startDate ? new Date(startDate).toISOString().slice(0, 10) : undefined,
+        date_end: endDate ? new Date(endDate).toISOString().slice(0, 10) : undefined,
         geometry: geom,
         sensors: ['sentinel2'],
         limit: 10,
-        reference: `ndvi_task_${Date.now()}`,
+        reference: `stats_task_${Date.now()}`,
+        // Cloud Masking Settings (Level 2 recommended)
+        max_cloud_cover_in_aoi: 20,
+        exclude_cover_pixels: true,
+        cloud_masking_level: 2
       },
     }
 
@@ -650,14 +719,11 @@ export async function fetchEOSDANDVI(
       { method: 'POST', body: JSON.stringify(body) },
     )
 
-    if (!created.task_id) throw new Error('NDVI task creation failed')
+    if (!created.task_id) throw new Error('Statistics task creation failed')
 
     // Poll for task completion
-    // In a real app, we might want to return the task ID and let the client poll, 
-    // but here we'll do a simple poll with timeout for simplicity
-
     let attempts = 0
-    const maxAttempts = 10
+    const maxAttempts = 15 // Increased timeout for multi-index
     const delay = 1000 // 1 second
 
     while (attempts < maxAttempts) {
@@ -665,57 +731,98 @@ export async function fetchEOSDANDVI(
 
       const result = await requestFromEOSDA<{
         status?: string
-        result?: Array<{ date?: string; indexes?: { NDVI?: { average?: number; min?: number; max?: number } } }>
+        result?: Array<{
+          date?: string;
+          indexes?: {
+            [key: string]: { average?: number; min?: number; max?: number; p10?: number; p90?: number }
+          }
+        }>
         errors?: any[]
       }>(`/api/gdw/api/${created.task_id}`)
 
       if (result.status === 'finished' || result.result) {
         const entry = result?.result?.[0]
-        const stats = entry?.indexes?.NDVI
 
-        if (!stats || typeof stats.average !== 'number') {
-          // If finished but no data, might be cloud cover or no scenes
-          if (result.status === 'finished') throw new Error('NDVI analysis finished but returned no data')
+        if (!entry || !entry.indexes) {
+          if (result.status === 'finished') throw new Error('Analysis finished but returned no data (possibly all cloudy)')
           // If not finished, continue polling
         } else {
+          // Parse all indices
+          const indicesData: EOSDAStatisticsResponse['indices'] = {}
+
+          Object.entries(entry.indexes).forEach(([key, stats]) => {
+            if (stats && typeof stats.average === 'number') {
+              indicesData[key] = {
+                mean: stats.average,
+                min: stats.min || 0,
+                max: stats.max || 0,
+                p10: stats.p10,
+                p90: stats.p90
+              }
+            }
+          })
+
           return {
             id: entry?.date,
             url: '', // No map URL from stats API
-            ndvi_value: stats.average,
-            statistics: {
-              mean: stats.average,
-              min: stats.min,
-              max: stats.max
-            },
+            indices: indicesData,
             bounds: undefined,
             date: entry?.date || new Date().toISOString(),
+            isSynthetic: false
           }
         }
       }
 
       if (result.status === 'error' || result.errors?.length) {
-        throw new Error(`NDVI task failed: ${JSON.stringify(result.errors)}`)
+        throw new Error(`Statistics task failed: ${JSON.stringify(result.errors)}`)
       }
 
       attempts++
     }
 
-    throw new Error('NDVI task timed out')
+    throw new Error('Statistics task timed out')
   } catch (error) {
-    logger.error('EOSDA NDVI error', error, {
-      center,
-      startDate,
-      endDate,
-      service: "eosda"
-    })
-    // Graceful fallback for demo stability when network/DNS fails
-    const message = (error instanceof Error ? error.message : String(error || ''))
-    const causeCode = (error as any)?.cause?.code
-    const networkFailure = /ENOTFOUND|ECONNREFUSED|EAI_AGAIN|fetch failed|DNS|getaddrinfo/i.test(message) || causeCode === 'ENOTFOUND'
-    if (networkFailure) {
-      return createSyntheticNDVIResponse({ center, startDate, endDate })
+    logger.error("Failed to fetch satellite statistics", { error })
+    return createSyntheticStatisticsResponse({ center, startDate, endDate })
+  }
+}
+
+// Helper for synthetic response
+function createSyntheticStatisticsResponse({
+  center,
+  startDate,
+  endDate,
+  isRateLimited = false
+}: {
+  center: { latitude: number; longitude: number }
+  startDate?: string
+  endDate?: string
+  isRateLimited?: boolean
+}): EOSDAStatisticsResponse {
+  const base = 0.35 + seededRandom(center.latitude, center.longitude) * 0.4
+  const timestamp = syntheticTimestamp(startDate ? new Date(startDate) : undefined, endDate ? new Date(endDate) : undefined)
+
+  const generateStats = (baseVal: number) => {
+    const mean = Number(clampNumber(baseVal, 0.1, 0.9).toFixed(3))
+    return {
+      mean,
+      min: Number(clampNumber(mean - 0.15, 0.05, 0.95).toFixed(3)),
+      max: Number(clampNumber(mean + 0.15, 0.1, 0.98).toFixed(3))
     }
-    throw new Error('Failed to fetch EOSDA NDVI data')
+  }
+
+  return {
+    id: `synthetic-stats-${timestamp}`,
+    url: SYNTHETIC_IMAGE_URL,
+    indices: {
+      'NDVI': generateStats(base),
+      'NDWI': generateStats(base - 0.2), // Usually lower than NDVI
+      'EVI': generateStats(base * 0.9)
+    },
+    bounds: undefined,
+    date: timestamp,
+    source: isRateLimited ? 'synthetic-ratelimit' : SYNTHETIC_SOURCE,
+    isSynthetic: true
   }
 }
 
@@ -1296,7 +1403,7 @@ export async function fetchEOSDAStatistics({
       causeCode === "ENOTFOUND"
 
     if (networkFailure) {
-      return createSyntheticStatisticsResponse(index)
+      return createSyntheticIndexResponse(index)
     }
 
     throw new Error("Failed to fetch EOSDA statistics")
