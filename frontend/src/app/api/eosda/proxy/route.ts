@@ -35,7 +35,7 @@ export async function GET(req: Request) {
 
     const target = `${base}/api/render/${encodeURIComponent(viewId)}/${encodeURIComponent(bands)}/${encodeURIComponent(z)}/${encodeURIComponent(x)}/${encodeURIComponent(y)}?${qs.join('&')}`
 
-    const apiKey = (process.env.EOSDA_API_KEY || '').trim()
+    const apiKey = (process.env.EOSDA_API_KEY || process.env.NEXT_PUBLIC_EOSDA_API_KEY || '').trim()
     if (!apiKey) {
       return NextResponse.json({ error: 'EOSDA API key not configured' }, { status: 503 })
     }

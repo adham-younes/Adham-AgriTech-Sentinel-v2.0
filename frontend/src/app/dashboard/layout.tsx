@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { resolveActiveProfile } from "@/lib/supabase/demo-session"
+import { ErrorBoundary } from "@/components/ui/error-boundary"
+
+import { MobileNav } from "@/components/dashboard/mobile-nav"
 
 // Force dynamic rendering to prevent static generation errors
 export const dynamic = 'force-dynamic'
@@ -18,7 +21,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </div>
       <div className="flex flex-1 flex-col overflow-hidden">
         <DashboardHeader user={user} profile={profile} />
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">{children}</main>
+        {/* Add pb-20 on mobile to account for the fixed bottom nav */}
+        <ErrorBoundary>
+          <main className="flex-1 overflow-y-auto p-3 pb-20 sm:p-4 md:p-6 md:pb-6">{children}</main>
+        </ErrorBoundary>
+        <MobileNav />
       </div>
     </div>
   )

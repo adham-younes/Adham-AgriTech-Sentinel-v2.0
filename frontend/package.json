@@ -102,6 +102,7 @@
     "maplibre-gl": "^3.6.2",
     "next": "14.2.33",
     "next-mdx-remote": "^5.0.0",
+    "next-pwa": "^5.6.0",
     "next-themes": "latest",
     "react": "^18",
     "react-circular-progressbar": "^2.2.0",

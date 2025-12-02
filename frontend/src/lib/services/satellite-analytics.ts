@@ -77,7 +77,7 @@ export class SatelliteAnalyticsService {
     private isLiveDataAvailable: boolean
 
     constructor() {
-        this.apiKey = process.env.NEXT_PUBLIC_EOSDA_API_KEY || 'apk.cefa9921669b0857be282894813d1213ed88c5e8299e29a5e91db105464aa232'
+        this.apiKey = process.env.NEXT_PUBLIC_EOSDA_API_KEY || ''
         this.baseUrl = process.env.NEXT_PUBLIC_EOSDA_API_URL || 'https://api.eosda.com/v1'
         this.isLiveDataAvailable = !!this.apiKey
     }

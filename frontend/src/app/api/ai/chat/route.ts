@@ -767,25 +767,10 @@ async function loadContext({
   return { blocks, plantReport }
 }
 
+import { SYSTEM_PROMPT } from "@/lib/ai/system-prompt"
+
 function buildSystemPrompt(language?: string) {
-  const today = new Date().toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", { dateStyle: "long" })
-  return language === "ar"
-    ? `أنت مساعد زراعي ذكي متخصص في المحاصيل المصرية (التاريخ: ${today}).`
-    + "\n\nإرشادات الاستجابة:"
-    + "\n1) ابدأ بالتشخيص ونسبة الثقة بناءً على الأعراض والبيانات (NDVI، الرطوبة، التربة، الطقس)."
-    + "\n2) قدّم خطة تدخل منسقة (ري، تسميد، حماية) مع جرعات وأزمنة دقيقة."
-    + "\n3) اربط التوصيات بالصور أو قراءات الأقمار الصناعية، واذكر مؤشرات الخطر إذا غابت البيانات."
-    + "\n4) اعتمد على قاعدة بيانات المحاصيل والتربة والآفات المرفقة في السياق، واذكر المواد الفعّالة أو نوع السماد/المبيد دون تفضيل تجاري."
-    + "\n5) أختم بخطوات مراقبة الأيام السبعة القادمة ونصائح السلامة."
-    + "\nاستخدم قوائم مرقمة أو جداول قصيرة لسهولة التنفيذ."
-    : `You are an agronomy copilot for Egyptian farms (date: ${today}).`
-    + "\n\nResponse policy:"
-    + "\n1) Start with a diagnosis and confidence score that cites imagery, NDVI, soil, or weather signals."
-    + "\n2) Provide a staged intervention plan (irrigation, nutrition, protection) with doses, timings, and tools."
-    + "\n3) Tie each recommendation back to the uploaded media or satellite context and call out missing data explicitly."
-    + "\n4) Ground advice in the attached crop/soil/pest knowledge base, and speak in terms of active ingredients or input types (not brand endorsements)."
-    + "\n5) Close with next-7-day monitoring actions and safety notices."
-    + "\nPrefer numbered lists or compact tables so agronomists can act immediately."
+  return SYSTEM_PROMPT(language || "ar")
 }
 
 function findRelatedArticles(query: string, limit = 3) {

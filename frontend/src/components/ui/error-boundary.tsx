@@ -2,8 +2,9 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { Card } from '@/components/ui/card'
-import { AlertCircle, RefreshCw } from 'lucide-react'
+import { AlertCircle, RefreshCw, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 interface Props {
     children?: ReactNode
@@ -36,30 +37,42 @@ export class ErrorBoundary extends Component<Props, State> {
             }
 
             return (
-                <div className="flex items-center justify-center min-h-[400px] w-full p-6">
-                    <Card className="max-w-md w-full p-6 bg-destructive/5 border-destructive/20">
-                        <div className="flex flex-col items-center text-center gap-4">
-                            <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
-                                <AlertCircle className="h-6 w-6 text-destructive" />
+                <div className="flex min-h-[50vh] w-full items-center justify-center p-6">
+                    <Card className="w-full max-w-md border-destructive/20 bg-destructive/5 p-8 shadow-lg backdrop-blur-sm">
+                        <div className="flex flex-col items-center gap-6 text-center">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 ring-4 ring-destructive/5">
+                                <AlertCircle className="h-8 w-8 text-destructive" />
                             </div>
 
                             <div className="space-y-2">
-                                <h3 className="text-lg font-semibold text-destructive">
-                                    حدث خطأ غير متوقع
+                                <h3 className="text-xl font-bold text-destructive">
+                                    Something went wrong
+                                    <span className="block text-lg font-medium opacity-80 mt-1">حدث خطأ غير متوقع</span>
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
-                                    {this.state.error?.message || 'نعتذر، حدث خطأ أثناء تحميل هذا القسم.'}
+                                    {this.state.error?.message || 'An unexpected error occurred while loading this section.'}
                                 </p>
                             </div>
 
-                            <Button
-                                variant="outline"
-                                className="gap-2"
-                                onClick={() => window.location.reload()}
-                            >
-                                <RefreshCw className="h-4 w-4" />
-                                إعادة تحميل الصفحة
-                            </Button>
+                            <div className="flex w-full gap-3">
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 gap-2 border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
+                                    onClick={() => this.setState({ hasError: false, error: null })}
+                                >
+                                    <RefreshCw className="h-4 w-4" />
+                                    Try Again / إعادة المحاولة
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    className="gap-2"
+                                    asChild
+                                >
+                                    <Link href="/dashboard">
+                                        <Home className="h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </div>
                         </div>
                     </Card>
                 </div>
