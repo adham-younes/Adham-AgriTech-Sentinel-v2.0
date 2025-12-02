@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Activity, Droplets, Leaf, LineChart, Download, Eye, Loader2, MapPin, Info } from "lucide-react"
+import { Activity, Droplets, Leaf, LineChart, Download, Eye, Loader2, MapPin, Info, AlertCircle } from "lucide-react"
 import Link from "next/link"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
