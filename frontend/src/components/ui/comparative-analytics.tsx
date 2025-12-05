@@ -153,15 +153,15 @@ export function ComparativeAnalytics({
 
   const translations = t[lang]
 
-  // Calculate health score
-  const calculateHealthScore = () => {
+  // Calculate health score - returns null when no data available
+  const calculateHealthScore = (): number | null => {
     const values = [
       fieldData.current.ndvi,
       fieldData.current.chlorophyll,
       fieldData.current.moisture
-    ].filter(v => v !== null && v !== undefined) as number[]
+    ].filter(v => v !== null && v !== undefined && typeof v === 'number' && !isNaN(v)) as number[]
 
-    if (values.length === 0) return 0
+    if (values.length === 0) return null
 
     const normalizedValues = values.map(v => {
       if (fieldData.current.ndvi === v) return ((v + 1) / 2) * 100
@@ -169,7 +169,7 @@ export function ComparativeAnalytics({
       return v
     })
 
-    return normalizedValues.reduce((sum, v) => sum + v, 0) / normalizedValues.length
+    return Math.round(normalizedValues.reduce((sum, v) => sum + v, 0) / normalizedValues.length)
   }
 
   const getTrendDirection = (current: number | null | undefined, historical: number[]) => {
@@ -184,7 +184,8 @@ export function ComparativeAnalytics({
     return "stable"
   }
 
-  const getPerformanceLevel = (score: number) => {
+  const getPerformanceLevel = (score: number | null) => {
+    if (score === null) return { level: "unknown", color: "text-gray-400", bg: "bg-gray-500/20" }
     if (score >= 80) return { level: "excellent", color: "text-emerald-600", bg: "bg-emerald-100" }
     if (score >= 60) return { level: "good", color: "text-green-600", bg: "bg-green-100" }
     if (score >= 40) return { level: "fair", color: "text-yellow-600", bg: "bg-yellow-100" }
@@ -194,20 +195,23 @@ export function ComparativeAnalytics({
   const healthScore = calculateHealthScore()
   const performance = getPerformanceLevel(healthScore)
 
-  // Prepare chart data
-  const chartData = fieldData.historical.map((entry, index) => ({
-    date: new Date(entry.date).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
-      month: "short",
-      day: "numeric"
-    }),
-    ndvi: entry.ndvi,
-    chlorophyll: entry.chlorophyll,
-    moisture: entry.moisture,
-    evi: entry.evi,
-    nri: entry.nri,
-    dswi: entry.dswi,
-    ndwi: entry.ndwi
-  }))
+  // Prepare chart data - filter out future dates
+  const now = new Date()
+  const chartData = fieldData.historical
+    .filter(entry => new Date(entry.date) <= now) // Exclude future dates
+    .map((entry, index) => ({
+      date: new Date(entry.date).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", {
+        month: "short",
+        day: "numeric"
+      }),
+      ndvi: entry.ndvi,
+      chlorophyll: entry.chlorophyll,
+      moisture: entry.moisture,
+      evi: entry.evi,
+      nri: entry.nri,
+      dswi: entry.dswi,
+      ndwi: entry.ndwi
+    }))
 
   // Generate insights
   const generateInsights = () => {
@@ -265,7 +269,7 @@ export function ComparativeAnalytics({
           </div>
           <div className="text-center">
             <div className={`text-4xl font-bold ${performance.color} mb-1 drop-shadow-[0_0_8px_currentColor]`}>
-              {Math.round(healthScore)}%
+              {healthScore !== null ? `${healthScore}%` : "--"}
             </div>
             <Badge className={`${performance.bg} ${performance.color} border-0 bg-opacity-10`}>
               {translations[performance.level as keyof typeof translations]}
@@ -291,7 +295,7 @@ export function ComparativeAnalytics({
                 <span className="text-sm font-medium text-gray-300">{translations.healthScore}</span>
               </div>
               <div className={`text-2xl font-bold ${performance.color}`}>
-                {Math.round(healthScore)}%
+                {healthScore !== null ? `${healthScore}%` : "--"}
               </div>
               <div className="text-xs text-gray-500 mt-1">
                 {translations[performance.level as keyof typeof translations]}

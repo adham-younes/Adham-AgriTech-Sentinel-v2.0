@@ -102,30 +102,37 @@ export function ModernFieldCard({
 
   const translations = t[lang]
 
-  // Calculate health score
-  const calculateHealthScore = () => {
+  // Calculate health score - returns null when no data available
+  const calculateHealthScore = (): number | null => {
     const ndvi = metrics?.ndvi?.latest ?? field.last_ndvi ?? field.ndvi_score
     const moisture = metrics?.moisture?.latest ?? field.last_moisture ?? field.moisture_index
 
-    if (!ndvi && !moisture) return 0
+    // Return null to indicate "N/A" instead of 0 when data is missing
+    const hasNdvi = typeof ndvi === 'number' && !isNaN(ndvi)
+    const hasMoisture = typeof moisture === 'number' && !isNaN(moisture)
+
+    if (!hasNdvi && !hasMoisture) return null
 
     let score = 0
     let count = 0
 
-    if (ndvi) {
-      score += ((ndvi + 1) / 2) * 100 // Normalize NDVI from -1,1 to 0-100
+    if (hasNdvi) {
+      // Normalize NDVI from -1,1 to 0-100
+      score += ((ndvi! + 1) / 2) * 100
       count++
     }
 
-    if (moisture) {
-      score += moisture // Moisture is already 0-100
+    if (hasMoisture) {
+      // Moisture is already 0-100
+      score += moisture!
       count++
     }
 
-    return count > 0 ? score / count : 0
+    return count > 0 ? Math.round(score / count) : null
   }
 
-  const getHealthStatus = (score: number) => {
+  const getHealthStatus = (score: number | null) => {
+    if (score === null) return { status: "unknown", color: "bg-gray-400", textColor: "text-gray-500" }
     if (score >= 80) return { status: "excellent", color: "bg-emerald-500", textColor: "text-emerald-700" }
     if (score >= 60) return { status: "good", color: "bg-green-500", textColor: "text-green-700" }
     if (score >= 40) return { status: "fair", color: "bg-yellow-500", textColor: "text-yellow-700" }
@@ -180,7 +187,7 @@ export function ModernFieldCard({
           {/* Health Score Badge */}
           <div className="text-center">
             <div className={`text-2xl font-bold ${healthStatus.textColor}`}>
-              {Math.round(healthScore)}%
+              {healthScore !== null ? `${healthScore}%` : "--"}
             </div>
             <Badge className={`${healthStatus.color} text-white border-0 text-xs`}>
               {translations[healthStatus.status as keyof typeof translations]}
@@ -231,9 +238,9 @@ export function ModernFieldCard({
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-gray-700">{translations.health}</span>
-            <span className="text-sm text-gray-500">{Math.round(healthScore)}%</span>
+            <span className="text-sm text-gray-500">{healthScore !== null ? `${healthScore}%` : "--"}</span>
           </div>
-          <Progress value={healthScore} className="h-2" />
+          <Progress value={healthScore ?? 0} className="h-2" />
         </div>
 
         {/* Weather Info */}

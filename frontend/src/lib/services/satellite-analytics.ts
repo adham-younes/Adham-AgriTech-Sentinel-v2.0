@@ -6,6 +6,7 @@
 
 import { eosdaPublicConfig } from '@/lib/config/eosda'
 import { getSatelliteStatistics } from '@/lib/services/eosda'
+import { createClient } from '@/lib/supabase/client'
 
 // Types
 export interface NDVIDataPoint {
@@ -78,7 +79,7 @@ export class SatelliteAnalyticsService {
 
     constructor() {
         this.apiKey = process.env.NEXT_PUBLIC_EOSDA_API_KEY || ''
-        this.baseUrl = process.env.NEXT_PUBLIC_EOSDA_API_URL || 'https://api.eosda.com/v1'
+        this.baseUrl = process.env.NEXT_PUBLIC_EOSDA_API_URL || 'https://api-connect.eos.com/v1'
         this.isLiveDataAvailable = !!this.apiKey
     }
 
@@ -113,11 +114,40 @@ export class SatelliteAnalyticsService {
             return []
         }
 
+        const supabase = createClient()
         const endDate = new Date()
         const startDate = new Date()
         startDate.setDate(startDate.getDate() - days)
 
         try {
+            // 1. Try to fetch from Database first
+            const { data: dbData } = await supabase
+                .from('satellite_readings')
+                .select('*')
+                .eq('field_id', fieldId)
+                .gte('date', startDate.toISOString())
+                .lte('date', endDate.toISOString())
+                .order('date', { ascending: false })
+
+            if (dbData && dbData.length > 0) {
+                console.log(`✅ Loaded ${dbData.length} readings from DB for field ${fieldId}`)
+                const now = new Date()
+                return dbData
+                    .filter((d: any) => new Date(d.date) <= now) // Exclude future dates
+                    .map((d: any) => ({
+                        date: d.date,
+                        value: d.ndvi_mean || 0,
+                        cloud_coverage: d.cloud_coverage,
+                        sceneID: d.image_url
+                    }))
+            }
+
+            // 2. If not in DB, fetch from EOSDA API
+            if (!this.isLiveDataAvailable || !polygon || polygon.length === 0) {
+                console.warn('EOSDA API key missing or polygon not provided. Cannot fetch live data.')
+                return []
+            }
+
             // Calculate center point from polygon
             const lats = polygon.map(p => p[1])
             const lngs = polygon.map(p => p[0])
@@ -137,14 +167,31 @@ export class SatelliteAnalyticsService {
             const ndviDataPoints: NDVIDataPoint[] = []
 
             if (stats.indices?.NDVI && typeof stats.indices.NDVI.mean === 'number') {
+                const ndviVal = parseFloat(stats.indices.NDVI.mean.toFixed(3))
+
                 ndviDataPoints.push({
                     date: stats.date || new Date().toISOString(),
-                    value: parseFloat(stats.indices.NDVI.mean.toFixed(3)),
+                    value: ndviVal,
                     cloud_coverage: 0, // Cloud masking is applied in getSatelliteStatistics
                     sceneID: stats.id || undefined
                 })
 
-                console.log(`✅ NDVI from optimized API: ${stats.indices.NDVI.mean.toFixed(3)}, Synthetic: ${stats.isSynthetic}`)
+                console.log(`✅ NDVI from optimized API: ${ndviVal}, Synthetic: ${stats.isSynthetic}`)
+
+                // 3. Save to Database
+                if (!stats.isSynthetic) {
+                    await supabase.from('satellite_readings').insert({
+                        field_id: fieldId,
+                        date: stats.date,
+                        ndvi_mean: ndviVal,
+                        ndvi_min: stats.indices.NDVI.min,
+                        ndvi_max: stats.indices.NDVI.max,
+                        evi_mean: stats.indices.EVI?.mean,
+                        ndwi_mean: stats.indices.NDWI?.mean,
+                        source: 'eosda',
+                        image_url: stats.url
+                    })
+                }
             }
 
             return ndviDataPoints

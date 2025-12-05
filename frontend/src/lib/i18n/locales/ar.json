@@ -386,7 +386,16 @@
     "poor": "ضعيف",
     "fair": "متوسط",
     "good": "جيد",
-    "excellent": "ممتاز"
+    "excellent": "ممتاز",
+    "difference_map": "خريطة التباين",
+    "vegetation_index": "مؤشر الغطاء النباتي",
+    "online": "متصل",
+    "offline": "غير متصل",
+    "status": "الحالة",
+    "last_capture": "آخر لقطة",
+    "cloud_coverage": "نسبة الغيوم",
+    "resolution": "الدقة",
+    "data_source": "مصدر البيانات"
   },
   "satellite3d": {
     "title": "ذكاء المزارع ثلاثي الأبعاد",

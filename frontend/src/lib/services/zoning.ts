@@ -83,13 +83,28 @@ export async function createVegetationMap({
 
         logger.info("Creating vegetation map", { fieldId, vegetationIndex, zoneQuantity })
 
-        const response = await fetch(`${EOSDA_API_URL}/zoning/vegetation-map`, {
+        // Use EOSDA GDW API for zone map creation (task-based workflow)
+        // Documentation: https://doc.eos.com/docs/statistics/
+        const gdwRequestBody = {
+            type: 'zoning',
+            params: {
+                view_id: fieldId, // field_id should be the EOSDA view_id
+                bm_type: vegetationIndex,
+                zone_count: zoneQuantity,
+                date_start: dateStart,
+                date_end: dateEnd,
+                min_zone_area: minZoneArea,
+                reference: `zoning_task_${Date.now()}`
+            }
+        }
+
+        const response = await fetch(`${EOSDA_API_URL}/api/gdw/api`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "x-api-key": EOSDA_API_KEY
+                "X-Api-Key": EOSDA_API_KEY
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify(gdwRequestBody)
         })
 
         if (!response.ok) {
@@ -123,7 +138,7 @@ export async function getVegetationMapStatus(
 
     try {
         const response = await fetch(
-            `${EOSDA_API_URL}/zoning/maps/${fieldId}/${zmapId}`,
+            `${EOSDA_API_URL}/api/zoning/maps/${fieldId}/${zmapId}`,
             {
                 headers: {
                     "x-api-key": EOSDA_API_KEY
