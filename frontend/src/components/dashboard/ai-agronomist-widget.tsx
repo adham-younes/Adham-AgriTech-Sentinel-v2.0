@@ -60,17 +60,21 @@ export function AiAgronomistWidget({ fieldId, cropType, mode = 'floating' }: AiA
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: input,
-                    context: { fieldId, cropType, language }
+                    type: 'prompt',
+                    payload: {
+                        prompt: `${input}. Context: Field ID: ${fieldId || 'general'}, Crop: ${cropType || 'unspecified'}, Language: ${language}`
+                    }
                 })
             });
 
             const data = await res.json();
 
-            if (data.error) {
+            if (data.error || !data.success) {
                 setResponse(isArabic ? "حدث خطأ في الاتصال." : "Connection error.");
             } else {
-                setResponse(data.response);
+                // Cloud Run returns: { success, action, result: { status, analysis: { ndvi, interpretation, map_url } } }
+                const interpretation = data.result?.analysis?.interpretation || data.result?.response || data.response;
+                setResponse(interpretation || (isArabic ? "لم أتمكن من فهم الطلب." : "I couldn't process the request."));
             }
         } catch (e) {
             setResponse(isArabic ? "حدث خطأ غير متوقع." : "Unexpected error.");

@@ -65,28 +65,21 @@ export class AIProviderRegistry {
       }
     }
 
-    // Priority 1: Vertex AI (Enterprise)
+    // Priority 1: Vertex AI (Enterprise) - DISABLED on Vercel
+    // Vertex AI requires GCP Application Default Credentials which aren't available in Vercel.
+    // Use Google AI (Standard) instead which works with just an API key.
+    // To enable Vertex AI, deploy OSIRIS backend to Cloud Run with proper GCP credentials.
+    /*
     const vertexLocation = trim(process.env.VERTEX_AI_LOCATION);
     const vertexProject = trim(process.env.GOOGLE_CLOUD_PROJECT);
 
     if (vertexLocation && vertexProject) {
       try {
-        // Dynamic import to avoid build issues if package is missing
         const { getVertexAIClient, GEMINI_MODEL } = require('./vertex-ai');
         const vertexClient = getVertexAIClient();
-
-        // Create a compatible model interface wrapper
-        // Since we're using the official Google Cloud SDK, we wrap it to match AI SDK interface
         const vertexModelWrapper = (modelId: string) => {
-          return {
-            // This is a simplified wrapper. For full AI SDK compatibility, 
-            // we might need @ai-sdk/google-vertex if available or custom implementation.
-            // For now, we'll use the direct generation method in the chat route.
-            provider: 'vertex',
-            modelId: modelId
-          } as any;
+          return { provider: 'vertex', modelId: modelId } as any;
         };
-
         providers.push({
           id: "vertex",
           name: "Google Vertex AI (Enterprise)",
@@ -100,12 +93,13 @@ export class AIProviderRegistry {
         console.warn("[AI Registry] Failed to initialize Vertex AI:", error);
       }
     }
+    */
 
     // Priority 2: Groq
     if (trim(process.env.GROQ_API_KEY)) {
       const groqKey = trim(process.env.GROQ_API_KEY) as string
       const groqClient = createGroq({ apiKey: groqKey })
-      const groqModel = trim(process.env.GROQ_MODEL) || "llama-3.3-70b-versatile"
+      const groqModel = trim(process.env.GROQ_MODEL) || "llama-3.3-70b-versatile" // Latest Llama 3.3 (Dec 2024)
       providers.push({
         id: "groq",
         name: "Groq",
@@ -121,7 +115,7 @@ export class AIProviderRegistry {
     if (googleKey && googleKey.length > 10) {
       try {
         const googleClient = createGoogleGenerativeAI({ apiKey: googleKey })
-        const googleModel = trim(process.env.GOOGLE_AI_MODEL) || "gemini-2.0-flash"
+        const googleModel = trim(process.env.GOOGLE_AI_MODEL) || "gemini-3-pro-preview-11-2025" // Gemini 3 Pro (Nov 2025) - Latest
         providers.push({
           id: "google",
           name: "Google Gemini (Standard)",

@@ -21,7 +21,12 @@ def init_services():
         if not api_key:
             raise ValueError("GOOGLE_API_KEY not set")
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        generation_config = {
+            "temperature": 1,
+            "top_p": 0.95,
+            "max_output_tokens": 65535,
+        }
+        model = genai.GenerativeModel('gemini-3-pro-preview', generation_config=generation_config)
     
     # BigQuery
     if bq_client is None:
