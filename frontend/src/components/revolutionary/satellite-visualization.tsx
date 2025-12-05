@@ -4,13 +4,13 @@ import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { 
-  Eye, 
-  Layers, 
-  MapPin, 
-  Calendar, 
-  Download, 
-  ZoomIn, 
+import {
+  Eye,
+  Layers,
+  MapPin,
+  Calendar,
+  Download,
+  ZoomIn,
   ZoomOut,
   RotateCw,
   Grid,
@@ -39,6 +39,7 @@ interface SatelliteVisualizationProps {
     capturedAt: string
   }
   onLayerChange?: (layer: string) => void
+  lang?: 'ar' | 'en'
 }
 
 const ndviColorMap = [
@@ -50,20 +51,22 @@ const ndviColorMap = [
 ]
 
 const satelliteLayers = [
-  { id: "ndvi", name: "NDVI", icon: <Eye className="h-4 w-4" />, description: "Vegetation health index" },
-  { id: "chlorophyll", name: "Chlorophyll", icon: <Sun className="h-4 w-4" />, description: "Chlorophyll content" },
-  { id: "moisture", name: "Soil Moisture", icon: <Droplets className="h-4 w-4" />, description: "Soil water content" },
-  { id: "thermal", name: "Thermal", icon: <Thermometer className="h-4 w-4" />, description: "Temperature mapping" },
-  { id: "rgb", name: "True Color", icon: <Satellite className="h-4 w-4" />, description: "Natural color view" }
+  { id: "ndvi", name: { ar: "صحة النبات (NDVI)", en: "NDVI" }, icon: <Eye className="h-4 w-4" />, description: { ar: "مؤشر صحة النباتات", en: "Vegetation health index" } },
+  { id: "chlorophyll", name: { ar: "الكلوروفيل", en: "Chlorophyll" }, icon: <Sun className="h-4 w-4" />, description: { ar: "محتوى الكلوروفيل في الأوراق", en: "Chlorophyll content" } },
+  { id: "moisture", name: { ar: "رطوبة التربة", en: "Soil Moisture" }, icon: <Droplets className="h-4 w-4" />, description: { ar: "نسبة رطوبة التربة", en: "Soil water content" } },
+  { id: "thermal", name: { ar: "التصوير الحراري", en: "Thermal" }, icon: <Thermometer className="h-4 w-4" />, description: { ar: "خريطة درجات الحرارة", en: "Temperature mapping" } },
+  { id: "rgb", name: { ar: "ألوان حقيقية", en: "True Color" }, icon: <Satellite className="h-4 w-4" />, description: { ar: "الصورة الطبيعية", en: "Natural color view" } }
 ]
 
-export function SatelliteVisualization({ field, satelliteData, onLayerChange }: SatelliteVisualizationProps) {
+export function SatelliteVisualization({ field, satelliteData, onLayerChange, lang = 'ar' }: SatelliteVisualizationProps) {
   const [selectedLayer, setSelectedLayer] = useState("ndvi")
   const [zoomLevel, setZoomLevel] = useState(1)
   const [showGrid, setShowGrid] = useState(false)
   const [imageLoading, setImageLoading] = useState(false)
 
   const currentLayer = satelliteLayers.find(layer => layer.id === selectedLayer) || satelliteLayers[0]
+  const getName = (names: { ar: string; en: string }) => names[lang]
+  const getDesc = (descs: { ar: string; en: string }) => descs[lang]
 
   const getLayerValue = () => {
     switch (selectedLayer) {
@@ -93,25 +96,25 @@ export function SatelliteVisualization({ field, satelliteData, onLayerChange }: 
       if (value < 0.8) return "#228B22"
       return "#006400"
     }
-    
+
     if (selectedLayer === "chlorophyll") {
       if (value < 0.3) return "#FF6B6B"
       if (value < 0.6) return "#FFD93D"
       return "#6BCF7F"
     }
-    
+
     if (selectedLayer === "moisture") {
       if (value < 30) return "#FF6B6B"
       if (value < 70) return "#4ECDC4"
       return "#45B7D1"
     }
-    
+
     if (selectedLayer === "thermal") {
       if (value > 35) return "#FF6B6B"
       if (value > 25) return "#FFD93D"
       return "#6BCF7F"
     }
-    
+
     return "#228B22"
   }
 
@@ -147,7 +150,7 @@ export function SatelliteVisualization({ field, satelliteData, onLayerChange }: 
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="capitalize">
-                {currentLayer.name}
+                {getName(currentLayer.name)}
               </Badge>
               <Badge variant="secondary">
                 {field.area} feddan
@@ -171,7 +174,7 @@ export function SatelliteVisualization({ field, satelliteData, onLayerChange }: 
                   className="flex items-center gap-2"
                 >
                   {layer.icon}
-                  {layer.name}
+                  {getName(layer.name)}
                 </Button>
               ))}
             </div>
@@ -180,7 +183,7 @@ export function SatelliteVisualization({ field, satelliteData, onLayerChange }: 
           {/* Map Container */}
           <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ height: "400px" }}>
             {/* Simulated Satellite Image */}
-            <div 
+            <div
               className="absolute inset-0 flex items-center justify-center"
               style={{
                 background: `linear-gradient(135deg, ${getLayerColor(getLayerValue())}22 0%, ${getLayerColor(getLayerValue())}44 100%)`,
@@ -189,7 +192,7 @@ export function SatelliteVisualization({ field, satelliteData, onLayerChange }: 
               }}
             >
               {/* Field Boundary */}
-              <div 
+              <div
                 className="border-2 border-dashed border-gray-600 rounded-lg"
                 style={{
                   width: "60%",
@@ -205,7 +208,7 @@ export function SatelliteVisualization({ field, satelliteData, onLayerChange }: 
                     ))}
                   </div>
                 )}
-                
+
                 {/* Center point */}
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                   <MapPin className="h-6 w-6 text-red-600" />
@@ -242,7 +245,7 @@ export function SatelliteVisualization({ field, satelliteData, onLayerChange }: 
 
             {/* Layer Value Display */}
             <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3">
-              <div className="text-sm font-medium">{currentLayer.name}</div>
+              <div className="text-sm font-medium">{getName(currentLayer.name)}</div>
               <div className="text-lg font-bold" style={{ color: getLayerColor(getLayerValue()) }}>
                 {getLayerValue().toFixed(3)}
               </div>
@@ -255,7 +258,7 @@ export function SatelliteVisualization({ field, satelliteData, onLayerChange }: 
           {/* Layer Description */}
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>{currentLayer.name}:</strong> {currentLayer.description}
+              <strong>{getName(currentLayer.name)}:</strong> {getDesc(currentLayer.description)}
             </p>
           </div>
         </CardContent>
@@ -274,7 +277,7 @@ export function SatelliteVisualization({ field, satelliteData, onLayerChange }: 
             <div className="space-y-2">
               {ndviColorMap.map((item) => (
                 <div key={item.range} className="flex items-center gap-3">
-                  <div 
+                  <div
                     className="w-8 h-8 rounded border border-gray-300"
                     style={{ backgroundColor: item.color }}
                   />
@@ -371,7 +374,7 @@ export function SatelliteVisualization({ field, satelliteData, onLayerChange }: 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {satelliteLayers.slice(0, 4).map((layer) => (
               <div key={layer.id} className="text-center">
-                <div 
+                <div
                   className="w-full h-20 rounded-lg mb-2 flex items-center justify-center"
                   style={{
                     background: `linear-gradient(135deg, ${getLayerColor(getLayerValue())}44 0%, ${getLayerColor(getLayerValue())}88 100%)`
@@ -379,7 +382,7 @@ export function SatelliteVisualization({ field, satelliteData, onLayerChange }: 
                 >
                   {layer.icon}
                 </div>
-                <div className="text-sm font-medium">{layer.name}</div>
+                <div className="text-sm font-medium">{getName(layer.name)}</div>
                 <div className="text-xs text-gray-600 capitalize">{getLayerStatus()}</div>
               </div>
             ))}
