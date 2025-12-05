@@ -431,7 +431,7 @@ export function SatelliteImageryCard({
           setCompareScene(sortedScenes[0])
         }
 
-        setNdviValue(0.4 + Math.random() * 0.4)
+        setNdviValue(Math.round((0.4 + Math.random() * 0.4) * 100) / 100) // Round to 2 decimals
         if (mode === 'satellite') setMode('analysis')
       } else {
         setError('لم يتم العثور على صور أقمار صناعية حديثة لهذا الموقع.')
@@ -707,7 +707,7 @@ export function SatelliteImageryCard({
       setClusteringResult(data)
 
       if (data.view_id && map.current) {
-        const tileUrl = `https://api.eosda.com/v1/render/${data.view_id}/{z}/{x}/{y}?api_key=${eosdaPublicConfig.apiKey}`
+        const tileUrl = `https://api-connect.eos.com/v1/render/${data.view_id}/{z}/{x}/{y}?api_key=${eosdaPublicConfig.apiKey}`
 
         if (map.current.getSource('clustering-source')) {
           if (map.current.getLayer('clustering-layer')) map.current.removeLayer('clustering-layer')

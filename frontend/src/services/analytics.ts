@@ -70,7 +70,7 @@ export class AnalyticsService {
                     const field = fieldData.field || fieldData
                     const boundaries = field.boundaries
                     let polygon: [number, number][] | null = null
-                    
+
                     // Parse polygon from boundaries
                     if (boundaries) {
                         if (Array.isArray(boundaries)) {
@@ -90,7 +90,7 @@ export class AnalyticsService {
                             }
                         }
                     }
-                    
+
                     if (polygon && Array.isArray(polygon) && polygon.length > 0) {
                         // Calculate center from polygon
                         const center = {
@@ -112,42 +112,43 @@ export class AnalyticsService {
                             ? (ndviData.value as any)?.statistics?.mean ?? (ndviData.value as any)?.value ?? 0.65
                             : 0.65 + Math.random() * 0.2
 
-                        const moisture = moistureData.status === 'fulfilled' && !(moistureData.value as any)?.source?.includes('synthetic')
+                        const rawMoisture = moistureData.status === 'fulfilled' && !(moistureData.value as any)?.source?.includes('synthetic')
                             ? ((moistureData.value as any)?.statistics?.mean ?? (moistureData.value as any)?.value ?? 45) * 100
                             : 45 + Math.random() * 20
+                        const moisture = Math.round(rawMoisture * 10) / 10 // Round to 1 decimal
 
                         const chlorophyll = chlorophyllData.status === 'fulfilled' && !(chlorophyllData.value as any)?.source?.includes('synthetic')
                             ? (chlorophyllData.value as any)?.statistics?.mean ?? (chlorophyllData.value as any)?.value ?? 35
                             : 35 + Math.random() * 20
 
                         // Calculate health score based on real data
-                        const healthScore = Math.min(100, Math.max(0, 
-                            (ndvi * 100 * 0.4) + 
-                            (moisture * 0.3) + 
+                        const healthScore = Math.min(100, Math.max(0,
+                            (ndvi * 100 * 0.4) +
+                            (moisture * 0.3) +
                             ((chlorophyll / 50) * 100 * 0.3)
                         ))
 
                         return {
-                            healthScore,
-                            ndvi,
-                            moisture: Math.min(100, Math.max(0, moisture)),
-                            temperature: 22 + Math.random() * 8, // Temperature from weather API
+                            healthScore: Math.round(healthScore),
+                            ndvi: Math.round(ndvi * 100) / 100, // 2 decimals
+                            moisture: Math.round(Math.min(100, Math.max(0, moisture)) * 10) / 10, // 1 decimal
+                            temperature: Math.round((22 + Math.random() * 8) * 10) / 10, // 1 decimal
                             source: (ndviData.status === 'fulfilled' && !(ndviData.value as any)?.source?.includes('synthetic')) ? 'satellite' : 'simulated',
                             chlorophyll: {
-                                current: chlorophyll,
-                                trendPercent: -5 + Math.random() * 15,
+                                current: Math.round(chlorophyll * 10) / 10, // 1 decimal
+                                trendPercent: Math.round((-5 + Math.random() * 15) * 10) / 10, // 1 decimal
                             },
                             npk: {
-                                nitrogen: 60 + Math.random() * 30,
-                                phosphorus: 40 + Math.random() * 30,
-                                potassium: 50 + Math.random() * 30,
+                                nitrogen: Math.round(60 + Math.random() * 30), // integer
+                                phosphorus: Math.round(40 + Math.random() * 30), // integer
+                                potassium: Math.round(50 + Math.random() * 30), // integer
                             },
                             ecSalinity: {
-                                electricalConductivity: 1.2 + Math.random() * 0.8,
-                                salinityRatio: 0.5 + Math.random() * 1.5,
+                                electricalConductivity: Math.round((1.2 + Math.random() * 0.8) * 100) / 100, // 2 decimals
+                                salinityRatio: Math.round((0.5 + Math.random() * 1.5) * 10) / 10, // 1 decimal
                             },
                             irrigationAgent: {
-                                readiness: Math.min(100, Math.max(0, moisture * 0.8 + 20)),
+                                readiness: Math.round(Math.min(100, Math.max(0, moisture * 0.8 + 20))),
                                 status: {
                                     soilMoisture: moisture > 30,
                                     weatherIntegration: true,
@@ -155,9 +156,9 @@ export class AnalyticsService {
                                 },
                             },
                             yieldPrediction: {
-                                predictedYield: 8 + Math.random() * 4,
-                                comparisonToAverage: 5 + Math.random() * 15,
-                                confidence: 75 + Math.random() * 20,
+                                predictedYield: Math.round((8 + Math.random() * 4) * 10) / 10, // 1 decimal
+                                comparisonToAverage: Math.round(5 + Math.random() * 15), // integer
+                                confidence: Math.round(75 + Math.random() * 20), // integer
                                 estimatedHarvest: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
                             },
                             alerts: moisture < 30 ? [
@@ -178,26 +179,26 @@ export class AnalyticsService {
 
         // Fallback to simulated data
         return {
-            healthScore: 78 + Math.random() * 15,
-            ndvi: 0.65 + Math.random() * 0.2,
-            moisture: 45 + Math.random() * 20,
-            temperature: 22 + Math.random() * 8,
+            healthScore: Math.round(78 + Math.random() * 15), // integer
+            ndvi: Math.round((0.65 + Math.random() * 0.2) * 100) / 100, // 2 decimals
+            moisture: Math.round((45 + Math.random() * 20) * 10) / 10, // 1 decimal
+            temperature: Math.round((22 + Math.random() * 8) * 10) / 10, // 1 decimal
             source: 'simulated',
             chlorophyll: {
-                current: 35 + Math.random() * 20,
-                trendPercent: -5 + Math.random() * 15,
+                current: Math.round((35 + Math.random() * 20) * 10) / 10, // 1 decimal
+                trendPercent: Math.round((-5 + Math.random() * 15) * 10) / 10, // 1 decimal
             },
             npk: {
-                nitrogen: 60 + Math.random() * 30,
-                phosphorus: 40 + Math.random() * 30,
-                potassium: 50 + Math.random() * 30,
+                nitrogen: Math.round(60 + Math.random() * 30), // integer
+                phosphorus: Math.round(40 + Math.random() * 30), // integer
+                potassium: Math.round(50 + Math.random() * 30), // integer
             },
             ecSalinity: {
-                electricalConductivity: 1.2 + Math.random() * 0.8,
-                salinityRatio: 0.5 + Math.random() * 1.5,
+                electricalConductivity: Math.round((1.2 + Math.random() * 0.8) * 100) / 100, // 2 decimals
+                salinityRatio: Math.round((0.5 + Math.random() * 1.5) * 10) / 10, // 1 decimal
             },
             irrigationAgent: {
-                readiness: 85 + Math.random() * 10,
+                readiness: Math.round(85 + Math.random() * 10), // integer
                 status: {
                     soilMoisture: true,
                     weatherIntegration: true,
@@ -205,9 +206,9 @@ export class AnalyticsService {
                 },
             },
             yieldPrediction: {
-                predictedYield: 8 + Math.random() * 4,
-                comparisonToAverage: 5 + Math.random() * 15,
-                confidence: 75 + Math.random() * 20,
+                predictedYield: Math.round((8 + Math.random() * 4) * 10) / 10, // 1 decimal
+                comparisonToAverage: Math.round(5 + Math.random() * 15), // integer
+                confidence: Math.round(75 + Math.random() * 20), // integer
                 estimatedHarvest: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
             },
             alerts: Math.random() > 0.5 ? [
