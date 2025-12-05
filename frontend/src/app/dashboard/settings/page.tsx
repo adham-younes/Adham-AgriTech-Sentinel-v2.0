@@ -7,13 +7,13 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { 
-  Settings, 
-  Loader2, 
-  User, 
-  Bell, 
-  Shield, 
-  Globe, 
+import {
+  Settings,
+  Loader2,
+  User,
+  Bell,
+  Shield,
+  Globe,
   Database,
   Smartphone,
   Monitor,
@@ -144,7 +144,7 @@ export default function ProfessionalSettingsPage() {
     try {
       // Simulate saving settings
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       setMessage({ type: "success", text: t.settingsSaved })
     } catch (error) {
       setMessage({ type: "error", text: t.error })
@@ -155,11 +155,11 @@ export default function ProfessionalSettingsPage() {
 
   const handleExportData = async () => {
     setLoading(true)
-    
+
     try {
       // Simulate data export
       await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
       setMessage({ type: "success", text: t.dataExported })
     } catch (error) {
       setMessage({ type: "error", text: t.error })
@@ -174,11 +174,11 @@ export default function ProfessionalSettingsPage() {
     }
 
     setLoading(true)
-    
+
     try {
       // Simulate account deletion
       await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
       setMessage({ type: "success", text: t.accountDeleted })
     } catch (error) {
       setMessage({ type: "error", text: t.error })
@@ -196,7 +196,7 @@ export default function ProfessionalSettingsPage() {
             {t.settings}
           </h1>
           <p className="text-gray-400 mt-2">
-            {lang === "ar" 
+            {lang === "ar"
               ? "إدارة إعدادات حسابك وتفضيلات النظام"
               : "Manage your account settings and system preferences"
             }
@@ -252,7 +252,7 @@ export default function ProfessionalSettingsPage() {
               <User className="h-5 w-5 text-blue-600" />
               <h3 className="text-lg font-semibold text-gray-900">{t.profile}</h3>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -264,7 +264,7 @@ export default function ProfessionalSettingsPage() {
                   placeholder={lang === "ar" ? "أدخل اسمك الكامل" : "Enter your full name"}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {lang === "ar" ? "البريد الإلكتروني" : "Email"}
@@ -275,7 +275,7 @@ export default function ProfessionalSettingsPage() {
                   placeholder={lang === "ar" ? "أدخل بريدك الإلكتروني" : "Enter your email"}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {lang === "ar" ? "رقم الهاتف" : "Phone Number"}
@@ -295,7 +295,7 @@ export default function ProfessionalSettingsPage() {
               <Monitor className="h-5 w-5 text-purple-600" />
               <h3 className="text-lg font-semibold text-gray-900">{t.appearance}</h3>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -303,28 +303,32 @@ export default function ProfessionalSettingsPage() {
                 </label>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setLang("ar")}
-                    className={`px-4 py-2 rounded-lg border-2 transition-colors ${
-                      lang === "ar" 
-                        ? "border-blue-500 bg-blue-50 text-blue-700" 
+                    onClick={() => {
+                      setLang("ar")
+                      setLanguage("ar")
+                    }}
+                    className={`px-4 py-2 rounded-lg border-2 transition-colors ${lang === "ar"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
                         : "border-gray-300 text-gray-700 hover:border-gray-400"
-                    }`}
+                      }`}
                   >
                     العربية
                   </button>
                   <button
-                    onClick={() => setLang("en")}
-                    className={`px-4 py-2 rounded-lg border-2 transition-colors ${
-                      lang === "en" 
-                        ? "border-blue-500 bg-blue-50 text-blue-700" 
+                    onClick={() => {
+                      setLang("en")
+                      setLanguage("en")
+                    }}
+                    className={`px-4 py-2 rounded-lg border-2 transition-colors ${lang === "en"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
                         : "border-gray-300 text-gray-700 hover:border-gray-400"
-                    }`}
+                      }`}
                   >
                     English
                   </button>
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t.theme}
@@ -332,22 +336,20 @@ export default function ProfessionalSettingsPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setTheme("light")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-colors ${
-                      theme === "light" 
-                        ? "border-blue-500 bg-blue-50 text-blue-700" 
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-colors ${theme === "light"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
                         : "border-gray-300 text-gray-700 hover:border-gray-400"
-                    }`}
+                      }`}
                   >
                     <Sun className="h-4 w-4" />
                     {t.lightMode}
                   </button>
                   <button
                     onClick={() => setTheme("dark")}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-colors ${
-                      theme === "dark" 
-                        ? "border-blue-500 bg-blue-50 text-blue-700" 
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-colors ${theme === "dark"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
                         : "border-gray-300 text-gray-700 hover:border-gray-400"
-                    }`}
+                      }`}
                   >
                     <Moon className="h-4 w-4" />
                     {t.darkMode}
@@ -363,7 +365,7 @@ export default function ProfessionalSettingsPage() {
               <Bell className="h-5 w-5 text-amber-600" />
               <h3 className="text-lg font-semibold text-gray-900">{t.notifications}</h3>
             </div>
-            
+
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -374,18 +376,16 @@ export default function ProfessionalSettingsPage() {
                 </div>
                 <button
                   onClick={() => setEmailNotifications(!emailNotifications)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    emailNotifications ? "bg-blue-600" : "bg-gray-200"
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${emailNotifications ? "bg-blue-600" : "bg-gray-200"
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      emailNotifications ? "translate-x-6" : "translate-x-1"
-                    }`}
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${emailNotifications ? "translate-x-6" : "translate-x-1"
+                      }`}
                   />
                 </button>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium text-gray-700">{t.pushNotifications}</div>
@@ -395,18 +395,16 @@ export default function ProfessionalSettingsPage() {
                 </div>
                 <button
                   onClick={() => setPushNotifications(!pushNotifications)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    pushNotifications ? "bg-blue-600" : "bg-gray-200"
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${pushNotifications ? "bg-blue-600" : "bg-gray-200"
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      pushNotifications ? "translate-x-6" : "translate-x-1"
-                    }`}
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${pushNotifications ? "translate-x-6" : "translate-x-1"
+                      }`}
                   />
                 </button>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-medium text-gray-700">{t.smsNotifications}</div>
@@ -416,14 +414,12 @@ export default function ProfessionalSettingsPage() {
                 </div>
                 <button
                   onClick={() => setSmsNotifications(!smsNotifications)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    smsNotifications ? "bg-blue-600" : "bg-gray-200"
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${smsNotifications ? "bg-blue-600" : "bg-gray-200"
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      smsNotifications ? "translate-x-6" : "translate-x-1"
-                    }`}
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${smsNotifications ? "translate-x-6" : "translate-x-1"
+                      }`}
                   />
                 </button>
               </div>
@@ -436,7 +432,7 @@ export default function ProfessionalSettingsPage() {
               <Shield className="h-5 w-5 text-red-600" />
               <h3 className="text-lg font-semibold text-gray-900">{t.security}</h3>
             </div>
-            
+
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -447,18 +443,16 @@ export default function ProfessionalSettingsPage() {
                 </div>
                 <button
                   onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    twoFactorEnabled ? "bg-blue-600" : "bg-gray-200"
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${twoFactorEnabled ? "bg-blue-600" : "bg-gray-200"
+                    }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      twoFactorEnabled ? "translate-x-6" : "translate-x-1"
-                    }`}
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${twoFactorEnabled ? "translate-x-6" : "translate-x-1"
+                      }`}
                   />
                 </button>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {t.changePassword}
@@ -491,7 +485,7 @@ export default function ProfessionalSettingsPage() {
               <Database className="h-5 w-5 text-green-600" />
               <h3 className="text-lg font-semibold text-gray-900">{t.dataManagement}</h3>
             </div>
-            
+
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div>
@@ -513,7 +507,7 @@ export default function ProfessionalSettingsPage() {
                   )}
                 </Button>
               </div>
-              
+
               <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
                 <div>
                   <div className="font-medium text-red-700">{t.deleteAccount}</div>

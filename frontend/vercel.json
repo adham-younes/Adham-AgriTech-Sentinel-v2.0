@@ -3,15 +3,5 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "outputDirectory": ".next",
-  "crons": [
-    {
-      "path": "/api/cron/field-analytics",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/system/agent/run",
-      "schedule": "0 * * * *"
-    }
-  ]
+  "outputDirectory": ".next"
 }

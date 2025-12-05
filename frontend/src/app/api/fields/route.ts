@@ -256,17 +256,37 @@ export async function POST(request: Request) {
     const name = body.name?.trim()
     const area = coerceNumber(body.area ?? raw?.area)
 
-    if (!farmId || !name || !area || area <= 0) {
+    // Detailed validation with specific error messages
+    const validationErrors: string[] = []
+    
+    if (!farmId) {
+      validationErrors.push("farm_id is required")
+    }
+    if (!name) {
+      validationErrors.push("name is required")
+    } else if (name.length < 2) {
+      validationErrors.push("name must be at least 2 characters")
+    }
+    if (area === null || area === undefined) {
+      validationErrors.push("area is required")
+    } else if (area <= 0) {
+      validationErrors.push("area must be greater than 0")
+    } else if (area > 10000) {
+      validationErrors.push("area cannot exceed 10,000 hectares")
+    }
+    
+    if (validationErrors.length > 0) {
       return NextResponse.json(
         {
           error: "INVALID_INPUT",
-          message: "farm_id,name,area_required",
+          message: validationErrors.join("; "),
+          details: validationErrors,
         },
         { status: 400 },
       )
     }
 
-    const ownership = await ensureFarmOwnership(supabase, farmId, user.id)
+    const ownership = await ensureFarmOwnership(supabase, farmId!, user.id)
     if (!ownership.ok) {
       return NextResponse.json({ error: ownership.message }, { status: ownership.status })
     }
@@ -298,9 +318,9 @@ export async function POST(request: Request) {
     }
 
     const basePayload = {
-      farm_id: farmId,
-      name,
-      area,
+      farm_id: farmId!,
+      name: name!,
+      area: area!,
       crop_type: body.crop_type && typeof body.crop_type === "string" ? body.crop_type.trim() : null,
       soil_type: body.soil_type && typeof body.soil_type === "string" ? body.soil_type.trim() : null,
       irrigation_type: body.irrigation_type && typeof body.irrigation_type === "string" ? body.irrigation_type.trim() : null,

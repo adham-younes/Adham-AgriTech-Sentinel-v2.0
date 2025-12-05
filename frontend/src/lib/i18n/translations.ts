@@ -1,6 +1,12 @@
 export const translations = {
   ar: {
+    // Branding
+    "branding.name": "أدهم أجريتك",
+    
     // Navigation
+    "navigation.dashboard": "لوحة التحكم",
+    "navigation.services": "الخدمات",
+    "navigation.partners": "الشركاء",
     dashboard: "لوحة التحكم",
     farms: "المزارع",
     fields: "الحقول",
@@ -59,7 +65,13 @@ export const translations = {
     aiDiagnostics: "التشخيص الذكي",
   },
   en: {
+    // Branding
+    "branding.name": "Adham AgriTech",
+    
     // Navigation
+    "navigation.dashboard": "Dashboard",
+    "navigation.services": "Services",
+    "navigation.partners": "Partners",
     dashboard: "Dashboard",
     farms: "Farms",
     fields: "Fields",

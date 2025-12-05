@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify user has access to this field
-        const supabase = createClient()
+        const supabase = await createClient()
         const { data: field, error: fieldError } = await supabase
             .from("fields")
             .select(`

@@ -1,45 +1,34 @@
-import { VertexAI } from '@google-cloud/aiplatform';
+import { VertexAI } from '@google-cloud/vertexai';
 
-// Vertex AI Configuration
-const PROJECT_ID = 'adham-agritech-529b0';
-const LOCATION = 'us-central1'; // or your preferred region
+// Initialize Vertex AI with fail-safe logic
+const project = process.env.NEXT_PUBLIC_GOOGLE_PROJECT_ID || 'adham-agritech-529b0';
+const location = 'us-central1';
 
-// Initialize Vertex AI client
-export function getVertexAIClient() {
-    // For local development, use the credentials file
-    if (process.env.NODE_ENV === 'development') {
-        process.env.GOOGLE_APPLICATION_CREDENTIALS = require('path').resolve(__dirname, '../../../vertex-ai-credentials.json');
+let vertexClient: VertexAI | null = null;
+
+export function getVertexClient() {
+    if (!vertexClient) {
+        try {
+            // Ensure we only run this on the server-side to avoid browser leaks
+            if (typeof window === 'undefined') {
+                vertexClient = new VertexAI({ project: project, location: location });
+                console.log('[System] Vertex AI Client Initialized Successfully.');
+            }
+        } catch (error) {
+            console.error('[System] Failed to initialize Vertex AI:', error);
+            // Fallback logic is handled by the AI Registry, do not crash.
+        }
     }
-
-    // For production (Vercel), parse credentials from environment variable
-    const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-    const authOptions = credentialsJson ? { credentials: JSON.parse(credentialsJson) } : undefined;
-
-    return new VertexAI({
-        project: PROJECT_ID,
-        location: LOCATION,
-        googleAuthOptions: authOptions,
-    });
+    return vertexClient;
 }
 
-// Gemini Pro model configuration
-export const GEMINI_MODEL = 'gemini-2.0-flash-exp';
+export async function getModel(modelName: string = 'gemini-1.5-pro-preview-0409') {
+    const client = getVertexClient();
+    if (!client) throw new Error("Vertex AI Client not available.");
 
-export async function generateWithVertex(prompt: string, options?: {
-    temperature?: number;
-    maxTokens?: number;
-}) {
-    const vertexAI = getVertexAIClient();
-
-    const generativeModel = vertexAI.preview.getGenerativeModel({
-        model: GEMINI_MODEL,
-        generationConfig: {
-            maxOutputTokens: options?.maxTokens || 8192,
-            temperature: options?.temperature || 0.7,
-        },
+    return client.getGenerativeModel({
+        model: modelName,
+        safetySettings: [{ category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' }],
+        generationConfig: { maxOutputTokens: 2048, temperature: 0.4 },
     });
-
-    const result = await generativeModel.generateContent(prompt);
-    const response = await result.response;
-    return response.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }

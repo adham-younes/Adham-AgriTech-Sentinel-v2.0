@@ -25,7 +25,7 @@ export async function GET(
         }
 
         // Get from database
-        const supabase = createClient()
+        const supabase = await createClient()
         const { data: productivityMap, error: dbError } = await supabase
             .from("productivity_maps")
             .select(`

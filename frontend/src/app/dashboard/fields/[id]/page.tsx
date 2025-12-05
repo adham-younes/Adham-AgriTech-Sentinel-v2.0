@@ -373,7 +373,7 @@ export default function FieldDetailsPage() {
             <UnifiedEOSDAMap
               fieldId={fieldId}
               fieldName={field.name}
-              coordinates={field.boundary_coordinates?.coordinates?.[0]}
+              coordinates={field.boundary_coordinates?.coordinates?.[0] || []}
               center={fieldCenter}
               zoom={14}
               height="500px"

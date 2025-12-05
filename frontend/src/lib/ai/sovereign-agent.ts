@@ -1,15 +1,10 @@
-import { getVertexAIClient, GEMINI_MODEL } from './vertex-ai';
+// import { getModel } from './vertex-ai'; // Deprecated in favor of Groq
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { SOVEREIGN_AGENT_PROMPT } from './sovereign-prompt';
 import { GEEAnalysisRequest, BigQueryQuery } from './tools/definitions';
 import { fetchESODAData } from './tools/esoda';
 import { redeployProject } from './tools/vercel';
-
-// Initialize Supabase Admin Client (Service Role)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 interface AgentState {
     runId: string;
@@ -18,18 +13,22 @@ interface AgentState {
 }
 
 export class SovereignAgent {
-    private vertexClient;
     private runId: string;
     private state: AgentState;
+    private supabase;
 
     constructor() {
-        this.vertexClient = getVertexAIClient();
         this.runId = uuidv4();
         this.state = {
             runId: this.runId,
             memory: [],
             systemState: {}
         };
+
+        // Initialize Supabase Admin Client (Service Role)
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+        this.supabase = createClient(supabaseUrl, supabaseServiceKey);
     }
 
     /**
@@ -90,7 +89,7 @@ export class SovereignAgent {
 
     private async observe() {
         // Fetch active rules
-        const { data: rules } = await supabase
+        const { data: rules } = await this.supabase
             .from('system_rules')
             .select('*')
             .eq('is_active', true);
@@ -278,20 +277,32 @@ export class SovereignAgent {
 
     private async generateText(prompt: string): Promise<string> {
         try {
-            const generativeModel = this.vertexClient.preview.getGenerativeModel({
-                model: GEMINI_MODEL,
-            });
-            const result = await generativeModel.generateContent(prompt);
-            const response = await result.response;
-            return response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            // Use the Council of Minds (Ensemble)
+            const { council } = await import('./council');
+            const response = await council.consult(prompt, `You are the Sovereign Agent for Adham AgriTech. 
+            Your goal is to autonomously manage and optimize the agricultural platform.
+            You have access to tools for database management, deployment, and external APIs (EOSDA).
+            Always reason step-by-step before executing actions.`);
+
+            return response.consensus;
         } catch (e) {
-            console.error('Vertex AI Error:', e);
+            console.error('Council AI Error:', e);
+            throw e;
+        }
+    }
+
+    public async analyzeVisualData(imageUrl: string, prompt: string): Promise<string> {
+        try {
+            const { analyzeImage } = await import('./gemini-client');
+            return await analyzeImage(imageUrl, prompt);
+        } catch (e) {
+            console.error('Vision Analysis Error:', e);
             throw e;
         }
     }
 
     private async log(type: string, summary: string, analysis?: string, action?: any) {
-        await supabase.from('system_agent_logs').insert({
+        await this.supabase.from('system_agent_logs').insert({
             run_id: this.runId,
             event_type: type,
             summary,

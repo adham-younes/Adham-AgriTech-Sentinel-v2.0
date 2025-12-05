@@ -116,8 +116,10 @@ export function getEOSDAConfig() {
   const apiKey = eosdaServerConfig.apiKey || (trim(process.env.EOSDA_API_KEY) as string | undefined)
 
   const baseUrl = eosdaServerConfig.apiUrl || "https://api-connect.eos.com"
-  const version = eosdaServerConfig.apiVersion || "v1"
-  const apiBaseUrl = `${baseUrl.replace(/\/$/, "")}/${version.replace(/^\//, "")}`
+  const version = eosdaServerConfig.apiVersion || "v2"
+  // EOSDA API structure: baseUrl + /api/lms/search/v2/sentinel2
+  // The paths in this file already include /api/ prefix
+  const apiBaseUrl = baseUrl.replace(/\/$/, "")
 
   return {
     apiKey,

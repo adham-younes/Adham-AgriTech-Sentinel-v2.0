@@ -1,6 +1,6 @@
 
 const apiKey = "apk.cefa9921669b0857be282894813d1213ed88c5e8299e29a5e91db105464aa232";
-const baseUrl = "https://api.eosda.com/v1";
+const baseUrl = "https://api-connect.eos.com/v1";
 
 async function verifyEOSDA() {
     console.log("Verifying EOSDA API connection...");

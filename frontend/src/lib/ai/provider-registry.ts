@@ -1,6 +1,7 @@
 import type { LanguageModel } from "ai"
 import { createGroq } from "@ai-sdk/groq"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
+import { createOpenAI } from "@ai-sdk/openai"
 
 export interface AIProvider {
   id: string
@@ -43,6 +44,26 @@ export class AIProviderRegistry {
     const providers: AIProvider[] = []
 
     const trim = (v?: string) => (typeof v === "string" ? v.trim() : v)
+
+    // Priority 0: OpenAI (Highest Quality - "Opus-like")
+    if (trim(process.env.OPENAI_API_KEY)) {
+      try {
+        const openaiKey = trim(process.env.OPENAI_API_KEY) as string
+        const openaiClient = createOpenAI({ apiKey: openaiKey })
+        const openaiModel = trim(process.env.OPENAI_MODEL) || "gpt-4o"
+        providers.push({
+          id: "openai",
+          name: "OpenAI (GPT-4o)",
+          modelId: openaiModel,
+          getModel: () => openaiClient(openaiModel),
+          isAvailable: true,
+          capabilities: { vision: true },
+        })
+        console.log("[AI Registry] OpenAI initialized successfully")
+      } catch (error) {
+        console.warn("[AI Registry] Failed to initialize OpenAI:", error)
+      }
+    }
 
     // Priority 1: Vertex AI (Enterprise)
     const vertexLocation = trim(process.env.VERTEX_AI_LOCATION);
@@ -303,6 +324,25 @@ export class AIProviderRegistry {
                 })
               } catch (e) {
                 console.warn("[AI Registry] Failed to init Google from DB key", e)
+              }
+            }
+          } else if (key.provider_id === "openai") {
+            const openaiKey = trim(key.api_key)
+            if (openaiKey) {
+              try {
+                const { createOpenAI } = await import("@ai-sdk/openai")
+                const openaiClient = createOpenAI({ apiKey: openaiKey })
+                const openaiModel = trim(key.model_id) || "gpt-4o"
+                dbProviders.push({
+                  id: "openai",
+                  name: "OpenAI (DB)",
+                  modelId: openaiModel,
+                  getModel: () => openaiClient(openaiModel),
+                  isAvailable: true,
+                  capabilities: { vision: true },
+                })
+              } catch (e) {
+                console.warn("[AI Registry] Failed to init OpenAI from DB key", e)
               }
             }
           }

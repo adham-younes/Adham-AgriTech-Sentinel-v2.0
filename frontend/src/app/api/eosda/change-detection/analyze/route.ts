@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get field geometry
-        const supabase = createClient()
+        const supabase = await createClient()
         const { data: field, error: fieldError } = await supabase
             .from("fields")
             .select("geom")

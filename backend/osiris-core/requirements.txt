@@ -1,0 +1,5 @@
+functions-framework==3.4.0
+google-generativeai>=0.3.0
+earthengine-api>=0.1.300
+google-cloud-bigquery>=3.10.0
+requests>=2.31.0

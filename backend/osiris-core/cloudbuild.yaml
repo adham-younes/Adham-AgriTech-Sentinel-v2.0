@@ -1,0 +1,16 @@
+
+steps:
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args:
+      - gcloud
+      - functions
+      - deploy
+      - osiris-core
+      - --gen2
+      - --region=us-central1
+      - --runtime=python311
+      - --source=backend/osiris-core
+      - --entry-point=osiris_core
+      - --trigger-http
+      - --allow-unauthenticated
+      - --set-env-vars=GCP_PROJECT=$PROJECT_ID,GCP_REGION=us-central1

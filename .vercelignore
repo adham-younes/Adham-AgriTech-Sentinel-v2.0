@@ -1,0 +1,9 @@
+# Vercel Ignore File
+backend/
+tmp_gcloud/
+secrets/
+.git/
+node_modules/
+frontend/node_modules/
+.DS_Store
+*.log

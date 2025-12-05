@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     console.log("[EOSDA-TEST] Environment variables:", envTests)
 
     // Test 2: EOSDA API Direct Call
-    const apiKey = process.env.NEXT_PUBLIC_EOSDA_API_KEY
+    const apiKey = process.env.NEXT_PUBLIC_EOSDA_API_KEY || process.env.EOSDA_API_KEY || "apk.cefa9921669b0857be282894813d1213ed88c5e8299e29a5e91db105464aa232"
     const apiUrl = process.env.NEXT_PUBLIC_EOSDA_API_URL || "https://api-connect.eos.com"
     
     if (!apiKey) {
@@ -33,12 +33,12 @@ export async function GET(request: Request) {
 
     console.log("[EOSDA-TEST] Testing API call to:", apiUrl)
     
-    // Test a simple API call - try different endpoints
+    // Test a simple API call - try correct EOSDA endpoints
+    // Documentation: https://doc.eos.com/docs/search/simple-search/
     const endpoints = [
-      `${apiUrl}/v1/polygons/search`,
-      `${apiUrl}/v1/images/search`,
-      `${apiUrl}/v1/data/zones`,
-      `${apiUrl}/v1/auth/verify` // Test if API key is valid
+      `${apiUrl}/api/lms/search/v2/sentinel2`,
+      `${apiUrl}/api/lms/search/v2/sentinel2l2a`,
+      `${apiUrl}/api/render/S2/36/U/XU/2016/5/2/0/NDVI/10/611/354` // Render test
     ]
 
     let apiResults = []
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
+            "X-Api-Key": apiKey
           }
         }
 
@@ -96,7 +96,7 @@ export async function GET(request: Request) {
         lng: parseFloat(process.env.NEXT_PUBLIC_EOSDA_CENTER_LNG || "32.55524")
       },
       esriTileUrl: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      eosdaTileUrl: process.env.NEXT_PUBLIC_EOSDA_TILE_URL || "https://api.eosda.com",
+      eosdaTileUrl: process.env.NEXT_PUBLIC_EOSDA_TILE_URL || "https://api-connect.eos.com",
       zoom: {
         default: parseInt(process.env.NEXT_PUBLIC_EOSDA_DEFAULT_ZOOM || "6"),
         min: parseInt(process.env.NEXT_PUBLIC_EOSDA_MIN_ZOOM || "1"),

@@ -25,7 +25,13 @@ export function IrrigationRecommendation({ moisture, weatherCondition, cropType 
         ? "مستويات الرطوبة في التربة مثالية. لا حاجة للري اليوم."
         : "Soil moisture levels are optimal. No irrigation needed today."
 
-    if (isLow) {
+    if (moisture === 0) {
+        status = "warning"
+        title = isAr ? "بانتظار البيانات" : "Waiting for Data"
+        message = isAr
+            ? "جاري جلب بيانات الرطوبة من الأقمار الصناعية..."
+            : "Fetching moisture data from satellites..."
+    } else if (isLow) {
         status = "urgent"
         title = isAr ? "تنبيه: جفاف التربة" : "Alert: Low Soil Moisture"
         message = isAr

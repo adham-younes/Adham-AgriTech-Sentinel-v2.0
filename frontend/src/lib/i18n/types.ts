@@ -85,6 +85,7 @@ export type TranslationKey =
   | FieldsTranslationKey
   | FarmsTranslationKey
   | DashboardTranslationKey
+  | string
 
 // ============================================================================
 // Translation Options

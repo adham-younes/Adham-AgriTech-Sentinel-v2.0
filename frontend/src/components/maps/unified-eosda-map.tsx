@@ -68,7 +68,15 @@ export interface UnifiedEOSDAMapProps {
 
 const DEFAULT_CENTER: [number, number] = [eosdaPublicConfig.center.lng, eosdaPublicConfig.center.lat]
 const DEFAULT_ZOOM = eosdaPublicConfig.zoom.default || 10
+const MIN_ZOOM = eosdaPublicConfig.zoom.min || 1
+const MAX_ZOOM = eosdaPublicConfig.zoom.max || 18
 const EOSDA_API_KEY = process.env.NEXT_PUBLIC_EOSDA_API_KEY?.trim() || ''
+
+// Fallback tile sources for when EOSDA is unavailable
+const FALLBACK_TILE_SOURCES = {
+  esri: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  osm: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+}
 
 const LAYER_CONFIG: Record<EOSDAMapLayer, { name: { ar: string; en: string }; color: string; eosdaLayer: string }> = {
   'true-color': {
@@ -200,10 +208,13 @@ export function UnifiedEOSDAMap({
           ],
         },
         center: mapCenter,
-        zoom,
+        zoom: Math.min(Math.max(zoom, MIN_ZOOM), MAX_ZOOM),
+        minZoom: MIN_ZOOM,
+        maxZoom: MAX_ZOOM,
         pitch,
         bearing,
         antialias: true,
+        failIfMajorPerformanceCaveat: false,
       })
 
       mapRef.current.on('load', () => {
@@ -217,6 +228,11 @@ export function UnifiedEOSDAMap({
       })
 
       mapRef.current.on('error', (e) => {
+        // Ignore tile loading errors - they're common and don't break the map
+        if (e.error?.message?.includes('tile') || e.error?.message?.includes('404')) {
+          console.warn('[UnifiedEOSDAMap] Tile loading warning:', e.error?.message)
+          return
+        }
         const err = new Error(
           lang === 'ar'
             ? `خطأ في تحميل الخريطة: ${e.error?.message || 'خطأ غير معروف'}`

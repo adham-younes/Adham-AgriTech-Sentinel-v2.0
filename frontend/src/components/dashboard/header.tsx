@@ -50,7 +50,8 @@ export function DashboardHeader({ user, profile }: HeaderProps) {
 
   return (
     <header className="flex h-14 sm:h-16 items-center justify-between border-b border-white/5 bg-background/40 backdrop-blur-xl px-3 sm:px-6 shadow-3d gap-3 sm:gap-4">
-      <MobileMenu user={user} profile={profile} />
+      {/* MobileMenu removed to avoid duplication with MobileNav */}
+      <div className="md:hidden"></div>
 
       <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
         <h1 className="text-sm sm:text-xl font-bold bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent truncate">

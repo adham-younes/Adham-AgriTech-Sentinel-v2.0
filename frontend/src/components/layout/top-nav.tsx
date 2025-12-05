@@ -11,6 +11,7 @@ export function TopNav() {
   const pathname = usePathname()
   const { t, language, toggleLanguage } = useTranslation()
   const isDashboard = pathname?.startsWith("/dashboard")
+  const isAuthPage = pathname?.startsWith("/auth")
   const [open, setOpen] = useState(false)
   const [userName, setUserName] = useState<string | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
@@ -38,7 +39,8 @@ export function TopNav() {
     }
   }, [supabase])
 
-  if (isDashboard) return null
+  // Hide TopNav on dashboard and auth pages
+  if (isDashboard || isAuthPage) return null
 
   const showPartners = process.env.NEXT_PUBLIC_SHOW_PARTNERS === "true"
 
@@ -51,8 +53,7 @@ export function TopNav() {
     },
     { href: "/dashboard/services", label: t("navigation.services") },
     showPartners ? { href: "/partners", label: t("navigation.partners") } : null,
-    { href: "/about", label: language === "ar" ? "الرؤية" : "Vision" },
-    { href: "/about#vision-team", label: language === "ar" ? "منظور المؤسس" : "Founder Lens" },
+    { href: "/about", label: language === "ar" ? "الرؤية والمؤسس" : "Vision & Founder" },
   ]
 
   const authAction = authChecked ? (
@@ -91,9 +92,8 @@ export function TopNav() {
             <Link
               key={item!.href}
               href={item!.href}
-              className={`rounded-md px-3 py-1.5 transition-colors hover:text-primary ${
-                pathname === item!.href ? "text-primary" : "text-white/80"
-              }`}
+              className={`rounded-md px-3 py-1.5 transition-colors hover:text-primary ${pathname === item!.href ? "text-primary" : "text-white/80"
+                }`}
             >
               {item!.label}
             </Link>
@@ -139,9 +139,8 @@ export function TopNav() {
                 key={item!.href}
                 href={item!.href}
                 onClick={() => setOpen(false)}
-                className={`rounded-md px-3 py-2 transition-colors hover:text-primary ${
-                  pathname === item!.href ? "text-primary" : "text-white/80"
-                }`}
+                className={`rounded-md px-3 py-2 transition-colors hover:text-primary ${pathname === item!.href ? "text-primary" : "text-white/80"
+                  }`}
               >
                 {item!.label}
               </Link>
