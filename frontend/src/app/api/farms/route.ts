@@ -63,23 +63,31 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "AUTH_REQUIRED", message: "Please sign in to view farms" }, { status: 401 })
     }
 
-    // Get farms where user is owner or member - simplified query
-    const { data: farms, error: farmsError } = await supabase
-      .from("farms")
-      .select("*")
-      .or(`user_id.eq.${user.id},owner_id.eq.${user.id}`)
-      .order("created_at", { ascending: false })
+    // Get farms where user is owner or member via farm_owners bridge
+    // This ensures we catch shared farms and consistent with Dashboard logic
+    const { data: ownerships, error: ownershipsError } = await supabase
+      .from('farm_owners')
+      .select('farm_id, farms (*)')
+      .eq('user_id', user.id)
+      .order('added_at', { ascending: false })
 
-    if (farmsError) {
-      logger.error("[API] Failed to fetch farms", farmsError, { userId: user.id, endpoint: "GET /api/farms" })
+    if (ownershipsError) {
+      logger.error("[API] Failed to fetch farm ownerships", ownershipsError, { userId: user.id, endpoint: "GET /api/farms" })
       return NextResponse.json(
-        { error: "FARMS_FETCH_FAILED", message: farmsError.message },
+        { error: "FARMS_FETCH_FAILED", message: ownershipsError.message },
         { status: 500 }
       )
     }
 
-    logger.info("[API] Successfully fetched farms", { count: farms?.length || 0, userId: user.id })
-    return NextResponse.json({ farms: farms || [] })
+    // Flatten the result structure
+    // farm_owners returns { farm_id, farms: { ...farmDetails } }
+    // We map it to just [ ...farmDetails ]
+    const farms = ownerships
+      ?.map(row => row.farms)
+      .filter(farm => farm !== null) || []
+
+    logger.info("[API] Successfully fetched farms", { count: farms.length, userId: user.id })
+    return NextResponse.json({ farms })
   } catch (error) {
     logger.error("[API] Unexpected farms fetch error", error, { endpoint: "GET /api/farms" })
     const message = error instanceof Error ? error.message : "Unknown error"
@@ -159,7 +167,7 @@ export async function POST(request: Request) {
       Object.entries(mutablePayload).filter(([, value]) => value !== undefined),
     )
 
-    logger.debug("[API/farms] Attempting initial insert", { 
+    logger.debug("[API/farms] Attempting initial insert", {
       payload: payloadToSend,
       endpoint: "POST /api/farms"
     })
@@ -288,14 +296,14 @@ export async function POST(request: Request) {
       if (bridgeError) {
         logger.error("[API] Failed to update farm_owners bridge", bridgeError, {
           endpoint: "POST /api/farms",
-          farmId: insertedFarmId
+          farmId: insertedId
         })
         // Don't fail the request, but log the error
       }
     } catch (bridgeError) {
       logger.error("[API] Unexpected bridge error", bridgeError, {
         endpoint: "POST /api/farms",
-        farmId: insertedFarmId
+        farmId: insertedId
       })
     }
 

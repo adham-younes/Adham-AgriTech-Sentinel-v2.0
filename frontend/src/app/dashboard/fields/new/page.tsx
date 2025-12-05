@@ -71,7 +71,7 @@ export default function NewFieldPage() {
   })
 
   const supabase = useMemo(() => createClient(), [])
-  
+
   // Initialize Farm Service
   const farmService = useMemo(() => {
     const { FarmService } = require('@/lib/services/core/farm-service')
@@ -362,35 +362,7 @@ export default function NewFieldPage() {
       }
       setBoundaryError(null)
 
-      // Validate area against farm area using Farm Service
-      if (formData.farm_id && resolvedAreaFeddan !== null) {
-        try {
-          const validation = await farmService.validateFarmArea(
-            formData.farm_id,
-            resolvedAreaFeddan,
-            lang
-          )
-          
-          if (!validation.valid) {
-            setFormError(validation.error || t[lang].areaVsFarmWarning)
-            setBoundaryError(validation.error || t[lang].areaVsFarmWarning)
-            setLoading(false)
-            return
-          }
-        } catch (error) {
-          console.error('[FieldForm] Error validating area:', error)
-          // Continue with submission if validation fails (non-blocking)
-        }
-      }
-      
-      // Also check synchronous validation
-      if (areaValidationErrorSync) {
-        setFormError(areaValidationErrorSync)
-        setBoundaryError(areaValidationErrorSync)
-        setLoading(false)
-        return
-      }
-
+      // Calculate area first before validation
       let resolvedAreaFeddan = autoAreaFeddan
 
       if (useManualArea) {
@@ -406,6 +378,35 @@ export default function NewFieldPage() {
 
       if (resolvedAreaFeddan === null || Number.isNaN(resolvedAreaFeddan)) {
         alert(t[lang].areaMissing)
+        setLoading(false)
+        return
+      }
+
+      // Validate area against farm area using Farm Service
+      if (formData.farm_id && resolvedAreaFeddan !== null) {
+        try {
+          const validation = await farmService.validateFarmArea(
+            formData.farm_id,
+            resolvedAreaFeddan,
+            lang
+          )
+
+          if (!validation.valid) {
+            setFormError(validation.error || t[lang].areaVsFarmWarning)
+            setBoundaryError(validation.error || t[lang].areaVsFarmWarning)
+            setLoading(false)
+            return
+          }
+        } catch (error) {
+          console.error('[FieldForm] Error validating area:', error)
+          // Continue with submission if validation fails (non-blocking)
+        }
+      }
+
+      // Also check synchronous validation
+      if (areaValidationErrorSync) {
+        setFormError(areaValidationErrorSync)
+        setBoundaryError(areaValidationErrorSync)
         setLoading(false)
         return
       }
