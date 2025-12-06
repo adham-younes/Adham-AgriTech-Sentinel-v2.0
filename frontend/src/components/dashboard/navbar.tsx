@@ -100,14 +100,14 @@ export function DashboardNavbar({ user, profile }: NavbarProps) {
                                     <ChevronDown className="h-3 w-3 opacity-50" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="center" className="w-56 glass-card border-white/10 mt-2">
+                            <DropdownMenuContent align="center" className="w-56 glass-card border-white/10 mt-2 z-[100]">
                                 {group.items.map((key) => {
                                     const item = navigationItems[key as keyof typeof navigationItems]
                                     const Icon = item.icon
                                     const isActive = pathname === item.href
                                     return (
-                                        <Link key={key} href={item.href} passHref>
-                                            <DropdownMenuItem className={cn("cursor-pointer gap-2 py-2.5", isActive && "bg-primary/20 text-primary focus:bg-primary/20")}>
+                                        <DropdownMenuItem key={key} asChild className={cn("cursor-pointer gap-2 py-2.5", isActive && "bg-primary/20 text-primary focus:bg-primary/20")}>
+                                            <Link href={item.href}>
                                                 <Icon className="h-4 w-4" />
                                                 <span className="flex-1">{t(item.translationKey)}</span>
                                                 {/* Status Badge */}
@@ -116,8 +116,8 @@ export function DashboardNavbar({ user, profile }: NavbarProps) {
                                                         {language === 'ar' ? navStatusTokens[(item as any).status as keyof typeof navStatusTokens]?.ar : navStatusTokens[(item as any).status as keyof typeof navStatusTokens]?.en}
                                                     </span>
                                                 )}
-                                            </DropdownMenuItem>
-                                        </Link>
+                                            </Link>
+                                        </DropdownMenuItem>
                                     )
                                 })}
                             </DropdownMenuContent>
