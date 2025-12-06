@@ -1,10 +1,8 @@
 import type React from "react"
 import { createClient } from "@/lib/supabase/server"
-import { DashboardSidebar } from "@/components/dashboard/sidebar"
-import { DashboardHeader } from "@/components/dashboard/header"
+import { DashboardNavbar } from "@/components/dashboard/navbar" // New Navbar
 import { resolveActiveProfile } from "@/lib/supabase/demo-session"
 import { ErrorBoundary } from "@/components/ui/error-boundary"
-
 import { MobileNav } from "@/components/dashboard/mobile-nav"
 
 // Force dynamic rendering to prevent static generation errors
@@ -15,16 +13,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { user, profile } = await resolveActiveProfile(supabase)
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <div className="hidden md:flex md:w-64 md:flex-col">
-        <DashboardSidebar user={user} profile={profile} />
-      </div>
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader user={user} profile={profile} />
-        {/* Add pb-20 on mobile to account for the fixed bottom nav */}
+    <div className="flex flex-col h-screen overflow-hidden bg-background">
+      {/* 1. Desktop Horizontal Navbar (Replaces Sidebar & Header) */}
+      <DashboardNavbar user={user} profile={profile} />
+
+      {/* 2. Main Content Area */}
+      <div className="flex-1 overflow-hidden relative">
         <ErrorBoundary>
-          <main className="flex-1 overflow-y-auto p-3 pb-20 sm:p-4 md:p-6 md:pb-6">{children}</main>
+          <main className="h-full overflow-y-auto p-3 pb-24 sm:p-4 md:p-6">{children}</main>
         </ErrorBoundary>
+
+        {/* 3. Mobile Navigation (Bottom) */}
         <MobileNav />
       </div>
     </div>
