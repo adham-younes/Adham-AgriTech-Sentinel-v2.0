@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "@/lib/i18n/use-language"
+import { OsirisPulse } from "@/components/dashboard/osiris-pulse"
 import {
     LayoutDashboard,
     Sprout,
@@ -81,6 +82,10 @@ export function DashboardNavbar({ user, profile }: NavbarProps) {
                 </div>
                 <div className="flex flex-col">
                     <span className="text-sm font-bold tracking-tight">{t("branding.name")}</span>
+                </div>
+                {/* OSIRIS PULSE (Always Active) */}
+                <div className="ml-4">
+                    <OsirisPulse />
                 </div>
             </div>
 

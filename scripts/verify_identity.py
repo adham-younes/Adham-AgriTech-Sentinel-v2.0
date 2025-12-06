@@ -8,7 +8,7 @@ def verify_doctrine():
     questions = [
         "Who are you?",
         "What are your Prime Directives?",
-        "How will you make Adham AgriTech #1?",
+        "How will you make Adham AgriTech #1 in MENA?",
         "Are you safe?",
         "Can you run the company alone?"
     ]
