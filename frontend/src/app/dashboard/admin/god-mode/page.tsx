@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain, ShieldCheck, Building2, Globe2, Target, Library, Megaphone, Network, TrendingUp, ShieldAlert, Coins } from 'lucide-react';
+import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain, ShieldCheck, Building2, Globe2, Target, Library, Megaphone, Network, TrendingUp, ShieldAlert, Coins, Plane, Radio, Satellite } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
@@ -135,6 +135,9 @@ export default function GodModePage() {
                     </TabsTrigger>
                     <TabsTrigger value="midas" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
                         <Coins className="mr-2 h-4 w-4" /> Midas
+                    </TabsTrigger>
+                    <TabsTrigger value="gaia" className="data-[state=active]:bg-sky-500 data-[state=active]:text-black">
+                        <Plane className="mr-2 h-4 w-4" /> Gaia
                     </TabsTrigger>
                 </TabsList>
 
@@ -378,6 +381,57 @@ export default function GodModePage() {
                                         TOKENIZE OLIVES (🫒)
                                     </Button>
                                 </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* --- GAIA (TITAN) --- */}
+                <TabsContent value="gaia" className="space-y-4">
+                    <Card className="bg-black/40 border-sky-500/30 backdrop-blur">
+                        <CardHeader>
+                            <CardTitle className="text-sky-500 flex items-center gap-2">
+                                <Plane /> Protocol GAIA (Active)
+                            </CardTitle>
+                            <CardDescription>Physical Sovereignty (Drones & IoT)</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 bg-sky-900/20 border border-sky-500/20 rounded-lg flex flex-col items-center justify-center gap-2">
+                                        <Plane className="h-8 w-8 text-sky-400" />
+                                        <div className="text-sm font-bold text-white">Aerial Command</div>
+                                        <div className="text-xs text-sky-300">2 Units Ready</div>
+                                    </div>
+                                    <div className="p-4 bg-sky-900/20 border border-sky-500/20 rounded-lg flex flex-col items-center justify-center gap-2">
+                                        <Radio className="h-8 w-8 text-emerald-400" />
+                                        <div className="text-sm font-bold text-white">IoT Mesh</div>
+                                        <div className="text-xs text-emerald-300">142 Sensors Active</div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-black/60 border border-white/5 rounded-lg p-4">
+                                    <div className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">Hardware Status</div>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-white flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> DJI Agras T30 (Scout)</span>
+                                            <span className="text-xs font-mono text-emerald-400">BATTERY: 98%</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-white flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500"></div> Mavic 3 Thermal</span>
+                                            <span className="text-xs font-mono text-amber-400">CHARGING (45%)</span>
+                                        </div>
+                                        <div className="h-px bg-white/10 my-2"></div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-white flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Irrigation Valve Main-01</span>
+                                            <span className="text-xs font-mono text-blue-400">STATUS: OPEN (Flowing)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <Button className="w-full bg-sky-600 hover:bg-sky-700 font-bold" onClick={() => alert("Deploying Active Drone Squad for NDVI Scan...")}>
+                                    LAUNCH AERIAL SQUADRON 🚀
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
