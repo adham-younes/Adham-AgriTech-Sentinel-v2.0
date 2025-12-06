@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/refresh-satellite",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/osiris-pulse",
+      "schedule": "0 * * * *"
     }
   ]
 }
