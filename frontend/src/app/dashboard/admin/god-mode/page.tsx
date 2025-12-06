@@ -3,18 +3,39 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain } from 'lucide-react';
+import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain, ShieldCheck } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/client';
+
+const ALLOWED_EMAILS = [
+    'adhamyounesmohamedahmed@gmail.com',
+    'adham@adham-agritech.com',
+    'adhamlouxor@gmail.com'
+];
 
 export default function GodModePage() {
     const [memories, setMemories] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("memory");
+    const [isDivineView, setIsDivineView] = useState(false);
+    const [userEmail, setUserEmail] = useState<string | null>(null);
 
     useEffect(() => {
+        checkUserAccess();
         fetchMemory();
     }, []);
+
+    const checkUserAccess = async () => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
+            setUserEmail(user.email);
+            if (ALLOWED_EMAILS.includes(user.email)) {
+                setIsDivineView(true);
+            }
+        }
+    };
 
     const fetchMemory = async () => {
         setIsLoading(true);
@@ -31,35 +52,65 @@ export default function GodModePage() {
         }
     };
 
+    // Text Variants based on View Mode
+    const texts = {
+        title: isDivineView ? "OSIRIS GOD MODE" : "OSIRIS CORE SYSTEM",
+        subtitle: isDivineView ? "Protocol PROMETHEUS Active | Sovereign Oversight Interface" : "Advanced System Oversight | Neural Core Interface",
+        statusBadge: isDivineView ? "Sovereign Status: ONLINE" : "System Status: ONLINE",
+        brainBadge: isDivineView ? "Brain: Gemini 3 Pro (Divine)" : "Model: Gemini 3 Pro (High-Reasoning)",
+        tabMemory: isDivineView ? "Mind Observatory" : "Neural Logs",
+        tabKnowledge: isDivineView ? "Knowledge Base" : "Data Ingestion",
+        tabPilot: isDivineView ? "Pilot Operations" : "Autonomous Operations",
+        memoryTitle: isDivineView ? "Recent Thoughts & Memories" : "System Decision Logs",
+        memoryDesc: isDivineView ? "Direct feed from BigQuery `osiris_memory` vector store." : "Real-time decision feed from the vector database.",
+        ingestTitle: isDivineView ? "Mass Ingestion Protocols" : "Data Pipeline Management",
+        ingestDesc: isDivineView ? "Inject massive datasets into the Sovereign Memory." : "Manage data ingestion streams for model training.",
+        pilotTitle: isDivineView ? "Pilot Protocol Standby" : "Autonomous Driver Standby",
+        welcome: isDivineView ? "Welcome, Eng. Adham Younes Mohamed - System Architect & Creator." : null
+    };
+
     return (
         <div className="min-h-screen bg-black text-white p-8 font-sans">
-            <header className="mb-8 flex justify-between items-center border-b border-white/10 pb-6">
-                <div>
-                    <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-                        OSIRIS GOD MODE
-                    </h1>
-                    <p className="text-gray-400 mt-2">Protocol PROMETHEUS Active | Sovereign Oversight Interface</p>
-                </div>
-                <div className="flex gap-4">
-                    <Badge variant="outline" className="text-emerald-400 border-emerald-400/30 px-4 py-1">
-                        Sovereign Status: ONLINE
-                    </Badge>
-                    <Badge variant="outline" className="text-cyan-400 border-cyan-400/30 px-4 py-1">
-                        Brain: Gemini 3 Pro
-                    </Badge>
+            <header className="mb-8 border-b border-white/10 pb-6">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                            {texts.title}
+                        </h1>
+                        <p className="text-gray-400 mt-2">{texts.subtitle}</p>
+                        {texts.welcome && (
+                            <div className="mt-4 flex items-center gap-2 text-amber-400 bg-amber-900/20 px-4 py-2 rounded-lg border border-amber-500/30 w-fit">
+                                <ShieldCheck className="h-5 w-5" />
+                                <span className="font-semibold">{texts.welcome}</span>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex flex-col gap-2 items-end">
+                        <div className="flex gap-4">
+                            <Badge variant="outline" className="text-emerald-400 border-emerald-400/30 px-4 py-1">
+                                {texts.statusBadge}
+                            </Badge>
+                            <Badge variant="outline" className="text-cyan-400 border-cyan-400/30 px-4 py-1">
+                                {texts.brainBadge}
+                            </Badge>
+                        </div>
+                        <div className="text-xs text-gray-500 font-mono mt-1">
+                            User: {userEmail || 'Anonymous'}
+                        </div>
+                    </div>
                 </div>
             </header>
 
             <Tabs defaultValue="memory" className="space-y-6" onValueChange={setActiveTab}>
                 <TabsList className="bg-white/5 border border-white/10 p-1">
                     <TabsTrigger value="memory" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                        <Brain className="mr-2 h-4 w-4" /> Mind Observatory
+                        <Brain className="mr-2 h-4 w-4" /> {texts.tabMemory}
                     </TabsTrigger>
                     <TabsTrigger value="knowledge" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                        <Database className="mr-2 h-4 w-4" /> Knowledge Base
+                        <Database className="mr-2 h-4 w-4" /> {texts.tabKnowledge}
                     </TabsTrigger>
                     <TabsTrigger value="pilot" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
-                        <Activity className="mr-2 h-4 w-4" /> Pilot Operations
+                        <Activity className="mr-2 h-4 w-4" /> {texts.tabPilot}
                     </TabsTrigger>
                 </TabsList>
 
@@ -69,9 +120,9 @@ export default function GodModePage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-xl">
                                 <Eye className="text-emerald-400" />
-                                Recent Thoughts & Memories
+                                {texts.memoryTitle}
                             </CardTitle>
-                            <CardDescription>Direct feed from BigQuery `osiris_memory` vector store.</CardDescription>
+                            <CardDescription>{texts.memoryDesc}</CardDescription>
                         </CardHeader>
                         <CardContent>
                             {isLoading ? (
@@ -106,9 +157,9 @@ export default function GodModePage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-xl text-blue-400">
                                 <CloudRain className="text-blue-400" />
-                                Mass Ingestion Protocols
+                                {texts.ingestTitle}
                             </CardTitle>
-                            <CardDescription>Inject massive datasets into the Sovereign Memory.</CardDescription>
+                            <CardDescription>{texts.ingestDesc}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -133,8 +184,8 @@ export default function GodModePage() {
                 <TabsContent value="pilot" className="space-y-4">
                     <div className="p-12 text-center text-gray-500">
                         <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-xl font-bold">Pilot Protocol Standby</h3>
-                        <p>Select a field in the main dashboard to activate Sovereign Driver Mode.</p>
+                        <h3 className="text-xl font-bold">{texts.pilotTitle}</h3>
+                        <p>Select a field in the main dashboard to activate {isDivineView ? "Sovereign" : "Autonomous"} Driver Mode.</p>
                     </div>
                 </TabsContent>
 
