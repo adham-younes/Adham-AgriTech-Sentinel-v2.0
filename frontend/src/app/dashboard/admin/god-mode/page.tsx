@@ -341,38 +341,43 @@ export default function GodModePage() {
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-4 bg-amber-900/20 border border-amber-500/20 rounded-lg text-center">
-                                        <div className="text-sm text-gray-400">Assets Under Management</div>
-                                        <div className="font-bold text-2xl text-amber-300">$2.4M</div>
-                                        <div className="text-xs text-amber-500/70">+15% this week</div>
+                                        <div className="text-sm text-gray-400">Yield Portfolio Value</div>
+                                        <div className="font-bold text-2xl text-amber-300">$8.7M</div>
+                                        <div className="text-xs text-amber-500/70">+42% (Dates Season)</div>
                                     </div>
                                     <div className="p-4 bg-amber-900/20 border border-amber-500/20 rounded-lg text-center">
-                                        <div className="text-sm text-gray-400">Active Liquid Tokens</div>
-                                        <div className="font-bold text-2xl text-white">3</div>
-                                        <div className="text-xs text-gray-500">$WHEAT24, $CORN_FUT, $SOY_IDX</div>
+                                        <div className="text-sm text-gray-400">Minted Commodities</div>
+                                        <div className="font-bold text-2xl text-white">4</div>
+                                        <div className="text-xs text-gray-500">$DATES_KSA, $OLIVE_MED, $WHEAT26</div>
                                     </div>
                                 </div>
 
                                 <div className="bg-black/60 border border-white/5 rounded-lg p-4">
-                                    <div className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">Recent Transactions (Blockchain)</div>
+                                    <div className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">Asset Tokenization Log</div>
                                     <div className="space-y-2 text-xs font-mono">
+                                        <div className="flex justify-between items-center text-amber-400">
+                                            <span>MINT: $DATES_KSA (High Grade)</span>
+                                            <span>Value: $700,000</span>
+                                        </div>
                                         <div className="flex justify-between items-center text-emerald-400">
-                                            <span>MINT: 1,000,000 $WHEAT26</span>
-                                            <span>+ $220,000 Liquidity</span>
+                                            <span>MINT: $OLIVE_OIL_FUTURES</span>
+                                            <span>Value: $360,000</span>
                                         </div>
                                         <div className="flex justify-between items-center text-blue-400">
-                                            <span>SALE: 50T Carbon Credits</span>
-                                            <span>+ $45,000 USD</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-gray-500">
-                                            <span>GAS: Smart Contract Deploy</span>
-                                            <span>- $12.50 MATIC</span>
+                                            <span>MINT: $WHEAT_EG_26</span>
+                                            <span>Value: $220,000</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold" onClick={() => alert("Minting RWA Tokens for 500 Hectares of Wheat...")}>
-                                    TOKENIZE ASSETS (Generate Wealth)
-                                </Button>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button className="bg-amber-600 hover:bg-amber-700 text-black font-bold text-xs" onClick={() => alert("Minting High-Value Date Palms Tokens...")}>
+                                        TOKENIZE DATES (💎)
+                                    </Button>
+                                    <Button className="bg-emerald-600 hover:bg-emerald-700 font-bold text-xs" onClick={() => alert("Tokenizing Olive Harvest...")}>
+                                        TOKENIZE OLIVES (🫒)
+                                    </Button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
