@@ -11,7 +11,7 @@
     },
     {
       "path": "/api/cron/osiris-pulse",
-      "schedule": "0 * * * *"
+      "schedule": "0 4 * * *"
     }
   ]
 }
