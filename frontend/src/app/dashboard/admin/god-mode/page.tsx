@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain, ShieldCheck, Building2, Globe2, Target, Library } from 'lucide-react';
+import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain, ShieldCheck, Building2, Globe2, Target, Library, Megaphone } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
@@ -202,9 +202,9 @@ export default function GodModePage() {
                                     </div>
                                 </div>
                                 <div className="p-4 rounded-lg bg-black/50 border border-white/5 font-mono text-xs text-gray-400">
-                                    > Generating "Why AI is Sovereign" thread...<br />
-                                    > Broadcasting to LinkedIn (Pending)...<br />
-                                    > Syncing with Protocol Alexandria for sources...
+                                    &gt; Generating "Why AI is Sovereign" thread...<br />
+                                    &gt; Broadcasting to LinkedIn (Pending)...<br />
+                                    &gt; Syncing with Protocol Alexandria for sources...
                                 </div>
                                 <Button className="w-full bg-purple-600 hover:bg-purple-700 font-bold" onClick={() => alert("Broadcasting Viral Thread to all channels...")}>
                                     AMPLIFY VOICE (Global Broadcast)
