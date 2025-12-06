@@ -100,13 +100,13 @@ export function DashboardNavbar({ user, profile }: NavbarProps) {
                                     <ChevronDown className="h-3 w-3 opacity-50" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="center" className="w-56 glass-card border-white/10 mt-2 z-[100]">
+                            <DropdownMenuContent align="center" className="w-56 glass-card border-white/10 mt-2 z-[9999]">
                                 {group.items.map((key) => {
                                     const item = navigationItems[key as keyof typeof navigationItems]
                                     const Icon = item.icon
                                     const isActive = pathname === item.href
                                     return (
-                                        <DropdownMenuItem key={key} asChild className={cn("cursor-pointer gap-2 py-2.5", isActive && "bg-primary/20 text-primary focus:bg-primary/20")}>
+                                        <DropdownMenuItem key={key} asChild className={cn("cursor-pointer gap-2 py-2.5", isActive && "bg-primary/20 text-primary focus:bg-primary/20", "focus:text-primary")}>
                                             <Link href={item.href}>
                                                 <Icon className="h-4 w-4" />
                                                 <span className="flex-1">{t(item.translationKey)}</span>
@@ -154,7 +154,7 @@ export function DashboardNavbar({ user, profile }: NavbarProps) {
                             </div>
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 glass-card border-white/10">
+                    <DropdownMenuContent align="end" className="w-56 glass-card border-white/10 z-[9999]">
                         <DropdownMenuLabel>{t("dashboard_header.menu.account")}</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
                             <Settings className="mr-2 h-4 w-4" /> {t("dashboard_header.menu.settings")}
