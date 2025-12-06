@@ -115,7 +115,67 @@ export default function GodModePage() {
                     <TabsTrigger value="pilot" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
                         <Activity className="mr-2 h-4 w-4" /> {texts.tabPilot}
                     </TabsTrigger>
+                    <TabsTrigger value="dominion" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+                        <Target className="mr-2 h-4 w-4" /> Dominion
+                    </TabsTrigger>
+                    <TabsTrigger value="alexandria" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+                        <Library className="mr-2 h-4 w-4" /> Alexandria
+                    </TabsTrigger>
                 </TabsList>
+
+                {/* --- DOMINION (HUNTER) --- */}
+                <TabsContent value="dominion" className="space-y-4">
+                    <Card className="bg-black/40 border-red-500/30 backdrop-blur">
+                        <CardHeader>
+                            <CardTitle className="text-red-500 flex items-center gap-2">
+                                <Target /> Protocol DOMINION (Active)
+                            </CardTitle>
+                            <CardDescription>Automated Market Expansion & Client Hunting</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="p-4 bg-red-900/20 border border-red-500/20 rounded-lg">
+                                    <div className="text-sm text-gray-400">Target Area</div>
+                                    <div className="font-bold text-white">MENA Region (Egypt, KSA)</div>
+                                </div>
+                                <div className="p-4 bg-red-900/20 border border-red-500/20 rounded-lg">
+                                    <div className="text-sm text-gray-400">Leads Identified</div>
+                                    <div className="font-mono text-2xl text-red-400">3 Potential Sovereigns</div>
+                                </div>
+                                <Button className="w-full bg-red-600 hover:bg-red-700 font-bold" onClick={() => alert("Hunting Protocol Initiated. Scanning LinkedIn...")}>
+                                    EXECUTE HUNT (Scan LinkedIn)
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* --- ALEXANDRIA (SAGE) --- */}
+                <TabsContent value="alexandria" className="space-y-4">
+                    <Card className="bg-black/40 border-indigo-500/30 backdrop-blur">
+                        <CardHeader>
+                            <CardTitle className="text-indigo-500 flex items-center gap-2">
+                                <Library /> Protocol ALEXANDRIA (Active)
+                            </CardTitle>
+                            <CardDescription>Infinite Knowledge Ingestion (RAG)</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="p-4 bg-indigo-900/20 border border-indigo-500/20 rounded-lg">
+                                    <div className="text-sm text-gray-400">Knowledge Source</div>
+                                    <div className="font-bold text-white">ArXiv, AgriVix, Google Scholar</div>
+                                </div>
+                                <div className="p-4 bg-indigo-900/20 border border-indigo-500/20 rounded-lg">
+                                    <div className="text-sm text-gray-400">Papers Ingested</div>
+                                    <div className="font-mono text-2xl text-indigo-400">0 (Pending Scrape)</div>
+                                </div>
+                                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 font-bold" onClick={() => alert("Connecting to ArXiv API... Ingesting papers.")}>
+                                    ABSORB KNOWLEDGE (Start Scraper)
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
 
                 {/* --- MIND OBSERVATORY --- */}
                 <TabsContent value="memory" className="space-y-4">
