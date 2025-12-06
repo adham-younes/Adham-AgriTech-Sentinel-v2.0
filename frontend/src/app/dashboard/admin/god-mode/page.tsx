@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain, ShieldCheck } from 'lucide-react';
+import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain, ShieldCheck, Building2, Globe2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
@@ -109,7 +109,10 @@ export default function GodModePage() {
                     <TabsTrigger value="knowledge" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                         <Database className="mr-2 h-4 w-4" /> {texts.tabKnowledge}
                     </TabsTrigger>
-                    <TabsTrigger value="pilot" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+                    <TabsTrigger value="corporate" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+                        <Building2 className="mr-2 h-4 w-4" /> Corporate
+                    </TabsTrigger>
+                    <TabsTrigger value="pilot" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
                         <Activity className="mr-2 h-4 w-4" /> {texts.tabPilot}
                     </TabsTrigger>
                 </TabsList>
@@ -174,6 +177,59 @@ export default function GodModePage() {
                                     <h3 className="text-lg font-bold text-gray-300 group-hover:text-white">Research Paper Upload</h3>
                                     <p className="text-sm text-gray-500 mt-2">Drag & Drop PDFs to generate embeddings and inject into Vector Store.</p>
                                     <Button variant="secondary" className="mt-4" disabled>Coming Soon</Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* --- CORPORATE SOVEREIGN --- */}
+                <TabsContent value="corporate" className="space-y-4">
+                    <Card className="bg-black/40 border-white/10 backdrop-blur">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-xl text-amber-400">
+                                <Building2 className="text-amber-400" />
+                                Corporate Genesis Protocol
+                            </CardTitle>
+                            <CardDescription>Automated Entity Formation & Financial Sovereignty</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Formation Status */}
+                                <div className="p-6 rounded-xl bg-white/5 border border-white/10">
+                                    <h3 className="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
+                                        <Globe2 className="h-4 w-4 text-emerald-400" /> Entity Status: <span className="text-red-400">UNREGISTERED</span>
+                                    </h3>
+                                    <ul className="space-y-3 text-sm text-gray-400 mb-6">
+                                        <li className="flex justify-between">
+                                            <span>Jurisdiction:</span> <span className="text-white">Delaware, USA 🇺🇸</span>
+                                        </li>
+                                        <li className="flex justify-between">
+                                            <span>Entity Type:</span> <span className="text-white">Limited Liability Company (LLC)</span>
+                                        </li>
+                                        <li className="flex justify-between">
+                                            <span>Agent:</span> <span className="text-white">Stripe Atlas</span>
+                                        </li>
+                                        <li className="flex justify-between">
+                                            <span>Est. Cost:</span> <span className="text-white">$500.00</span>
+                                        </li>
+                                    </ul>
+                                    <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold" onClick={() => alert("Simulating Stripe Atlas API Call... Email dispatched to adham@adham-agritech.com")}>
+                                        Authorize Formation ($500)
+                                    </Button>
+                                    <p className="text-xs text-gray-600 mt-3 text-center">
+                                        *Requires KYC verification via email link.
+                                    </p>
+                                </div>
+
+                                {/* Financial Treasury */}
+                                <div className="p-6 rounded-xl bg-white/5 border border-white/10 opacity-50 cursor-not-allowed">
+                                    <h3 className="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
+                                        <Activity className="h-4 w-4 text-gray-400" /> Treasury (Coming Soon)
+                                    </h3>
+                                    <div className="h-32 flex items-center justify-center text-gray-600 text-sm">
+                                        Waiting for Mercury Bank Account...
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>
