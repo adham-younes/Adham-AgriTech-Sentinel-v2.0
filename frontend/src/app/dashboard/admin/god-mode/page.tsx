@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain, ShieldCheck, Building2, Globe2, Target, Library, Megaphone } from 'lucide-react';
+import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain, ShieldCheck, Building2, Globe2, Target, Library, Megaphone, Network, TrendingUp, ShieldAlert } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
@@ -124,6 +124,15 @@ export default function GodModePage() {
                     <TabsTrigger value="influence" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
                         <Megaphone className="mr-2 h-4 w-4" /> Influence
                     </TabsTrigger>
+                    <TabsTrigger value="nexus" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white">
+                        <Network className="mr-2 h-4 w-4" /> Nexus
+                    </TabsTrigger>
+                    <TabsTrigger value="oracle" className="data-[state=active]:bg-pink-600 data-[state=active]:text-white">
+                        <TrendingUp className="mr-2 h-4 w-4" /> Oracle
+                    </TabsTrigger>
+                    <TabsTrigger value="sentinel" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white">
+                        <ShieldAlert className="mr-2 h-4 w-4" /> Sentinel
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* --- DOMINION (HUNTER) --- */}
@@ -208,6 +217,108 @@ export default function GodModePage() {
                                 </div>
                                 <Button className="w-full bg-purple-600 hover:bg-purple-700 font-bold" onClick={() => alert("Broadcasting Viral Thread to all channels...")}>
                                     AMPLIFY VOICE (Global Broadcast)
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* --- NEXUS (PLATFORM) --- */}
+                <TabsContent value="nexus" className="space-y-4">
+                    <Card className="bg-black/40 border-yellow-500/30 backdrop-blur">
+                        <CardHeader>
+                            <CardTitle className="text-yellow-500 flex items-center gap-2">
+                                <Network /> Protocol NEXUS (Active)
+                            </CardTitle>
+                            <CardDescription>Public API Gateway & Developer Economy</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="p-4 bg-yellow-900/20 border border-yellow-500/20 rounded-lg text-center">
+                                    <div className="text-sm text-gray-400">API Endpoint</div>
+                                    <div className="font-mono text-lg text-yellow-300">https://osiris.ag/api/v1</div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="p-2 bg-white/5 rounded text-center text-xs">
+                                        <div className="text-gray-400">Keys Active</div>
+                                        <div className="text-white font-bold">12</div>
+                                    </div>
+                                    <div className="p-2 bg-white/5 rounded text-center text-xs">
+                                        <div className="text-gray-400">Requests/hr</div>
+                                        <div className="text-white font-bold">4,500</div>
+                                    </div>
+                                    <div className="p-2 bg-white/5 rounded text-center text-xs">
+                                        <div className="text-gray-400">Revenue</div>
+                                        <div className="text-emerald-400 font-bold">$1,200/mo</div>
+                                    </div>
+                                </div>
+                                <Button className="w-full bg-yellow-600 hover:bg-yellow-700 font-bold" onClick={() => alert("Generating new API Key for Enterprise Client...")}>
+                                    MINT API KEY (Monetize)
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* --- ORACLE (SEER) --- */}
+                <TabsContent value="oracle" className="space-y-4">
+                    <Card className="bg-black/40 border-pink-500/30 backdrop-blur">
+                        <CardHeader>
+                            <CardTitle className="text-pink-500 flex items-center gap-2">
+                                <TrendingUp /> Protocol ORACLE (Active)
+                            </CardTitle>
+                            <CardDescription>Global Market Prediction Engine</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 bg-pink-900/20 border border-pink-500/20 rounded-lg text-center">
+                                        <div className="text-sm text-gray-400">Wheat Forecast</div>
+                                        <div className="font-bold text-red-400">SELL NOW</div>
+                                        <div className="text-xs text-gray-500">Supply Surge (+12%)</div>
+                                    </div>
+                                    <div className="p-4 bg-pink-900/20 border border-pink-500/20 rounded-lg text-center">
+                                        <div className="text-sm text-gray-400">Corn Forecast</div>
+                                        <div className="font-bold text-emerald-400">HOLD</div>
+                                        <div className="text-xs text-gray-500">Supply Deficit (-5%)</div>
+                                    </div>
+                                </div>
+                                <Button className="w-full bg-pink-600 hover:bg-pink-700 font-bold" onClick={() => alert("Sending SELL SIGNAL to all Wheat Farmers...")}>
+                                    BROADCAST MARKET SIGNAL
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* --- SENTINEL (IMMORTAL) --- */}
+                <TabsContent value="sentinel" className="space-y-4">
+                    <Card className="bg-black/40 border-slate-500/30 backdrop-blur">
+                        <CardHeader>
+                            <CardTitle className="text-slate-400 flex items-center gap-2">
+                                <ShieldAlert /> Protocol SENTINEL (Active)
+                            </CardTitle>
+                            <CardDescription>Self-Healing Cybersecurity Mesh</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="p-4 bg-slate-900/40 border border-slate-500/20 rounded-lg flex items-center justify-between">
+                                    <div>
+                                        <div className="text-sm text-gray-400">System Integrity</div>
+                                        <div className="font-bold text-emerald-400">100% (Secure)</div>
+                                    </div>
+                                    <ShieldCheck className="h-8 w-8 text-emerald-500" />
+                                </div>
+                                <div className="p-4 bg-slate-900/40 border border-slate-500/20 rounded-lg">
+                                    <div className="text-xs font-mono text-gray-500 mb-2">IMMUNITY LOGS</div>
+                                    <div className="space-y-1 text-xs text-gray-400 h-24 overflow-y-auto">
+                                        <div className="text-emerald-500">[14:02:11] Attack Repelled: SQL Injection (Source: Russia)</div>
+                                        <div className="text-blue-400">[14:05:00] Self-Heal: Patched 'Auth0' dependency vulnerability</div>
+                                        <div className="text-emerald-500">[14:10:22] Integrity Scan: PASSED</div>
+                                    </div>
+                                </div>
+                                <Button className="w-full bg-slate-700 hover:bg-slate-600 font-bold" onClick={() => alert("Running Auto-Penetration Test against self...")}>
+                                    EXECUTE PENETRATION TEST
                                 </Button>
                             </div>
                         </CardContent>
