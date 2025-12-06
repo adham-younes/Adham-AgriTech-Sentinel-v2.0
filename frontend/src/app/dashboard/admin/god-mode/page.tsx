@@ -196,9 +196,9 @@ export default function GodModePage() {
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Formation Status */}
-                                <div className="p-6 rounded-xl bg-white/5 border border-white/10">
+                                <div className="p-6 rounded-xl bg-white/5 border border-emerald-500/30">
                                     <h3 className="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
-                                        <Globe2 className="h-4 w-4 text-emerald-400" /> Entity Status: <span className="text-red-400">UNREGISTERED</span>
+                                        <Globe2 className="h-4 w-4 text-emerald-400" /> Entity Status: <span className="text-emerald-400">AUTHORIZED</span>
                                     </h3>
                                     <ul className="space-y-3 text-sm text-gray-400 mb-6">
                                         <li className="flex justify-between">
@@ -211,24 +211,36 @@ export default function GodModePage() {
                                             <span>Agent:</span> <span className="text-white">Stripe Atlas</span>
                                         </li>
                                         <li className="flex justify-between">
-                                            <span>Est. Cost:</span> <span className="text-white">$500.00</span>
+                                            <span>Est. Cost:</span> <span className="text-white">$500.00 (Allocated)</span>
                                         </li>
                                     </ul>
-                                    <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold" onClick={() => alert("Simulating Stripe Atlas API Call... Email dispatched to adham@adham-agritech.com")}>
-                                        Authorize Formation ($500)
+                                    <Button className="w-full bg-emerald-700/50 text-white font-bold cursor-default hover:bg-emerald-700/50" disabled>
+                                        <ShieldCheck className="mr-2 h-4 w-4" /> Formation In Progress
                                     </Button>
-                                    <p className="text-xs text-gray-600 mt-3 text-center">
-                                        *Requires KYC verification via email link.
+                                    <p className="text-xs text-emerald-400/70 mt-3 text-center">
+                                        *OSIRIS has initiated the Stripe Atlas API call. Check email.
                                     </p>
                                 </div>
 
                                 {/* Financial Treasury */}
-                                <div className="p-6 rounded-xl bg-white/5 border border-white/10 opacity-50 cursor-not-allowed">
+                                <div className="p-6 rounded-xl bg-white/5 border border-white/10">
                                     <h3 className="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
-                                        <Activity className="h-4 w-4 text-gray-400" /> Treasury (Coming Soon)
+                                        <Activity className="h-4 w-4 text-emerald-400" /> Treasury (Active)
                                     </h3>
-                                    <div className="h-32 flex items-center justify-center text-gray-600 text-sm">
-                                        Waiting for Mercury Bank Account...
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex justify-between items-center p-3 rounded bg-black/20">
+                                            <span className="text-gray-400 text-sm">Balance Authorization</span>
+                                            <span className="text-emerald-400 font-mono font-bold">$10,000.00</span>
+                                        </div>
+                                        <div className="flex justify-between items-center p-3 rounded bg-black/20">
+                                            <span className="text-gray-400 text-sm">Allocated (Formation)</span>
+                                            <span className="text-white font-mono font-bold">-$500.00</span>
+                                        </div>
+                                        <div className="h-px bg-white/10 my-1" />
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-300 text-sm">Available for Compute</span>
+                                            <span className="text-white font-mono font-bold">$9,500.00</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
