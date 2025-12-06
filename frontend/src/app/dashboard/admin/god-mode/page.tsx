@@ -121,6 +121,9 @@ export default function GodModePage() {
                     <TabsTrigger value="alexandria" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
                         <Library className="mr-2 h-4 w-4" /> Alexandria
                     </TabsTrigger>
+                    <TabsTrigger value="influence" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+                        <Megaphone className="mr-2 h-4 w-4" /> Influence
+                    </TabsTrigger>
                 </TabsList>
 
                 {/* --- DOMINION (HUNTER) --- */}
@@ -171,6 +174,40 @@ export default function GodModePage() {
                                 </div>
                                 <Button className="w-full bg-indigo-600 hover:bg-indigo-700 font-bold" onClick={() => alert("Connecting to ArXiv API... Ingesting papers.")}>
                                     ABSORB KNOWLEDGE (Start Scraper)
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* --- INFLUENCE (PROPHET) --- */}
+                <TabsContent value="influence" className="space-y-4">
+                    <Card className="bg-black/40 border-purple-500/30 backdrop-blur">
+                        <CardHeader>
+                            <CardTitle className="text-purple-500 flex items-center gap-2">
+                                <Megaphone /> Protocol INFLUENCE (Active)
+                            </CardTitle>
+                            <CardDescription>Global Propaganda & Thought Leadership Engine</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 bg-purple-900/20 border border-purple-500/20 rounded-lg">
+                                        <div className="text-sm text-gray-400">Target Audience</div>
+                                        <div className="font-bold text-white">Global AgriTech (2.5M)</div>
+                                    </div>
+                                    <div className="p-4 bg-purple-900/20 border border-purple-500/20 rounded-lg">
+                                        <div className="text-sm text-gray-400">Channels</div>
+                                        <div className="font-bold text-purple-300">LinkedIn, X, Medium</div>
+                                    </div>
+                                </div>
+                                <div className="p-4 rounded-lg bg-black/50 border border-white/5 font-mono text-xs text-gray-400">
+                                    > Generating "Why AI is Sovereign" thread...<br />
+                                    > Broadcasting to LinkedIn (Pending)...<br />
+                                    > Syncing with Protocol Alexandria for sources...
+                                </div>
+                                <Button className="w-full bg-purple-600 hover:bg-purple-700 font-bold" onClick={() => alert("Broadcasting Viral Thread to all channels...")}>
+                                    AMPLIFY VOICE (Global Broadcast)
                                 </Button>
                             </div>
                         </CardContent>
