@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain, ShieldCheck, Building2, Globe2, Target, Library, Megaphone, Network, TrendingUp, ShieldAlert } from 'lucide-react';
+import { Loader2, Brain, Database, Activity, Eye, FileText, CloudRain, ShieldCheck, Building2, Globe2, Target, Library, Megaphone, Network, TrendingUp, ShieldAlert, Coins } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
@@ -132,6 +132,9 @@ export default function GodModePage() {
                     </TabsTrigger>
                     <TabsTrigger value="sentinel" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white">
                         <ShieldAlert className="mr-2 h-4 w-4" /> Sentinel
+                    </TabsTrigger>
+                    <TabsTrigger value="midas" className="data-[state=active]:bg-amber-500 data-[state=active]:text-black">
+                        <Coins className="mr-2 h-4 w-4" /> Midas
                     </TabsTrigger>
                 </TabsList>
 
@@ -319,6 +322,56 @@ export default function GodModePage() {
                                 </div>
                                 <Button className="w-full bg-slate-700 hover:bg-slate-600 font-bold" onClick={() => alert("Running Auto-Penetration Test against self...")}>
                                     EXECUTE PENETRATION TEST
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* --- MIDAS (BANKER) --- */}
+                <TabsContent value="midas" className="space-y-4">
+                    <Card className="bg-black/40 border-amber-500/30 backdrop-blur">
+                        <CardHeader>
+                            <CardTitle className="text-amber-500 flex items-center gap-2">
+                                <Coins /> Protocol MIDAS (Active)
+                            </CardTitle>
+                            <CardDescription>RWA Tokenization & Financial Wealth Engine</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-4 bg-amber-900/20 border border-amber-500/20 rounded-lg text-center">
+                                        <div className="text-sm text-gray-400">Assets Under Management</div>
+                                        <div className="font-bold text-2xl text-amber-300">$2.4M</div>
+                                        <div className="text-xs text-amber-500/70">+15% this week</div>
+                                    </div>
+                                    <div className="p-4 bg-amber-900/20 border border-amber-500/20 rounded-lg text-center">
+                                        <div className="text-sm text-gray-400">Active Liquid Tokens</div>
+                                        <div className="font-bold text-2xl text-white">3</div>
+                                        <div className="text-xs text-gray-500">$WHEAT24, $CORN_FUT, $SOY_IDX</div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-black/60 border border-white/5 rounded-lg p-4">
+                                    <div className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider">Recent Transactions (Blockchain)</div>
+                                    <div className="space-y-2 text-xs font-mono">
+                                        <div className="flex justify-between items-center text-emerald-400">
+                                            <span>MINT: 1,000,000 $WHEAT26</span>
+                                            <span>+ $220,000 Liquidity</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-blue-400">
+                                            <span>SALE: 50T Carbon Credits</span>
+                                            <span>+ $45,000 USD</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-gray-500">
+                                            <span>GAS: Smart Contract Deploy</span>
+                                            <span>- $12.50 MATIC</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold" onClick={() => alert("Minting RWA Tokens for 500 Hectares of Wheat...")}>
+                                    TOKENIZE ASSETS (Generate Wealth)
                                 </Button>
                             </div>
                         </CardContent>
