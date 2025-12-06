@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Check, X, Shield, Sapling, Building2, Globe2 } from 'lucide-react';
+import { Check, X, Shield, Sprout, Building2, Globe2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 const TIERS = [
     {
         name: "Sovereign Farmer",
-        price: "$499/mo",
+        price: "$29/mo",
         description: "For individual forward-thinking farmers.",
         features: [
             "Autonomous Irrigation Decisions",
@@ -17,14 +17,14 @@ const TIERS = [
             "OSIRIS Chat Interface (Standard)",
             "Crop Disease Diagnosis"
         ],
-        icon: Sapling,
+        icon: Sprout,
         color: "text-emerald-400",
         borderColor: "border-emerald-500/20",
         buttonVariant: "outline"
     },
     {
         name: "Agri-Enterprise",
-        price: "$2,999/mo",
+        price: "$299/mo",
         description: "For large-scale agricultural operations.",
         features: [
             "Everything in Farmer",
