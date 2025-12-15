@@ -28,7 +28,7 @@ jobs:
 
       - name: Upload async deployment report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: async-post-deploy-${{ github.run_id }}
           path: ${{ steps.async_tasks.outputs.report_path }}

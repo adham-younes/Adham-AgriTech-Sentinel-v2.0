@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload post-deploy report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: async-postdeploy-report
           path: reports/async
